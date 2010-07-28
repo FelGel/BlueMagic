@@ -1,0 +1,108 @@
+@ERASE
+
+0 REM BlueSpells Scanner Version 0.1
+
+@INIT 1
+2 PRINTU "\n\n\n\rBLUESPELLS"
+3 PRINTU " SENSOR V0.1\n\r"
+0 REM Set LED on
+5 A = pioset 20
+0 REM Baud rate for serial line
+6 A = baud 1152
+0 REM Debug toggle
+7 Z = 0
+0 REM power for scanning in dBm
+8 REM A = defpower 10
+300 RESERVED 
+400 RESERVED
+500 001E377281F0
+10 M = 0
+0 REM PRINTU "Press 's' "
+0 REM PRINTU "to start "
+0 REM $300[0] = 0
+0 REM TIMEOUTU 1
+0 REM INPUTU $300
+0 REM IF $300[0] <> 115 THEN 20;
+11 RETURN
+
+@IDLE 20
+20 PRINTU "\n\rIDLE\n\r"
+21 REM A = pioset 20
+22 A = pioclr 20
+23 WAIT 1
+24 REM A = pioset 20
+25 REM A = slave 5
+26 REM WAIT 20
+27 REM A = pioclr 20
+30 ALARM 1
+49 RETURN
+
+@SLAVE 800 
+800 A = link 2 
+805 PRINTM "SPP CONNECTED\n\r"
+810 ALARM 2
+895 RETURN
+
+@ALARM 50
+50 A = status
+51 IF A <> 0 THEN 56
+52 A = pioclr 20
+53 A = pioset 20
+54 A = slave 20
+55 GOTO 93
+56 A = pioclr 20
+57 M = M + 1
+58 IF M = 11 THEN 100
+59 PRINTS "\n\r#"
+60 PRINTS M
+61 PRINTS "  "
+62 A = date $400
+63 PRINTS $400
+64 PRINTS "  "
+70 PRINTS "\n\rPress 's' "
+75 PRINTS "to stop\n\r"
+80 $300[0] = 0
+85 TIMEOUTS 1
+86 INPUTS $300
+87 REM TIMEOUTU 1
+90 REM INPUTU $300
+91 IF $300[0] = 115 THEN 100
+92 A = inquiry -10
+93 ALARM 20
+95 RETURN
+
+@INQUIRY 900
+0 REM Single LED blink to show device found
+900 A = pioset 20
+905 A = pioclr 20
+910 PRINTU $0;
+920 PRINTU "\n\r";
+925 PRINTS $0;
+930 PRINTS "\n\r";
+995 RETURN
+
+
+100 PRINTS "\n\rTERMINATED\n\r"
+101 PRINTS "\n\rPress 'r' "
+102 PRINTS "to reboot\n\r"
+103 PRINTS "\n\rPress any "
+104 PRINTS "other key "
+105 PRINTS "to resume\n\r"
+106 $300[0] = 0
+107 A = status
+108 IF A <> 0 THEN 112
+109 ALARM 1
+110 RETURN
+112 TIMEOUTS 1
+115 INPUTS $300
+119 IF $300[0] = 0 THEN 107;
+
+120 PRINTS $300;
+121 PRINTS "\n\r"
+122 IF $300[0] = 114 THEN 150
+125 M = 0
+130 PRINTS "\n\rRESUMING\n\r"
+135 GOTO 50
+150 PRINTS "REBOOTING\n\r"
+155 A = reboot
+156 RETURN
