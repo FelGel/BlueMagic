@@ -34,15 +34,7 @@
 /debug/ScriptCompilerApp.ini
 */release/
 /release/
-/Communication/
-/MapGenerator/ImageStone/example/
-/MapGenerator/Debug/
-/MapGenerator/Release/
-/ScriptCompiler/Debug/
-/ScriptCompiler/Release/
 /ApplicationLogs/
-/ScriptCompiler/Debug/
-/ScriptCompiler/Release/
 
 # Specific uniteresting file names:
 # -------------------------------------
