@@ -192,11 +192,23 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\PositioningManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\PositioningModule.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\PositioningModuleDlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SensorController.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SensorControllersContainer.cpp"
 				>
 			</File>
 			<File
@@ -226,6 +238,18 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\ISensorEvents.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ObjectsContainer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PositioningManager.h"
+				>
+			</File>
+			<File
 				RelativePath=".\PositioningModule.h"
 				>
 			</File>
@@ -235,6 +259,14 @@
 			</File>
 			<File
 				RelativePath=".\Resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SensorController.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SensorControllersContainer.h"
 				>
 			</File>
 			<File
