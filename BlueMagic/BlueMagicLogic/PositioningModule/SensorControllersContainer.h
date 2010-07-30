@@ -17,6 +17,7 @@ public:
 private:
 	// Implemented CSensorControllersContainer method
 	virtual CSensorController* CreateObject(const char* ConfigSection, int ObjectIndex);
+	virtual void OnRemoveObject(CSensorController *RemovedObject);
 	bool AreObjectParametersValid(int ObjectIndex, int SensorID, int ComPort, std::string BDADDRESS);
 
 	ISensorEvents* m_Handler;

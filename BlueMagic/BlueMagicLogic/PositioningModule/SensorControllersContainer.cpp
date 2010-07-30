@@ -33,6 +33,11 @@ void CSensorControllersContainer::RemoveObjects()
 	CObjectsContainer<CSensorController>::RemoveObjects();
 }
 
+void CSensorControllersContainer::OnRemoveObject(CSensorController *RemovedObject)
+{
+	RemovedObject->Close();
+}
+
 //#include "SensorControllerGenericFactory.h"
 
 // Implemented CTxRxContainer method
@@ -46,7 +51,7 @@ CSensorController* CSensorControllersContainer::CreateObject(const char* ConfigS
 		return NULL;
 
 	CSensorController* SensorController = NULL;
-	SensorController = new CSensorController();//CREATE_CC_RECEIVER(ReceiverType, ConfigSection, ReceiverId);
+	SensorController = new CSensorController(SensorID, ComPort, BDADDRESS);//CREATE_CC_RECEIVER(ReceiverType, ConfigSection, ReceiverId);
 	if(SensorController == NULL)
 		return NULL;
 

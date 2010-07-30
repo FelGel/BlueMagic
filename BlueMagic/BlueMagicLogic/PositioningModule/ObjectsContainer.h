@@ -40,7 +40,7 @@ public:
 		}
 
 		bool ObjectsCreatedOk = true;
-		for (int i = 0; (unsigned)i < min(ObjectSections.size(), MaxNumber); ++i) 
+		for (int i = 0; (unsigned)i < min(ObjectSections.size(), (unsigned)MaxNumber); ++i) 
 		{
 			std::string ObjectSection = ObjectSections[i].ItemValue;
 			Object* ObjectInstance = CreateObject(ObjectSection.c_str(), ObjectSections[i].ItemId);
@@ -67,12 +67,16 @@ public:
 	void RemoveObjects()
 	{
 		for(int i=0; (unsigned int)i<m_Objects.size(); i++)
+		{
+			OnRemoveObject(m_Objects[i]);
 			delete m_Objects[i];
+		}
 		m_Objects.clear();
 	}
 
 protected:
 	virtual Object* CreateObject(const char* ConfigSection, int ObjectIndex) = 0;
+	virtual void OnRemoveObject(Object *RemovedObject) = 0;
 
 private:
 	std::vector<Object*> m_Objects;

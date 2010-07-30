@@ -212,6 +212,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Serial.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SerialEx.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SerialPort.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -267,6 +279,18 @@
 			</File>
 			<File
 				RelativePath=".\SensorControllersContainer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Serial.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SerialEx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SerialPort.h"
 				>
 			</File>
 			<File

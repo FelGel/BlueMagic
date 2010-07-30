@@ -36,32 +36,32 @@ bool CPositioningManager::Init()
 	return true;
 }
 
-void CPositioningManager::OnErrorInTopolog(UCHAR SensorId)
+void CPositioningManager::OnErrorInTopolog(UCHAR /*SensorId*/)
 {
 
 }
 
-void CPositioningManager::OnSensorInfo(SSensorInfo SensorInfo)
+void CPositioningManager::OnSensorInfo(SSensorInfo /*SensorInfo*/)
 {
 
 }
 
-void CPositioningManager::OnSensorsInfo(CList<SSensorInfo> SensorsInfo)
+void CPositioningManager::OnSensorsInfo(CList<SSensorInfo> /*SensorsInfo*/)
 {
 
 }
 
-void CPositioningManager::OnIncomingScannedData(CList<SScannedData> ScannedData)
+void CPositioningManager::OnIncomingScannedData(CList<SScannedData> /*ScannedData*/)
 {
 
 }
 
-void CPositioningManager::OnConnected(UCHAR SensorId)
+void CPositioningManager::OnConnected(UCHAR /*SensorId*/)
 {
 
 }
 
-void CPositioningManager::OnDisconnected(UCHAR SensorId)
+void CPositioningManager::OnDisconnected(UCHAR /*SensorId*/)
 {
 
 }
