@@ -5,6 +5,7 @@
 
 
 #include "..\ApplicationUtils/TabDlg.h"
+#include "PositioningManager.h"
 
 // CPositioningModuleDlg dialog
 class CPositioningModuleDlg : public CTabDlg
@@ -26,7 +27,7 @@ protected:
 	HICON m_hIcon;
 
 	// Generated message map functions
-	virtual BOOL OnInitDialog();
+	/*virtual BOOL OnInitDialog();*/
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()

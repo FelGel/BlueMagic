@@ -8,7 +8,6 @@ class CSensorControllersContainer :
 {
 public:
 	CSensorControllersContainer(void);
-	~CSensorControllersContainer(void);
 
 	bool CreateObjects(
 		const char* ConfigSection, ISensorEvents* Handler);
@@ -17,7 +16,8 @@ public:
 
 private:
 	// Implemented CSensorControllersContainer method
-	virtual CSensorController* CreateObject(const char* ConfigSection);
+	virtual CSensorController* CreateObject(const char* ConfigSection, int ObjectIndex);
+	bool AreObjectParametersValid(int ObjectIndex, int SensorID, int ComPort, std::string BDADDRESS);
 
 	ISensorEvents* m_Handler;
 };

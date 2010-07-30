@@ -37,4 +37,16 @@ void CPositioningModuleApp::AddDialogs()
 	return;
 }
 
+bool CPositioningModuleApp::PerformInitalization()
+{
+	return m_PositioningManager.Init();
+}
+
+bool CPositioningModuleApp::PerformCleanup()
+{
+	//m_PositioningModuleDlg
+	m_PositioningManager.CloseThread(true);
+	return true;
+}
+
 CPositioningModuleApp theApp;

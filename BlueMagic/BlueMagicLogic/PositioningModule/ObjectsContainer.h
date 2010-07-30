@@ -25,17 +25,35 @@ public:
 		const char* Prefix, 
 		int MaxNumber)
 	{
-		std::vector<std::string> ObjectSections = GetConfigSectionsArray(ConfigSection,Prefix,MaxNumber);    
-		for (int i = 0; (unsigned)i < ObjectSections.size(); ++i) 
+		// Since we use INI infrastructure instead of XML:
+		//////////////////////////////////////////////////////////////////////////
+		// std::vector<std::string> ObjectSections = GetConfigSectionsArray(ConfigSection,Prefix,MaxNumber);    
+
+		std::vector<ConfigListItem> ObjectSections;
+		GetListSection(ConfigSection, Prefix, ObjectSections);
+		//////////////////////////////////////////////////////////////////////////
+
+		if (ObjectSections.size() == 0)
 		{
-			std::string ObjectSection = ObjectSections[i];
-			Object* Object = CreateObject(ObjectSection.c_str());
-			if (Object)
-				m_Objects.push_back(Object);
+			LogEvent(LE_ERROR, "Failed to read objects from Configuration !");
+			return false;
+		}
+
+		bool ObjectsCreatedOk = true;
+		for (int i = 0; (unsigned)i < min(ObjectSections.size(), MaxNumber); ++i) 
+		{
+			std::string ObjectSection = ObjectSections[i].ItemValue;
+			Object* ObjectInstance = CreateObject(ObjectSection.c_str(), ObjectSections[i].ItemId);
+			if (ObjectInstance)
+				m_Objects.push_back(ObjectInstance);
 			else
+			{
 				LogEvent(LE_ERROR, "CObjectContainer::CreateObjects: error creating %s[%s]", 
 				Name, ObjectSection.c_str());
+				ObjectsCreatedOk = false;
+			}
 		}
+
 		if (m_Objects.size() == 0)
 		{
 			LogEvent(LE_WARNING, "CObjectContainer::CreateObjects: No %ss were created", Name);
@@ -43,7 +61,7 @@ public:
 		}
 
 		LogEvent(LE_INFOHIGH, "CObjectContainer::CreateObjects: Created %d %ss", m_Objects.size(), Name);
-		return true;
+		return ObjectsCreatedOk; //true;
 	}
 
 	void RemoveObjects()
@@ -53,14 +71,8 @@ public:
 		m_Objects.clear();
 	}
 
-	void DisplayCcLinksData()
-	{
-		for(int i=0; (unsigned int)i<m_Objects.size(); i++)
-			m_Objects[i]->DisplayCcLinksData();
-	}
-
 protected:
-	virtual Object* CreateObject(const char* ConfigSection) = 0;
+	virtual Object* CreateObject(const char* ConfigSection, int ObjectIndex) = 0;
 
 private:
 	std::vector<Object*> m_Objects;
