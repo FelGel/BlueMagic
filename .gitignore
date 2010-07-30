@@ -1,0 +1,46 @@
+# Untracked files:
+==================
+
+# Temporary \ Self-Generated File Types
+# -------------------------------------
+*.obj
+*.pdb
+*.idb
+*.pch
+*.user
+*.def
+*.ncb
+*.suo
+*.aps
+*.exe
+*.res
+*.log
+*.manifest
+*.manifest.res
+*.txt.bak
+*.txt.orig
+*.zip
+
+# Temporary \ Self-Generated Folders
+# -------------------------------------
+*/debug/
+# the next line excludes the /debug/ folder itself. this means no exception can overrule it
+/debug/  
+# the next line excludes the content of the /debug/ folder. therefore, the following exception can be made:
+/debug/*
+# the next line adds ScriptCompilerApp.ini to git monitoring:
+#!/debug/ScriptCompilerApp.ini
+# the next line removes ScriptCompilerApp.ini from git monitoring:
+/debug/ScriptCompilerApp.ini
+*/release/
+/release/
+/ApplicationLogs/
+
+# Specific uniteresting file names:
+# -------------------------------------
+ReadMe.txt
+readme.html
+VC*.txt
+example.html
+Thumbs.db
+BuildLog.htm
