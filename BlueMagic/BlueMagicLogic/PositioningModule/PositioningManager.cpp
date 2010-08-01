@@ -46,12 +46,12 @@ void CPositioningManager::OnSensorInfo(SSensorInfo /*SensorInfo*/)
 
 }
 
-void CPositioningManager::OnSensorsInfo(CList<SSensorInfo> */*SensorsInfo*/)
+void CPositioningManager::OnSensorsInfo(CList<SSensorInfo> * /*SensorsInfo*/)
 {
 
 }
 
-void CPositioningManager::OnIncomingScannedData(CList<SScannedData> */*ScannedData*/)
+void CPositioningManager::OnIncomingScannedData(CList<SScannedData> * /*ScannedData*/)
 {
 
 }

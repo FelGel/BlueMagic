@@ -20,6 +20,8 @@ public:
 	static std::string ComEventToString(EEvent eEvent);
 	static std::string ComErrorToString(EError eError);
 
+	bool SendData(const BYTE *Data, DWORD DataLength);
+
 protected:	
 	virtual void OnEvent (EEvent eEvent, EError eError);
 

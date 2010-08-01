@@ -5,6 +5,7 @@
 #include "SensorController.h"
 #include "Common/collectionhelper.h"
 #include "Common/BufferDeSerializer.h"
+#include "Common/BufferSerializer.h"
 #include "Common/StringSerializer.h"
 #include "BlueMagicBTBMessages.h"
 #include "BlueMagicCommon/BlueMagicMessageFactory.h"
@@ -136,26 +137,26 @@ void CSensorController::HandleDataReceived(const SDataFromSensor& DataFromSensor
 DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 {
 	// BTB header only consists of MessageType:
-	EBlueMagicBTBMessageType MessageType = *(EBlueMagicBTBMessageType *)Data;
+	EBlueMagicBTBIncomingMessageType MessageType = *(EBlueMagicBTBIncomingMessageType *)Data;
 
 	if (!IsHeaderValid(MessageType))
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ "CSensorController::ParseData: Invalid Message: Type [%s]", 
-			CBlueMagicBTBMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
+			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
 		// ToDo: might get out of sync!! cannot just delete.
 		// Best easiest approach: Disconnect and Reconnect to BTB.
 		return 0;
 	}
 
 	LogEvent(LE_INFOLOW, __FUNCTION__ "CSensorController::ParseData: Message: Type [%s]", 
-		CBlueMagicBTBMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
+		CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
 
 	// Ask the messages factory to create the appropriate message:
-	CBlueMagicBTBMessage* BlueMagicBTBMessage = CreateBlueMagicBTBMessage(MessageType);
+	CBlueMagicBTBIncomingMessage* BlueMagicBTBMessage = CreateBlueMagicBTBMessage(MessageType);
 	if (BlueMagicBTBMessage == NULL)
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ "CSensorController::ParseData: failed to create BlueMagicBTBMessage %s",
-			CBlueMagicBTBMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
+			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
 		return 0;
 	}
 
@@ -172,7 +173,7 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 		CStringSerializer StringSerializer;
 		BlueMagicBTBMessage->Serialize(&StringSerializer);
 		LogEvent(LE_INFOLOW, __FUNCTION__ "CSensorController::ParseData: Message: Type [%s] Length [%d] Data [%s]",
-			CBlueMagicBTBMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str(), BlueMagicBTBMessage->MessageLength(), StringSerializer.GetString().c_str());
+			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str(), BlueMagicBTBMessage->MessageLength(), StringSerializer.GetString().c_str());
 	}
 
 	// Finally, call the appropriate event:
@@ -185,21 +186,143 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 	return BlueMagicBTBMessage->MessageLength() + sizeof(BYTE);
 }
 
-bool CSensorController::IsHeaderValid(EBlueMagicBTBMessageType MessageType)
+bool CSensorController::IsHeaderValid(EBlueMagicBTBIncomingMessageType MessageType)
 {
-	return ((int)MessageType >= BlueMagicBlueToothMessageType) && ((int)MessageType < EBlueMagicBTBMessageType_MAX);
+	return ((int)MessageType >= BlueMagicBTBIncomingMessageType) && ((int)MessageType < EBlueMagicBTBIncomingMessageType_MAX);
 }
 
-CBlueMagicBTBMessage* CSensorController::CreateBlueMagicBTBMessage(EBlueMagicBTBMessageType MessageType)
+CBlueMagicBTBIncomingMessage* CSensorController::CreateBlueMagicBTBMessage(EBlueMagicBTBIncomingMessageType MessageType)
 {
-	return CBlueMagicMessageFactory<EBlueMagicBTBMessageType, CBlueMagicBTBMessage>::GetBlueMagicMessageFactory()->CreateBlueMagicMessage(MessageType);
+	return CBlueMagicMessageFactory<EBlueMagicBTBIncomingMessageType, CBlueMagicBTBIncomingMessage>::GetBlueMagicMessageFactory()->CreateBlueMagicMessage(MessageType);
 }
 
-void CSensorController::CallEventOnMessage(int /*SensorID*/, const CBlueMagicBTBMessage* Message, UINT /*MessageSize*/)
+void CSensorController::CallEventOnMessage(int /*SensorID*/, const CBlueMagicBTBIncomingMessage* Message, UINT /*MessageSize*/)
 {
 	Assert(m_EventsHandler != NULL);
 	if (m_EventsHandler == NULL)
 		LogEvent(LE_ERROR, __FUNCTION__ ": m_ServerEvents == NULL");
 	else
 		Message->CallEventOnMessage(m_EventsHandler);
+}
+
+
+bool CSensorController::SendBlueMagicMessageToSensor(const CBlueMagicBTBOutgoingMessage* Message, const int& SensorID /*= CTcpSocketServer::SEND_ALL*/)
+{
+	//CCriticalSectionLocker Lock(m_HandshakeLock);
+	//if (CheckHandshake && ConnectionId != CTcpSocketServer::SEND_ALL)
+	//{
+	//	bool HandShakeOk;
+	//	if (!GetValueFromMap(m_HandShakeOkMap, ConnectionId, HandShakeOk))
+	//	{
+	//		LogEvent(LE_ERROR, __FUNCTION__ ": Connection %d is not open, cannot send the message (App [%s], Interface [%s], Version[%d])",
+	//			ConnectionId, m_AppName.c_str(), m_InterfaceName.c_str(), m_Version);
+	//		return false;
+	//	}
+	//	else if (!HandShakeOk)
+	//	{
+	//		LogEvent(LE_ERROR, __FUNCTION__ ": HandShake not performed for connection %d, refuse sending the message (App [%s], Interface [%s], Version[%d])",
+	//			ConnectionId, m_AppName.c_str(), m_InterfaceName.c_str(), m_Version);
+	//		return false;
+	//	}
+	//}
+
+	// Start by Serializing the message, leaving a place for the header
+	int HeaderSize = sizeof(BYTE);
+	CBufferSerializer Serializer(HeaderSize);
+	if (!Message->Serialize(&Serializer))
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Error serializing message (Type %d %s)",
+			Message->MessageType(), CBlueMagicBTBOutgoingMessage::BlueMagicBTBMessageTypeToString((EBlueMagicBTBOutgoingMessageType)Message->MessageType()).c_str());
+		return false;
+	}
+
+	// Then, Prepare the header
+	EBlueMagicBTBOutgoingMessageType MessageType = (EBlueMagicBTBOutgoingMessageType)Message->MessageType();
+	memcpy(Serializer.GetBuffer(), &MessageType, HeaderSize);
+	
+	if (/*m_TraceInterfaceMessages || */GetLogLevel() <= LE_INFOLOW)
+	{
+		CStringSerializer StringSerializer;
+		Message->Serialize(&StringSerializer);
+		LogEvent(LE_INFOLOW, __FUNCTION__ ": Message: Type [%s] Length [%d] Data [%s]",
+			CBlueMagicBTBOutgoingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str(), Serializer.GetSize(), StringSerializer.GetString().c_str());
+	}
+
+	bool IsSent = m_SerialPort.SendData(Serializer.GetData(), Serializer.GetSize());
+	if (!IsSent)
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to send data on ComPort %d SensorID %d. Data Length = %d",
+			m_ComPort, m_SensorID, Serializer.GetSize());
+
+	return IsSent;
+	// Last, Send the message itself
+	// IMPORTANT: message should be sent in one peace, since socket SendMessage may be called from different threads!
+	//bool Ret = true;
+	//if (!CheckHandshake || ConnectionId != CTcpSocketServer::SEND_ALL)
+	//{
+	//	bool SendIlmMessageFromServerToClientSucceeded = m_TcpSocketServer.SendMessage(Serializer.GetData(), Serializer.GetSize(), ConnectionId);
+	//	//Assert(SendIlmMessageFromServerToClientSucceeded);
+	//	if (!SendIlmMessageFromServerToClientSucceeded)
+	//	{
+	//		LogEvent(LE_ERROR, __FUNCTION__ "(%s): Error sending message (Type %d) to connection %d",
+	//			m_InterfaceName.c_str(), IlmMessage->MessageType(), ConnectionId);
+	//		return false;
+	//	}
+	//}
+	//else
+	//{
+	//	const std::map<int, bool>::const_iterator End = m_HandShakeOkMap.end();
+	//	for (std::map<int, bool>::const_iterator Iter = m_HandShakeOkMap.begin(); Iter != End; ++Iter)
+	//	{
+	//		if (Iter->second) // Handshake is ok!
+	//		{
+	//			const int& _ConnectionId = Iter->first;
+	//			bool SendIlmMessageFromServerToClientSucceeded = m_TcpSocketServer.SendMessage(Serializer.GetData(), Serializer.GetSize(), _ConnectionId);
+	//			//Assert(SendIlmMessageFromServerToClientSucceeded);
+	//			if (!SendIlmMessageFromServerToClientSucceeded)
+	//			{
+	//				LogEvent(LE_ERROR, __FUNCTION__ "(%s): Error sending message (Type %d) to connection %d",
+	//					m_InterfaceName.c_str(), IlmMessage->MessageType(), _ConnectionId);
+	//				Ret = false;
+	//			}
+	//		}
+	//		else
+	//			LogEvent(LE_INFO, __FUNCTION__ "(%s) SEND_ALL: connection %d without handshake - message will not be sent",
+	//			m_InterfaceName.c_str(), Iter->first);
+	//	}
+	//}
+
+	//return Ret;
+}
+
+void CSensorController::GetInfo()
+{
+	
+	AddHandlerToQueue(&CSensorController::HandleGetInfo);
+}
+
+void CSensorController::GetData()
+{
+	
+	AddHandlerToQueue(&CSensorController::HandleGetData);
+}
+
+void CSensorController::DefineTopology(/*......*/)
+{
+	AddHandlerToQueue(&CSensorController::HandleDefineTopology);
+}
+
+void CSensorController::HandleGetInfo()
+{
+	CBlueMagicBTBOutgoingMessage *Message = new CBlueMagicBTBGetInfoMessage();
+	SendBlueMagicMessageToSensor(Message, m_SensorID);
+}
+
+void CSensorController::HandleGetData()
+{
+	CBlueMagicBTBOutgoingMessage *Message = new CBlueMagicBTBGetDataMessage();
+	SendBlueMagicMessageToSensor(Message, m_SensorID);
+}
+
+void CSensorController::HandleDefineTopology(/*......*/)
+{
 }

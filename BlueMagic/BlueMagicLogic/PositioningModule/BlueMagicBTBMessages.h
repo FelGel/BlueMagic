@@ -15,37 +15,50 @@
 
 // Decoder Messages Enum:
 // ----------------------
-enum EBlueMagicBTBMessageType
+enum EBlueMagicBTBIncomingMessageType
 {
-	BTBKeepAlive = BlueMagicBlueToothMessageType, 
+	BTBKeepAlive = BlueMagicBTBIncomingMessageType, 
 	BTBIncomingData,
 	BTBErrorInTopology,
 	BTBInfo,
 	BTBSInfo,
-	EBlueMagicBTBMessageType_MAX
+	EBlueMagicBTBIncomingMessageType_MAX
 };
-// If more than 19, EIlmMessageType should be changed!!!
+// If more than 10, EBlueMagicMessageType should be changed!!!
 
+enum EBlueMagicBTBOutgoingMessageType
+{
+	BTBGetInfo = BlueMagicBTBIncomingMessageType, 
+	BTBGetData,
+	BTBDefineTopology,
+	EBlueMagicBTBOutgoingMessageType_MAX
+};
+// If more than 10, EBlueMagicMessageType should be changed!!!
 
-// Decoder Message Abstract Parents:
-// ---------------------------------
-class CBlueMagicBTBMessage : public CBlueMagicMessage
+class CBlueMagicBTBIncomingMessage : public CBlueMagicMessage
 {
 public:
 	virtual void CallEventOnMessage(ISensorEvents* SensorEvents) const = 0;
 
-	static std::string BlueMagicBTBMessageTypeToString(EBlueMagicBTBMessageType MessageType);
+	static std::string BlueMagicBTBMessageTypeToString(EBlueMagicBTBIncomingMessageType MessageType);
+};
+
+
+class CBlueMagicBTBOutgoingMessage : public CBlueMagicMessage
+{
+public:
+	static std::string BlueMagicBTBMessageTypeToString(EBlueMagicBTBOutgoingMessageType MessageType);
 };
 
 
 // BlueMagicBTBMessageXXXCreator Macro:
 // -------------------------------
-#define RegisterBlueMagicBTBMessage(Type, MessageClass) RegisterBlueMagicMessage(Type, EBlueMagicBTBMessageType, MessageClass, CBlueMagicBTBMessage)
+#define RegisterBlueMagicBTBMessage(Type, MessageClass) RegisterBlueMagicMessage(Type, EBlueMagicBTBIncomingMessageType, MessageClass, CBlueMagicBTBIncomingMessage)
 
 
 // Decoder Information Request Message:
 // ------------------------------------
-class CBlueMagicBTBKeepAliveMessage : public CBlueMagicBTBMessage
+class CBlueMagicBTBKeepAliveMessage : public CBlueMagicBTBIncomingMessage
 {
 public:
 	CBlueMagicBTBKeepAliveMessage() {}
@@ -68,7 +81,7 @@ public:
 RegisterBlueMagicBTBMessage(BTBKeepAlive, CBlueMagicBTBKeepAliveMessage)
 
 
-class CBlueMagicBTBDataMessage : public CBlueMagicBTBMessage
+class CBlueMagicBTBDataMessage : public CBlueMagicBTBIncomingMessage
 {
 public:
 	CBlueMagicBTBDataMessage() {}
@@ -87,3 +100,32 @@ public:
 	CList<SScannedData> m_ScannedDataList;
 };
 RegisterBlueMagicBTBMessage(BTBIncomingData, CBlueMagicBTBDataMessage)
+
+
+// GetData has ONLY HEADER and EMPTY MESSAGE
+class CBlueMagicBTBGetDataMessage : public CBlueMagicBTBOutgoingMessage
+{
+public:
+	CBlueMagicBTBGetDataMessage() {}
+	virtual ~CBlueMagicBTBGetDataMessage() {}
+
+	virtual bool				Serialize(ISerializer* /*Serializer*/) const {return true;}
+	virtual bool				DeSerialize(IDeSerializer* /*DeSerializer*/) {return true;}
+
+	virtual int					MessageLength() const {return 0;}
+	virtual int                 MessageType() const { return BTBGetData; }
+};
+
+// GetINFO has ONLY HEADER and EMPTY MESSAGE
+class CBlueMagicBTBGetInfoMessage : public CBlueMagicBTBOutgoingMessage
+{
+public:
+	CBlueMagicBTBGetInfoMessage() {}
+	virtual ~CBlueMagicBTBGetInfoMessage() {}
+
+	virtual bool				Serialize(ISerializer* /*Serializer*/) const {return true;}
+	virtual bool				DeSerialize(IDeSerializer* /*DeSerializer*/) {return true;}
+
+	virtual int					MessageLength() const {return 0;}
+	virtual int                 MessageType() const { return BTBGetInfo; }
+};

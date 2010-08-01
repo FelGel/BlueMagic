@@ -258,6 +258,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ISensorCommands.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ISensorEvents.h"
 				>
 			</File>

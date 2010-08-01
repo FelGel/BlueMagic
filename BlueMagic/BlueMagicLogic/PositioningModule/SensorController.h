@@ -1,6 +1,7 @@
 #pragma once
 #include "..\common\threadwithqueue.h"
 #include "ISensorEvents.h"
+#include "ISensorCommands.h"
 #include "SerialPort.h"
 #include "BlueMagicBTBMessages.h"
 
@@ -21,7 +22,7 @@ struct SSensorDataBuffer
 	DWORD m_DataBufferOffset;
 };
 
-class CSensorController : public CThreadWithQueue, public ISerialPortEvents
+class CSensorController : public CThreadWithQueue, public ISerialPortEvents, ISensorCommands
 {
 public:
 	CSensorController(int SensorID, int ComPort, std::string BDADDRESS);
@@ -33,14 +34,23 @@ public:
 protected:
 	virtual void OnDataReceived(int SerialPortID, BYTE *Data, int DataLength);
 
+	virtual void GetInfo();
+	virtual void GetData();
+	virtual void DefineTopology(/*......*/);
+
 private:
 	void HandleDataReceived(const SDataFromSensor& DataFromSensor);
 	DWORD ParseData(int SensorID, BYTE *Data, int DataLength);
-	bool IsHeaderValid(EBlueMagicBTBMessageType MessageType);
-	CBlueMagicBTBMessage* CreateBlueMagicBTBMessage(EBlueMagicBTBMessageType MessageType);
-	void CallEventOnMessage(int /*SensorID*/, const CBlueMagicBTBMessage* Message, UINT /*MessageSize*/);
+	bool IsHeaderValid(EBlueMagicBTBIncomingMessageType MessageType);
+	CBlueMagicBTBIncomingMessage* CreateBlueMagicBTBMessage(EBlueMagicBTBIncomingMessageType MessageType);
+	void CallEventOnMessage(int /*SensorID*/, const CBlueMagicBTBIncomingMessage* Message, UINT /*MessageSize*/);
+
+	void HandleGetInfo();
+	void HandleGetData();
+	void HandleDefineTopology(/*......*/);
 
 	bool ConnectToPort();
+	bool SendBlueMagicMessageToSensor(const CBlueMagicBTBOutgoingMessage* Message, const int& SensorID /*= CTcpSocketServer::SEND_ALL*/);
 
 private:
 	ISensorEvents *m_EventsHandler;

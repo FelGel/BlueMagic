@@ -6,7 +6,8 @@
 
 enum EBlueMagicMessageType
 {
-	BlueMagicBlueToothMessageType = 0, 
+	BlueMagicBTBIncomingMessageType = 0, 
+	BlueMagicBTBOutgoingMessageType = 10, 
 	BlueMagicWorkstationMessageType = 100, 
 	/*... up to 255*/
 };

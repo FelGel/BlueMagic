@@ -10,11 +10,31 @@
 	return false;
 
 
-std::string CBlueMagicBTBMessage::BlueMagicBTBMessageTypeToString(EBlueMagicBTBMessageType MessageType)
+std::string CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(EBlueMagicBTBIncomingMessageType MessageType)
 {
 	switch(MessageType)
 	{
 		RETURN_TYPE_STR(BTBKeepAlive);
+		RETURN_TYPE_STR(BTBIncomingData);
+		RETURN_TYPE_STR(BTBErrorInTopology);
+		RETURN_TYPE_STR(BTBInfo);
+		RETURN_TYPE_STR(BTBSInfo);
+	default:
+		char TmpStr[64];
+		sprintf_s(TmpStr, "Unknown BTB MessageType %d", MessageType);
+		LogEvent(LE_WARNING, __FUNCTION__ ": %s", TmpStr);
+		return TmpStr;
+	}
+}
+
+
+std::string CBlueMagicBTBOutgoingMessage::BlueMagicBTBMessageTypeToString(EBlueMagicBTBOutgoingMessageType MessageType)
+{
+	switch(MessageType)
+	{
+		RETURN_TYPE_STR(BTBGetInfo);
+		RETURN_TYPE_STR(BTBGetData);
+		RETURN_TYPE_STR(BTBDefineTopology);
 	default:
 		char TmpStr[64];
 		sprintf_s(TmpStr, "Unknown BTB MessageType %d", MessageType);

@@ -136,3 +136,25 @@ bool CSerialPort::ConnectToPort()
 
 	return true;
 }
+
+
+bool CSerialPort::SendData(const BYTE *Data, DWORD DataLength)
+{
+	DWORD dwSentData = 0;
+	LONG lLastError = Write(Data, DataLength, &dwSentData);
+	
+	if (lLastError != ERROR_SUCCESS)
+	{
+		LogEvent(LE_ERROR, "Failed to Send Data (length=%d) ComPort %s. Error=%d", 
+			DataLength, m_ComPort.c_str(), GetLastError());
+		return false;
+	}
+
+	if (DataLength != dwSentData)
+	{
+		LogEvent(LE_WARNING, "Attempted to send data in length %d on ComPort %s, yet only %d bytes were sent !!", 
+			DataLength, m_ComPort.c_str(), dwSentData);
+	}
+
+	return true;
+}
