@@ -19,7 +19,7 @@ struct SScannedData
 
 class ISensorEvents
 {
-	virtual void OnErrorInTopolog(UCHAR SensorId) = 0;
+	virtual void OnErrorInTopology(UCHAR SensorId) = 0;
 	virtual void OnSensorInfo(SSensorInfo SensorInfo) = 0;
 	virtual void OnSensorsInfo(CList<SSensorInfo> SensorsInfo) = 0;
 	virtual void OnIncomingScannedData(CList<SScannedData> ScannedData) = 0;

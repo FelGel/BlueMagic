@@ -5,7 +5,7 @@
 class CBufferDeSerializer :	public IDeSerializer
 {
 public:
-	CBufferDeSerializer (const char* ContextStr, const BYTE* DataOrigin, int DataSize, int RelevantOffset = 0);
+	CBufferDeSerializer (const char* ContextStr, const BYTE* DataOrigin, int DataSize, int RelevantOffset = 0, bool AllowOverflowAttempt = false);
 	~CBufferDeSerializer();
 
 	// note: DataToGet must be already allocated to the size of sizeofDataToGet !!!
@@ -35,5 +35,6 @@ protected:
 	const BYTE*       m_DataPtr;
     const int         m_DataSize;
 	const BYTE* const m_DataOrigin;
+	const bool m_AllowOverflowAttempt;
 };
 

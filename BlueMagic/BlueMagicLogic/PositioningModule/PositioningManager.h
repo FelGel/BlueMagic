@@ -10,7 +10,7 @@ public:
 	CPositioningManager(void);
 	~CPositioningManager(void);
 
-	virtual void OnErrorInTopolog(UCHAR SensorId);
+	virtual void OnErrorInTopology(UCHAR SensorId);
 	virtual void OnSensorInfo(SSensorInfo SensorInfo);
 	virtual void OnSensorsInfo(CList<SSensorInfo> SensorsInfo);
 	virtual void OnIncomingScannedData(CList<SScannedData> ScannedData);

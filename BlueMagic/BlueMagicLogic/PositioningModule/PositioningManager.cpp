@@ -36,7 +36,7 @@ bool CPositioningManager::Init()
 	return true;
 }
 
-void CPositioningManager::OnErrorInTopolog(UCHAR /*SensorId*/)
+void CPositioningManager::OnErrorInTopology(UCHAR /*SensorId*/)
 {
 
 }

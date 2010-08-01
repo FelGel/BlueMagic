@@ -8,8 +8,8 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-CBufferDeSerializer::CBufferDeSerializer(const char* ContextStr, const BYTE* DataOrigin, int DataSize, int RelevantOffset) :
-    m_ContextStr(ContextStr), m_DataPtr(DataOrigin + RelevantOffset), m_DataSize(DataSize - RelevantOffset), m_DataOrigin(DataOrigin + RelevantOffset)
+CBufferDeSerializer::CBufferDeSerializer(const char* ContextStr, const BYTE* DataOrigin, int DataSize, int RelevantOffset, bool AllowOverflowAttempt) :
+    m_ContextStr(ContextStr), m_DataPtr(DataOrigin + RelevantOffset), m_DataSize(DataSize - RelevantOffset), m_DataOrigin(DataOrigin + RelevantOffset), m_AllowOverflowAttempt(AllowOverflowAttempt)
 {
     Assert(RelevantOffset >= 0);
     Assert(DataSize >= RelevantOffset);
@@ -24,7 +24,11 @@ CBufferDeSerializer::~CBufferDeSerializer()
 	Assert(DataToGet != NULL); // DataToGet must be already allocated (to the size of sizeofDataToGet) 
 
 	Assert(m_DataOrigin <= m_DataPtr);
-	Assert(m_DataOrigin + m_DataSize >= m_DataPtr + sizeofDataToGet);
+	
+	if (!m_AllowOverflowAttempt)
+	{
+		Assert(m_DataOrigin + m_DataSize >= m_DataPtr + sizeofDataToGet);
+	}
 
 	if ((m_DataOrigin  + m_DataSize >= m_DataPtr + sizeofDataToGet) && (m_DataOrigin <= m_DataPtr))
 	{
@@ -36,12 +40,12 @@ CBufferDeSerializer::~CBufferDeSerializer()
 	{
 		if (m_ContextStr)
 		{
-			LogEvent(LE_ERROR, "%s::GetNextBufferField, pass the end of the buffer",
+			LogEvent((m_AllowOverflowAttempt) ? LE_DEBUG : LE_ERROR, "%s::GetNextBufferField, pass the end of the buffer",
 				m_ContextStr); 
 		}
 		else
 		{
-			LogEvent(LE_ERROR, "GetNextBufferField, pass the end of the buffer");
+			LogEvent((m_AllowOverflowAttempt) ? LE_DEBUG : LE_ERROR, "GetNextBufferField, pass the end of the buffer");
 		}
 		return false; 
 	}
