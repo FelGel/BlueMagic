@@ -3,77 +3,111 @@
 0 REM BlueSpells Scanner Version 0.1
 
 @INIT 1
-2 PRINTU "\n\n\n\rBLUESPELLS"
-3 PRINTU " SENSOR V0.1\n\r"
+1 PRINTU "\n\n\n\rBLUESPELLS"
+2 PRINTU " SENSOR V0.1\n\r"
 0 REM Set LED on
-5 A = pioset 20
+3 A = pioset 20
 0 REM Baud rate for serial line
-6 A = baud 1152
+4 A = baud 1152
 0 REM Debug toggle
-7 Z = 0
+5 Z = 0
 0 REM power for scanning in dBm
-8 REM A = defpower 10
+6 REM A = defpower 10
 400 RESERVED
 500 001E377281F0
 502 0025BF100359
 503 0025BF100357
-10 M = 0
-11 I = 0
-0 REM PRINTU "Press 's' "
-0 REM PRINTU "to start "
-0 REM $300[0] = 0
-0 REM TIMEOUTU 1
-0 REM INPUTU $300
-0 REM IF $300[0] <> 115 THEN 20;
+7 M = 0
+8 I = 0
+9 A = exist "found.log"
+10 IF A = 0 THEN 12
+11 F = delete "found.log"
+12 F = open "found.log"
+13 A = getaddr
+14 PRINTV "\n"
+15 B = strlen $0
+16 F = write B
+17 F = close
 18 A = zerocnt
-19 RETURN
+19 PRINTU $0
+29 RETURN
 
-@IDLE 20
-20 REM A = slave -1
-21 PRINTU "\n\rIDLE\n\r"
-22 REM A = pioset 20
-23 A = pioclr 20
-24 WAIT 1
-25 REM A = pioset 20
+@IDLE 30
+30 REM A = slave -1
+31 PRINTU "\n\rIDLE\n\r"
+33 A = pioclr 20
 48 ALARM 1
 49 RETURN
 
-@SLAVE 800 
-800 A = link 2 
-805 PRINTM "SPP CONNECTED\n\r"
-810 A = getaddr
-815 $0 = $503
-820 A = strcmp A
-825 IF A = 0 GOTO 894
-830 A = master $503
-894 ALARM 4
-895 RETURN
+@INQUIRY 900
+0 REM Single LED blink to show device found
+900 GOSUB 800;
+901 IF E <> 0 THEN 905;
+902 A = cancel;
+903 GOTO 939;
+905 A = strlen $0;
+906 IF A = 21 THEN 911;
+907 PRINTS "SIZE ERROR: ";
+908 PRINTS A;
+909 PRINTS "\n\r";
+910 GOTO 939;
+911 A = pioset 20
+912 A = pioclr 20;
+913 PRINTV " ";
+914 A = readcnt;
+915 PRINTV A;
+916 PRINTV "\n";
+917 F = append "found.log";
+918 Q = size;
+0 REM If file is too large, we just have to let the results go :(
+919 IF Q > 8000 THEN 939;
+920 B = strlen $0;
+921 F = write B;
+922 PRINTS $0;
+923 PRINTS "\r";
+930 F = close;
+939 RETURN
+
+@SLAVE 940
+940 A = slave -1
+941 REM A = link 2 
+942 A = getaddr
+943 PRINTS $0
+945 PRINTS " CONNECTED\n\r"
+950 A = getaddr
+953 $0 = $503
+955 A = strcmp A
+965 IF A = 0 GOTO 978
+970 REM A = master $503
+971 A = pioclr 20
+978 ALARM 2
+979 RETURN
 
 
-@MASTER 500
-500 REM A = unlink 2
-505 A = link 3
-510 A = pioset 20
-520 A = pioclr 20
-525 A = pioset 20
-530 A = pioclr 20
-540 REM ALARM 10
-595 RETURN
+@MASTER 980
+980 REM A = unlink 2
+985 A = link 3
+990 A = pioset 20
+995 A = pioclr 20
+1000 A = pioset 20
+1005 A = pioclr 20
+1010 REM ALARM 10
+1015 RETURN
 
 @ALARM 50
-50 IF I <> 0 THEN 54
-51 A = slave 10
-52 WAIT 11
-53 I = 1
-54 A = status
-55 IF A <> 0 THEN 60
-56 A = pioclr 20
-57 A = pioset 20
+50 GOSUB 800
+51 IF E <> 0 THEN 60
+52 A = pioclr 20
+53 A = pioset 20
+54 IF I <> 0 THEN 58
+55 A = slave 20
+56 I = 1
+57 GOTO 98
 58 A = slave -20
-59 GOTO 94
+59 GOTO 98
 60 A = pioclr 20
 61 M = M + 1
-62 IF M = 11 THEN 100
+62 IF M > 10 THEN 100
 63 PRINTS "\n\r#"
 64 PRINTS M
 65 PRINTS "  "
@@ -85,39 +119,20 @@
 71 PRINTS "  "
 72 PRINTS "\n\rPress 's' "
 75 PRINTS "to stop\n\r"
-76 $300[0] = 0
-77 REM TIMEOUTM 1
-78 REM INPUTM $300
-79 REM IF $300[0] = 0 GOTO 85
-80 REM PRINTS $300
-81 $300[0] = 0
+0 REM $300[0] = 0
+0 REM TIMEOUTM 1
+0 REM INPUTM $300
+0 REM IF $300[0] = 0 GOTO 85
+0 REM PRINTS $300
+84 $300[0] = 0
 85 TIMEOUTS 1
 86 INPUTS $300
 87 REM TIMEOUTU 1
 90 REM INPUTU $300
 91 IF $300[0] = 115 THEN 100
-92 REM A = master $503
 93 A = inquiry -10
-94 ALARM 18
+98 ALARM 18
 99 RETURN
-
-@INQUIRY 900
-0 REM Single LED blink to show device found
-900 A = status;
-901 IF A <> 0 THEN 910;
-902 A = cancel
-903 GOTO 995;
-910 A = pioset 20
-915 A = pioclr 20;
-920 A = readcnt;
-925 PRINTS A;
-930 PRINTS " ";
-940 PRINTU $0;
-950 PRINTU "\n\r";
-960 PRINTS $0;
-970 PRINTS "\n\r";
-995 RETURN
-
 
 100 PRINTS "\n\rTERMINATED\n\r"
 101 PRINTS "\n\rPress 'r' "
@@ -128,8 +143,8 @@
 106 PRINTS "other key "
 107 PRINTS "to resume\n\r"
 108 $300[0] = 0
-109 A = status
-110 IF A <> 0 THEN 113
+109 GOSUB 800
+110 IF E <> 0 THEN 113
 111 ALARM 1
 112 RETURN
 113 TIMEOUTS 1
@@ -142,14 +157,35 @@
 123 IF $300[0] = 100 THEN 150
 125 M = 0
 130 PRINTS "\n\rRESUMING\n\r"
-135 GOTO 50
+135 GOTO 196
 150 A = getaddr
 155 PRINTS $0
 160 PRINTS "  "
 165 PRINTS "DISCONNECTING\n\r"
 170 A = disconnect 0
 175 WAIT 3
-180 GOTO 50
+180 GOTO 196
 190 PRINTS "REBOOTING\n\r"
 195 A = reboot
-196 RETURN
+196 ALARM 1
+197 RETURN
+
+
+800 A = status
+801 E = 0
+802 IF A < 10000 THEN 805
+803 A = A - 10000
+805 IF A < 1000 THEN 810
+806 A = A - 1000
+810 IF A < 100 THEN 820
+815 A = A - 100
+820 IF A < 10 THEN 830
+823 E = E + 2
+825 A = A - 10
+830 IF A < 1 THEN 840
+835 E = E + 1
+840 IF E <> 2 THEN 849
+845 A = disconnect 1
+846 ALARM 1
+847 E = 0
+849 RETURN 
