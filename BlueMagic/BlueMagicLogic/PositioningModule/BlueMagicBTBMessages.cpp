@@ -47,3 +47,54 @@ bool CBlueMagicBTBKeepAliveMessage::DeSerialize(IDeSerializer* DeSerializer)
 
 	return Result;
 }
+
+
+bool CBlueMagicBTBDataMessage::Serialize(ISerializer* Serializer) const
+{
+	bool Result = true;
+
+	POSITION pos = m_ScannedDataList.GetHeadPosition();
+	for (int i=0; i < m_ScannedDataList.GetCount(); i++)
+	{
+		SScannedData ScannedData = m_ScannedDataList.GetNext(pos);
+
+		Result = Result && Serializer->AppendByte(ScannedData.SensorId);
+		Result = Result && Serializer->AppendShort(ScannedData.Clock);
+		Result = Result && Serializer->AppendByte(ScannedData.RSSI);
+		Result = Result && Serializer->AppendBuffer(ScannedData.ScannedBDADDRESS, BDADDRESS_LENGTH_IN_BYTES);
+	}
+
+	Result = Result && Serializer->AppendByte(0);
+	return Result;
+}
+
+bool CBlueMagicBTBDataMessage::DeSerialize(IDeSerializer* DeSerializer)
+{
+	CHECK_PARAM(DeSerializer);
+
+	UCHAR SensorId = 0;
+	bool Result = true;
+	do 
+	{
+		Result = Result && DeSerializer->GetNextByteField(SensorId);
+		
+		if (SensorId != 0)
+		{
+			SScannedData ScannedData;
+			ScannedData.SensorId = SensorId;
+
+			Result = Result && DeSerializer->GetNextShortField(ScannedData.Clock);
+			Result = Result && DeSerializer->GetNextByteField(ScannedData.RSSI);
+			Result = Result && DeSerializer->GetNextBufferField(ScannedData.ScannedBDADDRESS, BDADDRESS_LENGTH_IN_BYTES);
+			
+			m_ScannedDataList.AddTail(ScannedData);
+		}
+	} while (SensorId != 0);
+
+	return Result;
+}
+
+int	CBlueMagicBTBDataMessage::MessageLength() const
+{
+	return m_ScannedDataList.GetCount() * sizeof(SScannedData) + sizeof(BYTE)/*stop-byte*/;
+}

@@ -66,3 +66,24 @@ public:
 	short m_Clock;
 };
 RegisterBlueMagicBTBMessage(BTBKeepAlive, CBlueMagicBTBKeepAliveMessage)
+
+
+class CBlueMagicBTBDataMessage : public CBlueMagicBTBMessage
+{
+public:
+	CBlueMagicBTBDataMessage() {}
+	virtual ~CBlueMagicBTBDataMessage() {}
+
+	virtual bool				Serialize(ISerializer* Serializer) const;
+	virtual bool				DeSerialize(IDeSerializer* DeSerializer);
+
+	virtual int					MessageLength() const;
+	virtual int                 MessageType() const { return BTBIncomingData; }
+
+	virtual void				CallEventOnMessage(ISensorEvents* SensorEvents) const
+	{ SensorEvents->OnIncomingScannedData((CList<SScannedData> *)&m_ScannedDataList); }
+
+	//Members:
+	CList<SScannedData> m_ScannedDataList;
+};
+RegisterBlueMagicBTBMessage(BTBIncomingData, CBlueMagicBTBDataMessage)

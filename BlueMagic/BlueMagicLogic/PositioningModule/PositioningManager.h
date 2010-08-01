@@ -12,8 +12,8 @@ public:
 
 	virtual void OnErrorInTopology(UCHAR SensorId);
 	virtual void OnSensorInfo(SSensorInfo SensorInfo);
-	virtual void OnSensorsInfo(CList<SSensorInfo> SensorsInfo);
-	virtual void OnIncomingScannedData(CList<SScannedData> ScannedData);
+	virtual void OnSensorsInfo(CList<SSensorInfo> *SensorsInfo);
+	virtual void OnIncomingScannedData(CList<SScannedData> *ScannedData);
 	virtual void OnConnected(UCHAR SensorId);
 	virtual void OnDisconnected(UCHAR SensorId);
 

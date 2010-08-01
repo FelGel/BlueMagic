@@ -6,11 +6,11 @@
 const char* SensorControllerPrefix	= "SensorController";
 const int	MaxReceivers			= 100;
 
-#define MIN_SENSORID		1
-#define MAX_SENSORID		255
-#define MIN_COMPORT			1
-#define MAX_COMPORT			255
-#define BDADDRESS_LENGTH	12  // nibles \ chars
+#define MIN_SENSORID				1
+#define MAX_SENSORID				255
+#define MIN_COMPORT					1
+#define MAX_COMPORT					255
+#define BDADDRESS_LENGTH_IN_CHARS	12  // nibles \ chars
 
 CSensorControllersContainer::CSensorControllersContainer() : m_Handler(NULL)
 {
@@ -87,10 +87,10 @@ bool CSensorControllersContainer::AreObjectParametersValid(int ObjectIndex, int 
 		IsValid = false;
 	}
 
-	if (BDADDRESS.length() != BDADDRESS_LENGTH)
+	if (BDADDRESS.length() != BDADDRESS_LENGTH_IN_CHARS)
 	{
 		LogEvent(LE_ERROR, "SensorController #%d is mis-configured! BDADDRESS length is %d while should be %d",
-			ObjectIndex, BDADDRESS.length(), BDADDRESS_LENGTH);
+			ObjectIndex, BDADDRESS.length(), BDADDRESS_LENGTH_IN_CHARS);
 		IsValid = false;
 	}
 
