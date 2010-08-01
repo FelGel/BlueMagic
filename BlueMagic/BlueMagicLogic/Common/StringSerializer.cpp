@@ -78,13 +78,13 @@ void CStringSerializer::AppendDelimiter()
     m_Str += OurUitoa64(UintValue, Buf, 10);
     return true;
 }
-/*virtual*/ bool CStringSerializer::AppendTimet(time_t TimetValue)
-{
-    AppendDelimiter();
-    char Buf[64];
-    m_Str += OurUitoa64(TimetValue, Buf, 10);
-    return true;
-}
+///*virtual*/ bool CStringSerializer::AppendTimet(time_t TimetValue)
+//{
+//    AppendDelimiter();
+//    char Buf[64];
+//    m_Str += OurUitoa64(TimetValue, Buf, 10);
+//    return true;
+//}
 /*virtual*/ bool CStringSerializer::AppendBool(bool Value)
 {
     AppendDelimiter();

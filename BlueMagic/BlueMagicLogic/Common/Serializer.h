@@ -22,7 +22,7 @@ public:
 	virtual bool AppendUint(UINT UintValue) = 0;
     virtual bool AppendInt64(INT64 IntValue) = 0;
     virtual bool AppendUint64(UINT64 UintValue) = 0;
-    virtual bool AppendTimet(time_t TimetValue) = 0;
+    //virtual bool AppendTimet(time_t TimetValue) = 0;
 	virtual bool AppendBool(bool Value) = 0;
     virtual bool AppendFloat(float FloatValue) = 0;
     virtual bool AppendStr(const char* Str) = 0;

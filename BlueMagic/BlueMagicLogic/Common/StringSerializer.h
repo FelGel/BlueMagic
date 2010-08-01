@@ -19,7 +19,7 @@ public:
     virtual bool AppendUint(UINT UintValue);
     virtual bool AppendInt64(INT64 IntValue);
     virtual bool AppendUint64(UINT64 UintValue);
-    virtual bool AppendTimet(time_t TimetValue);
+    //virtual bool AppendTimet(time_t TimetValue);
     virtual bool AppendBool(bool Value);
     virtual bool AppendFloat(float FloatValue);
     virtual bool AppendStr(const char* Str);

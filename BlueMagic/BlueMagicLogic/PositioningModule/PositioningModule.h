@@ -29,6 +29,11 @@ public:
 	DECLARE_MESSAGE_MAP()
 private:
 	virtual void AddDialogs();
+	virtual bool PerformInitalization();
+	virtual bool PerformCleanup();
+
+private:
+	CPositioningManager m_PositioningManager;
 	CPositioningModuleDlg m_PositioningModuleDlg;
 };
 
