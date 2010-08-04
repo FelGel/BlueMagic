@@ -26,7 +26,14 @@ enum ESensorConnectionStatus
 {
 	SensorNotConnected,
 	SensorConnected,
-	SensorAttemptsAtConnection
+	SensorAttemptsAtConnection,
+	SensorResettingConnection
+};
+
+enum ESensorHandshakeStatus
+{
+	SensorNotHandshaked,
+	SensorHandshaked
 };
 
 class CSensorController : public CThreadWithQueue, public ISerialPortEvents, ISensorCommands
@@ -47,20 +54,26 @@ protected:
 	virtual void OnTimeout();
 
 private:
+	// Handle Incoming Messages from BTB
 	void HandleDataReceived(const SDataFromSensor& DataFromSensor);
 	DWORD ParseData(int SensorID, BYTE *Data, int DataLength);
 	bool IsHeaderValid(EBlueMagicBTBIncomingMessageType MessageType);
 	CBlueMagicBTBIncomingMessage* CreateBlueMagicBTBMessage(EBlueMagicBTBIncomingMessageType MessageType);
 	void CallEventOnMessage(int /*SensorID*/, const CBlueMagicBTBIncomingMessage* Message, UINT /*MessageSize*/);
 
+	// Handle Outgoing Message to BTB
 	void HandleGetInfo();
 	void HandleGetData();
 	void HandleDefineTopology(/*......*/);
-
-	bool ConnectToPort();
 	bool SendBlueMagicMessageToSensor(const CBlueMagicBTBOutgoingMessage* Message, const int& SensorID /*= CTcpSocketServer::SEND_ALL*/);
 
+	// Connection setup
+	bool ConnectToPort();
 	void StartConnectionRetiresMechanism();
+	// handshake setup
+	void DoHandshake();
+
+	void ResetConnection();
 
 private:
 	ISensorEvents *m_EventsHandler;
@@ -72,6 +85,9 @@ private:
 
 	ESensorConnectionStatus m_ConnectionStatus;
 	DWORD m_LastConnectionAttemptTickCount;
+
+	ESensorHandshakeStatus m_HandshakeStatus;
+	DWORD m_LastHandshakeAttemptTickCount;
 
 	std::map<int /*SensorId*/, SSensorDataBuffer*> m_SensorsDataBuffferMap;
 };

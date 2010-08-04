@@ -5,17 +5,19 @@
 
 struct SSensorInfo
 {
-	UCHAR SensorId;
-	short Clock;
+	/*UCHAR*/ int SensorId;
+	/*short*/ int Clock;
 	int Version;
+	std::string SensorBDADDRESS;
 };
 
 struct SScannedData
 {
-	UCHAR SensorId;
-	short Clock;
-	BYTE  RSSI;
-	BYTE  ScannedBDADDRESS[BDADDRESS_LENGTH_IN_BYTES];
+	/*UCHAR*/ int SensorId;
+	/*short*/ int Clock;
+	/*BYTE*/  int RSSI;
+	//BYTE  ScannedBDADDRESS[BDADDRESS_LENGTH_IN_BYTES];
+	std::string ScannedBDADDRESS;
 };
 
 class ISensorEvents

@@ -12,6 +12,12 @@ const int	MaxReceivers			= 100;
 #define MAX_COMPORT					255
 #define BDADDRESS_LENGTH_IN_CHARS	12  // nibles \ chars
 
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#undef THIS_FILE
+static char THIS_FILE[] = __FILE__;
+#endif
+
 CSensorControllersContainer::CSensorControllersContainer() : m_Handler(NULL)
 {
 }

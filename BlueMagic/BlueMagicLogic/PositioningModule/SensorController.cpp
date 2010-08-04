@@ -13,11 +13,19 @@
 #define SENSOR_CONTROLLER_QUEUE_SIZE 10000
 #define SENSOR_CONTROLLER_THREAD_TIMEOUT 100 //milisec
 #define TIME_BETWEEN_CONNCETION_ATTEMPTS 5000 //milisec
+#define TIME_BETWEEN_HANDSHAKE_ATTEMPTS  30000 //milisec
 
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#undef THIS_FILE
+static char THIS_FILE[] = __FILE__;
+#endif
 
 CSensorController::CSensorController(int SensorID, int ComPort, std::string BDADDRESS) 
 	: CThreadWithQueue("SensorController", SENSOR_CONTROLLER_QUEUE_SIZE), m_SerialPort(this, ComPort, SensorID),
-		m_SensorID(SensorID), m_ComPort(ComPort), m_BDADDRESS(BDADDRESS), m_EventsHandler(NULL), m_ConnectionStatus(SensorNotConnected)
+		m_SensorID(SensorID), m_ComPort(ComPort), m_BDADDRESS(BDADDRESS), m_EventsHandler(NULL), 
+		m_ConnectionStatus(SensorNotConnected), m_HandshakeStatus(SensorNotHandshaked),
+		m_LastConnectionAttemptTickCount(0), m_LastHandshakeAttemptTickCount(0)
 		
 {
 	InsertValueToMap(m_SensorsDataBuffferMap, SensorID, new SSensorDataBuffer());
@@ -25,6 +33,7 @@ CSensorController::CSensorController(int SensorID, int ComPort, std::string BDAD
 
 CSensorController::~CSensorController(void)
 {
+	Assert(m_SensorsDataBuffferMap.size() == 0);
 }
 
 bool CSensorController::Init(ISensorEvents *Handler)
@@ -80,6 +89,8 @@ bool CSensorController::ConnectToPort()
 
 	m_ConnectionStatus = SensorConnected;
 
+	DoHandshake();
+
 	return true;
 }
 
@@ -95,9 +106,23 @@ bool CSensorController::ConnectToPort()
 
 void CSensorController::HandleDataReceived(const SDataFromSensor& DataFromSensor)
 {
-	LogEvent(LE_DEBUG, "CSensorController::HandleDataReceived: SensorID=%d DataLength=%d, Data=%s", 
-		DataFromSensor.SensorID, DataFromSensor.DataLength, DataFromSensor.Data);
+	LogEvent(LE_DEBUG, "CSensorController::HandleDataReceived: SensorID=%d DataLength=%d, Data(hexa)=%X, Data(chars)=%s", 
+		DataFromSensor.SensorID, DataFromSensor.DataLength, DataFromSensor.Data, DataFromSensor.Data);
 
+	//char hexval[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+	//std::string Str;
+	//for (int i = 0; i < DataFromSensor.DataLength; i++)
+	//{
+	//	Str += hexval[((DataFromSensor.Data[i] >> 4) & 0xF)];
+	//	Str += hexval[(DataFromSensor.Data[i]) & 0x0F];
+	//}
+
+	//LogEvent(LE_INFOHIGH, "CSensorController::HandleDataReceived: SensorID=%d DataLength=%d, Data(hexa)=%X", 
+	//	DataFromSensor.SensorID, DataFromSensor.DataLength, DataFromSensor.Data);
+
+	//// TEMP !!!!!!!!!!!!!!!!!!!!!
+	//return;
 
 	SSensorDataBuffer* SensorDataBuffer;
 	if (!GetValueFromMap(m_SensorsDataBuffferMap, DataFromSensor.SensorID, SensorDataBuffer))
@@ -112,13 +137,16 @@ void CSensorController::HandleDataReceived(const SDataFromSensor& DataFromSensor
 		LogEvent(LE_ERROR, "CSensorController::HandleDataReceived: DATA OVERFLOW! MaxSize=%d, DesiredSize=%d"
 			,DATA_BUFFER_SIZE, SensorDataBuffer->m_DataBufferOffset + DataFromSensor.DataLength);
 		Assert(false);
-		// ToDo: might get out of sync!! cannot just delete.
+		// might get out of sync!! cannot just delete.
 		// Best easiest approach: Disconnect and Reconnect to BTB.
+		ResetConnection();
+		return;
 	}
 
 	// Add new data to end of buffer
 	memcpy(SensorDataBuffer->m_DataBuffer + SensorDataBuffer->m_DataBufferOffset, DataFromSensor.Data, DataFromSensor.DataLength);
 	delete[] DataFromSensor.Data;
+	SensorDataBuffer->m_DataBufferOffset += DataFromSensor.DataLength;
 
 	// parse all complete messages in buffer
 	DWORD ParsedBytes = 0, ParsedBytesSoFar = 0;
@@ -131,32 +159,47 @@ void CSensorController::HandleDataReceived(const SDataFromSensor& DataFromSensor
 	}
 	while (ParsedBytesSoFar < SensorDataBuffer->m_DataBufferOffset);
 
-	// move buffer leftovers to beginning
-	if (ParsedBytesSoFar != SensorDataBuffer->m_DataBufferOffset)
-	{
-		memcpy(SensorDataBuffer->m_DataBuffer, SensorDataBuffer->m_DataBuffer+ParsedBytesSoFar, 
-			SensorDataBuffer->m_DataBufferOffset - ParsedBytesSoFar);
-	}
 
-	SensorDataBuffer->m_DataBufferOffset -= ParsedBytesSoFar;
+	if (m_ConnectionStatus != SensorResettingConnection)
+	{
+		// move buffer leftovers to beginning
+		if (ParsedBytesSoFar > 0 && ParsedBytesSoFar != SensorDataBuffer->m_DataBufferOffset)
+		{
+			memcpy(SensorDataBuffer->m_DataBuffer, SensorDataBuffer->m_DataBuffer+ParsedBytesSoFar, 
+				SensorDataBuffer->m_DataBufferOffset - ParsedBytesSoFar);
+		}
+
+		SensorDataBuffer->m_DataBufferOffset -= ParsedBytesSoFar;
+	}
 }
 
 DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 {
 	// BTB header only consists of MessageType:
-	EBlueMagicBTBIncomingMessageType MessageType = *(EBlueMagicBTBIncomingMessageType *)Data;
+	EBlueMagicBTBIncomingMessageType MessageType = (EBlueMagicBTBIncomingMessageType)*(BYTE *)Data;
 
 	if (!IsHeaderValid(MessageType))
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ "CSensorController::ParseData: Invalid Message: Type [%s]", 
 			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
-		// ToDo: might get out of sync!! cannot just delete.
+		
+		// Might get out of sync!! cannot just delete.
 		// Best easiest approach: Disconnect and Reconnect to BTB.
+		ResetConnection(); 
 		return 0;
 	}
 
 	LogEvent(LE_INFOLOW, __FUNCTION__ "CSensorController::ParseData: Message: Type [%s]", 
 		CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
+
+	//if (m_HandshakeStatus != SensorHandshaked && MessageType != BTBInfo)
+	//{
+	//	LogEvent(LE_ERROR, __FUNCTION__ ": HandShake not performed, refuse processing the message (Type=%s)", 
+	//		CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
+
+	//	ResetConnection(); // otherwise they might be out of synch anyway
+	//	return 0;
+	//}
 
 	// Ask the messages factory to create the appropriate message:
 	CBlueMagicBTBIncomingMessage* BlueMagicBTBMessage = CreateBlueMagicBTBMessage(MessageType);
@@ -173,7 +216,10 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 
 	// If message is incomplete return parsed bytes 0.
 	if (!IsCompleteMessage)
+	{
+		delete BlueMagicBTBMessage;
 		return 0;
+	}
 
 	if (/*m_TraceInterfaceMessages ||*/ GetLogLevel() <= LE_INFOLOW)
 	{
@@ -187,10 +233,11 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 	Assert(BlueMagicBTBMessage->MessageLength() >= 0);
 	CallEventOnMessage(SensorID, BlueMagicBTBMessage, DataLength);
 
+	int MessageSize = BlueMagicBTBMessage->MessageLength();
 	delete BlueMagicBTBMessage;
 
 	// RETURN size + sizeof(BYTE) for header !!!!
-	return BlueMagicBTBMessage->MessageLength() + sizeof(BYTE);
+	return MessageSize + sizeof(BYTE);
 }
 
 bool CSensorController::IsHeaderValid(EBlueMagicBTBIncomingMessageType MessageType)
@@ -240,6 +287,7 @@ bool CSensorController::SendBlueMagicMessageToSensor(const CBlueMagicBTBOutgoing
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ ": Error serializing message (Type %d %s)",
 			Message->MessageType(), CBlueMagicBTBOutgoingMessage::BlueMagicBTBMessageTypeToString((EBlueMagicBTBOutgoingMessageType)Message->MessageType()).c_str());
+		delete Message;
 		return false;
 	}
 
@@ -260,6 +308,7 @@ bool CSensorController::SendBlueMagicMessageToSensor(const CBlueMagicBTBOutgoing
 		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to send data on ComPort %d SensorID %d. Data Length = %d",
 			m_ComPort, m_SensorID, Serializer.GetSize());
 
+	delete Message;
 	return IsSent;
 	// Last, Send the message itself
 	// IMPORTANT: message should be sent in one peace, since socket SendMessage may be called from different threads!
@@ -344,10 +393,33 @@ void CSensorController::OnTimeout()
 		LogEvent(LE_INFOHIGH, __FUNCTION__ ": Attempting to reconnect to Sensor..");
 		ConnectToPort();
 	}
+
+	if (m_ConnectionStatus == SensorConnected && m_HandshakeStatus != SensorHandshaked &&
+		TickCount - m_LastHandshakeAttemptTickCount > TIME_BETWEEN_HANDSHAKE_ATTEMPTS)
+	{
+		LogEvent(LE_INFOHIGH, __FUNCTION__ ": Attempting to send handshake to Sensor..");
+		DoHandshake();
+	}
 }
 
 void CSensorController::StartConnectionRetiresMechanism()
 {
 	m_ConnectionStatus = SensorAttemptsAtConnection;
 	m_LastConnectionAttemptTickCount = GetTickCount();
+}
+
+void CSensorController::DoHandshake()
+{
+	Assert(m_ConnectionStatus == SensorConnected && m_HandshakeStatus != SensorHandshaked);
+
+	LogEvent(LE_INFOHIGH, __FUNCTION__ ": Attempting to send handshake (GetInfo) to Sensor..");
+
+	m_LastHandshakeAttemptTickCount = GetTickCount();
+	GetInfo();
+}
+
+void CSensorController::ResetConnection()
+{
+	// Clean m_SensorsDataBuffferMap:
+
 }
