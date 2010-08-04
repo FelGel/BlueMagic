@@ -22,6 +22,13 @@ struct SSensorDataBuffer
 	DWORD m_DataBufferOffset;
 };
 
+enum ESensorConnectionStatus
+{
+	SensorNotConnected,
+	SensorConnected,
+	SensorAttemptsAtConnection
+};
+
 class CSensorController : public CThreadWithQueue, public ISerialPortEvents, ISensorCommands
 {
 public:
@@ -31,12 +38,13 @@ public:
 	bool Init(ISensorEvents *Handler);
 	void Close(); // called right before it is deleted
 
-protected:
-	virtual void OnDataReceived(int SerialPortID, BYTE *Data, int DataLength);
-
 	virtual void GetInfo();
 	virtual void GetData();
 	virtual void DefineTopology(/*......*/);
+
+protected:
+	virtual void OnDataReceived(int SerialPortID, BYTE *Data, int DataLength);
+	virtual void OnTimeout();
 
 private:
 	void HandleDataReceived(const SDataFromSensor& DataFromSensor);
@@ -52,6 +60,8 @@ private:
 	bool ConnectToPort();
 	bool SendBlueMagicMessageToSensor(const CBlueMagicBTBOutgoingMessage* Message, const int& SensorID /*= CTcpSocketServer::SEND_ALL*/);
 
+	void StartConnectionRetiresMechanism();
+
 private:
 	ISensorEvents *m_EventsHandler;
 	CSerialPort m_SerialPort;
@@ -59,6 +69,9 @@ private:
 	int m_SensorID;
 	int m_ComPort;
 	std::string m_BDADDRESS;
+
+	ESensorConnectionStatus m_ConnectionStatus;
+	DWORD m_LastConnectionAttemptTickCount;
 
 	std::map<int /*SensorId*/, SSensorDataBuffer*> m_SensorsDataBuffferMap;
 };
