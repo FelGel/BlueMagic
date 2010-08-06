@@ -14,12 +14,13 @@ struct SDataFromSensor
 	DWORD DataLength;
 };
 
-struct SSensorDataBuffer
+struct SSensorInformation
 {
-	SSensorDataBuffer() {m_DataBufferOffset = 0;};
+	SSensorInformation() {m_DataBufferOffset = 0; m_TickCountForClock0 = 0;};
 
 	BYTE m_DataBuffer[DATA_BUFFER_SIZE];
 	DWORD m_DataBufferOffset;
+	DWORD m_TickCountForClock0;
 };
 
 enum ESensorConnectionStatus
@@ -27,13 +28,14 @@ enum ESensorConnectionStatus
 	SensorNotConnected,
 	SensorConnected,
 	SensorAttemptsAtConnection,
-	SensorResettingConnection
+	SensorResettingConnection,
 };
 
 enum ESensorHandshakeStatus
 {
 	SensorNotHandshaked,
-	SensorHandshaked
+	SensorHandshaked,
+	SensorHandshakeFailed
 };
 
 class CSensorController : public CThreadWithQueue, public ISerialPortEvents, ISensorCommands
@@ -70,8 +72,14 @@ private:
 	// Connection setup
 	bool ConnectToPort();
 	void StartConnectionRetiresMechanism();
+	
 	// handshake setup
 	void DoHandshake();
+	void OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessage);
+
+	// Clocks
+	void SetClockForSensor(int Clock, int SensorID);
+	int  GetClockForSensor(int SensorID);
 
 	void ResetConnection();
 
@@ -89,5 +97,5 @@ private:
 	ESensorHandshakeStatus m_HandshakeStatus;
 	DWORD m_LastHandshakeAttemptTickCount;
 
-	std::map<int /*SensorId*/, SSensorDataBuffer*> m_SensorsDataBuffferMap;
+	std::map<int /*SensorId*/, SSensorInformation*> m_SensorsDataBuffferMap;
 };

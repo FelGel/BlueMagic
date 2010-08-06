@@ -93,7 +93,7 @@ bool CBlueMagicBTBIncomingMessage::DeSerialize(IDeSerializer* DeSerializer)
 
 	if (!Result || Char != TEXTUAL_BTB_PROTOCOL_MESSAGE_POST_TERMINATOR)
 	{
-		LogEvent(LE_INFO, __FUNCTION__ ": %s message is incomplete",
+		LogEvent(LE_INFOLOW, __FUNCTION__ ": %s message is incomplete",
 			BlueMagicBTBMessageTypeToString((EBlueMagicBTBIncomingMessageType)MessageType()).c_str());
 		return false;
 	}
@@ -134,7 +134,7 @@ bool CBlueMagicBTBKeepAliveMessage::Parse(CTokenParser MessageStringParser)
 	m_SensorId = atoi(SensorIDString.c_str());
 	m_Clock = atoi(ClockString.c_str());
 
-	LogEvent(LE_INFOLOW, __FUNCTION__ ": KeepAlive message Parsed: SensorId=%d, Clock=%d", 
+	LogEvent(LE_INFO, __FUNCTION__ ": KeepAlive message Parsed: SensorId=%d, Clock=%d", 
 		m_SensorId, m_Clock);
 
 	return true;
@@ -190,7 +190,7 @@ bool CBlueMagicBTBDataMessage::Parse(CTokenParser MessageStringParser)
 	ScannedData.RSSI = atoi(RSSIString.c_str());
 	ScannedData.ScannedBDADDRESS = BDADDRESSString;
 
-	LogEvent(LE_INFOLOW, __FUNCTION__ ": Data message Parsed: SensorId=%d, Clock=%d, RSSI=%d, BDADDRESS=%s", 
+	LogEvent(LE_INFO, __FUNCTION__ ": Data message Parsed: SensorId=%d, Clock=%d, RSSI=%d, BDADDRESS=%s", 
 		ScannedData.SensorId, ScannedData.Clock, ScannedData.RSSI, ScannedData.ScannedBDADDRESS.c_str());
 
 	m_ScannedDataList.AddTail(ScannedData);
@@ -249,7 +249,7 @@ bool CBlueMagicBTBInfoMessage::Parse(CTokenParser MessageStringParser)
 	m_SensorInfo.Version = atoi(Version.c_str());
 	m_SensorInfo.SensorBDADDRESS = SensorBDADDRESS;
 
-	LogEvent(LE_INFOLOW, __FUNCTION__ ": BTB INFO message Parsed: SensorId=%d, Clock=%d, Version=%d, SensorBDADDRESS=%s", 
+	LogEvent(LE_INFO, __FUNCTION__ ": BTB INFO message Parsed: SensorId=%d, Clock=%d, Version=%d, SensorBDADDRESS=%s", 
 		m_SensorInfo.SensorId, m_SensorInfo.Clock, m_SensorInfo.Version, m_SensorInfo.SensorBDADDRESS.c_str());
 
 	return true;

@@ -3,6 +3,8 @@
 #include "Common\Serializer.h"
 #include "Common\DeSerializer.h"
 
+#define BLUEMAGIC_VERSION	1
+
 
 enum EBlueMagicMessageType
 {
