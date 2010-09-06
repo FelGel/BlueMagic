@@ -78,12 +78,16 @@ private:
 	// handshake setup
 	void DoHandshake();
 	void OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessage);
+	
+	// Connection maintenance
+	void ResetConnection();
+	void OnConnectionTimedOut();
+	void OnValidMessageArrived(int SensorID);
+	void OnBTBKeepAliveMessage(CBlueMagicBTBKeepAliveMessage *BTBKeepAliveMessage);
 
 	// Clocks
 	void SetClockForSensor(int Clock, int SensorID);
 	int  GetClockForSensor(int SensorID);
-
-	void ResetConnection();
 
 private:
 	ISensorEvents *m_EventsHandler;
@@ -95,6 +99,7 @@ private:
 
 	ESensorConnectionStatus m_ConnectionStatus;
 	DWORD m_LastConnectionAttemptTickCount;
+	DWORD m_LastPacketRecievedTickCount;
 
 	ESensorHandshakeStatus m_HandshakeStatus;
 	DWORD m_LastHandshakeAttemptTickCount;

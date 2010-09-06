@@ -10,10 +10,11 @@
 #include "BlueMagicBTBMessages.h"
 #include "BlueMagicCommon/BlueMagicMessageFactory.h"
 
-#define SENSOR_CONTROLLER_QUEUE_SIZE 10000
-#define SENSOR_CONTROLLER_THREAD_TIMEOUT 100 //milisec
-#define TIME_BETWEEN_CONNCETION_ATTEMPTS 5000 //milisec
-#define TIME_BETWEEN_HANDSHAKE_ATTEMPTS  30000 //milisec
+#define SENSOR_CONTROLLER_QUEUE_SIZE		10000
+#define SENSOR_CONTROLLER_THREAD_TIMEOUT	100 //milisec
+#define TIME_BETWEEN_CONNCETION_ATTEMPTS	5000 //milisec
+#define TIME_BETWEEN_HANDSHAKE_ATTEMPTS		30000 //milisec
+#define TIME_BETWEEN_KEEP_ALIVES			60000 //milisec
 
 
 #ifdef _DEBUG
@@ -26,7 +27,7 @@ CSensorController::CSensorController(int SensorID, int ComPort, std::string BDAD
 	: CThreadWithQueue("SensorController", SENSOR_CONTROLLER_QUEUE_SIZE), m_SerialPort(this, ComPort, SensorID),
 		m_SensorID(SensorID), m_ComPort(ComPort), m_BDADDRESS(BDADDRESS), m_EventsHandler(NULL), 
 		m_ConnectionStatus(SensorNotConnected), m_HandshakeStatus(SensorNotHandshaked),
-		m_LastConnectionAttemptTickCount(0), m_LastHandshakeAttemptTickCount(0)
+		m_LastConnectionAttemptTickCount(0), m_LastHandshakeAttemptTickCount(0), m_LastPacketRecievedTickCount(0)
 		
 {
 	InsertValueToMap(m_SensorsDataBuffferMap, SensorID, new SSensorInformation());
@@ -250,6 +251,10 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 	Assert(BlueMagicBTBMessage->MessageLength() >= 0);
 	Assert(BlueMagicBTBMessage->MessageType() == MessageType);
 
+
+	OnValidMessageArrived(SensorID);
+
+
 	if (/*m_TraceInterfaceMessages ||*/ GetLogLevel() <= LE_INFOLOW)
 	{
 		CStringSerializer StringSerializer;
@@ -258,23 +263,25 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str(), BlueMagicBTBMessage->MessageLength(), StringSerializer.GetString().c_str());
 	}
 
+	// RETURN ParsedBytes = size + sizeof(BYTE) for header !!!!
 	int MessageSize = BlueMagicBTBMessage->MessageLength();
-	int ParsedBytes = 0;
+	int ParsedBytes = MessageSize + sizeof(BYTE);
+
 	if (MessageType == BTBInfo) // Handshake Message
 	{
 		OnBTBInfoMessage((CBlueMagicBTBInfoMessage *)BlueMagicBTBMessage);
+		
 		if (m_HandshakeStatus == SensorHandshakeFailed)
 			ParsedBytes = 0; // intentionally. so parsing will cease immediately!
-		else
-			ParsedBytes = MessageSize + sizeof(BYTE);
+	}
+	else if (MessageType == BTBKeepAlive)
+	{
+		OnBTBKeepAliveMessage((CBlueMagicBTBKeepAliveMessage *)BlueMagicBTBMessage);
 	}
 	else // Any other message
 	{
 		// Finally, call the appropriate event:
 		CallEventOnMessage(SensorID, BlueMagicBTBMessage, DataLength);
-
-		// RETURN size + sizeof(BYTE) for header !!!!
-		ParsedBytes = MessageSize + sizeof(BYTE);
 	}
 
 	delete BlueMagicBTBMessage;
@@ -409,6 +416,15 @@ void CSensorController::OnTimeout()
 		LogEvent(LE_INFOHIGH, __FUNCTION__ ": Attempting to send handshake to Sensor..");
 		DoHandshake();
 	}
+
+	if (m_ConnectionStatus == SensorConnected && m_HandshakeStatus == SensorHandshaked &&
+		TickCount - m_LastPacketRecievedTickCount > TIME_BETWEEN_KEEP_ALIVES)
+	{
+		LogEvent(LE_WARNING, __FUNCTION__ ": Connection to COM %d Sensor %d TimedOut !",
+			m_ComPort, m_SensorID);
+		OnConnectionTimedOut();
+	}
+		
 }
 
 void CSensorController::StartConnectionRetiresMechanism()
@@ -430,7 +446,8 @@ void CSensorController::DoHandshake()
 void CSensorController::ResetConnection()
 {
 	// ToDo - Implement this !!
-	Assert(false); // TEMPORARY.
+	//Assert(false); // TEMPORARY.
+	LogEvent(LE_ERROR, __FUNCTION__ "RESET NOT IMPLEMENTED YET !!");
 
 	// Clean m_SensorsDataBuffferMap:
 }
@@ -552,4 +569,23 @@ DWORD CSensorController::ParseInvalidData(int SensorID, BYTE *Data, int DataLeng
 		return 0;
 
 	}
+}
+
+void CSensorController::OnConnectionTimedOut()
+{
+	LogEvent(LE_WARNING, __FUNCTION__ ": Connection to COM %d Sensor %d TimedOut !",
+		m_ComPort, m_SensorID);
+
+	ResetConnection();
+}
+
+
+void CSensorController::OnBTBKeepAliveMessage(CBlueMagicBTBKeepAliveMessage *BTBKeepAliveMessage)
+{
+	SetClockForSensor(BTBKeepAliveMessage->m_Clock, BTBKeepAliveMessage->m_SensorId);
+}
+
+void CSensorController::OnValidMessageArrived(int SensorID)
+{
+	m_LastPacketRecievedTickCount = GetTickCount();
 }
