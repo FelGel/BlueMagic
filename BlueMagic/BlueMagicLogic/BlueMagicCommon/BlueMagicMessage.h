@@ -3,11 +3,13 @@
 #include "Common\Serializer.h"
 #include "Common\DeSerializer.h"
 
+#define BLUEMAGIC_VERSION	1
+
 
 enum EBlueMagicMessageType
 {
-	BlueMagicBTBIncomingMessageType = 0, 
-	BlueMagicBTBOutgoingMessageType = 10, 
+	BlueMagicBTBIncomingMessageType = 0x30, 
+	BlueMagicBTBOutgoingMessageType = 0x36, 
 	BlueMagicWorkstationMessageType = 100, 
 	/*... up to 255*/
 };

@@ -2,6 +2,12 @@
 #include "SerialPort.h"
 #include "Common/Utils.h"
 
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#undef THIS_FILE
+static char THIS_FILE[] = __FILE__;
+#endif
+
 #define BUFFER_SIZE 1024
 BYTE Buffer[BUFFER_SIZE];
 
@@ -34,8 +40,14 @@ CSerialPort::~CSerialPort(void)
 					LONG lLastError = Read(Buffer,BUFFER_SIZE,&dwBytesRead);
 					if (lLastError != ERROR_SUCCESS)
 					{
-						LogEvent(LE_ERROR, "CSerialPort::OnEvent: Failed to read Buffer. Error=%d",
+						LogEvent(LE_ERROR, __FUNCTION__ ": Failed to read Buffer. Error=%d",
 							GetLastError());
+						return;
+					}
+
+					if (dwBytesRead == 0)
+					{
+						LogEvent(LE_WARNING, __FUNCTION__ ": Read 0 bytes from Port");
 						return;
 					}
 

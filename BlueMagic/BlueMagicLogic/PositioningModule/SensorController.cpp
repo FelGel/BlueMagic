@@ -10,26 +10,38 @@
 #include "BlueMagicBTBMessages.h"
 #include "BlueMagicCommon/BlueMagicMessageFactory.h"
 
-#define SENSOR_CONTROLLER_QUEUE_SIZE 10000
-#define SENSOR_CONTROLLER_THREAD_TIMEOUT 100 //milisec
+#define SENSOR_CONTROLLER_QUEUE_SIZE		10000
+#define SENSOR_CONTROLLER_THREAD_TIMEOUT	100 //milisec
+#define TIME_BETWEEN_CONNCETION_ATTEMPTS	5000 //milisec
+#define TIME_BETWEEN_HANDSHAKE_ATTEMPTS		30000 //milisec
+#define TIME_BETWEEN_KEEP_ALIVES			60000 //milisec
+
+
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#undef THIS_FILE
+static char THIS_FILE[] = __FILE__;
+#endif
 
 CSensorController::CSensorController(int SensorID, int ComPort, std::string BDADDRESS) 
 	: CThreadWithQueue("SensorController", SENSOR_CONTROLLER_QUEUE_SIZE), m_SerialPort(this, ComPort, SensorID),
-		m_SensorID(SensorID), m_ComPort(ComPort), m_BDADDRESS(BDADDRESS), m_EventsHandler(NULL)
+		m_SensorID(SensorID), m_ComPort(ComPort), m_BDADDRESS(BDADDRESS), m_EventsHandler(NULL), 
+		m_ConnectionStatus(SensorNotConnected), m_HandshakeStatus(SensorNotHandshaked),
+		m_LastConnectionAttemptTickCount(0), m_LastHandshakeAttemptTickCount(0), m_LastPacketRecievedTickCount(0)
 		
 {
-	InsertValueToMap(m_SensorsDataBuffferMap, SensorID, new SSensorDataBuffer());
+	InsertValueToMap(m_SensorsDataBuffferMap, SensorID, new SSensorInformation());
 }
 
 CSensorController::~CSensorController(void)
 {
+	Assert(m_SensorsDataBuffferMap.size() == 0);
 }
 
 bool CSensorController::Init(ISensorEvents *Handler)
 {
 	m_EventsHandler = Handler;
 
-	// TODO: connection retries mechanism !!
 	ConnectToPort();
 
 	// start thread
@@ -50,8 +62,8 @@ void CSensorController::Close()
 		m_ComPort, m_SensorID);
 	m_SerialPort.Close();
 
-	std::map<int /*SensorId*/, SSensorDataBuffer*>::iterator Iter = m_SensorsDataBuffferMap.begin();
-	std::map<int /*SensorId*/, SSensorDataBuffer*>::iterator End = m_SensorsDataBuffferMap.end();
+	std::map<int /*SensorId*/, SSensorInformation*>::iterator Iter = m_SensorsDataBuffferMap.begin();
+	std::map<int /*SensorId*/, SSensorInformation*>::iterator End = m_SensorsDataBuffferMap.end();
 
 	for(;Iter != End; ++Iter)
 	{
@@ -68,11 +80,19 @@ bool CSensorController::ConnectToPort()
 	{
 		LogEvent(LE_ERROR, "Failed to ConnectToPort COM%d of SensorID %d.", 
 			m_ComPort, m_SensorID);
+
+		StartConnectionRetiresMechanism();
+
 		return false;
 	}
 
 	LogEvent(LE_INFOHIGH, "SensorID %d connected successfully to ComPort COM%d", 
 		m_SensorID, m_ComPort);
+
+	m_ConnectionStatus = SensorConnected;
+
+	DoHandshake();
+
 	return true;
 }
 
@@ -88,76 +108,133 @@ bool CSensorController::ConnectToPort()
 
 void CSensorController::HandleDataReceived(const SDataFromSensor& DataFromSensor)
 {
-	LogEvent(LE_DEBUG, "CSensorController::HandleDataReceived: SensorID=%d DataLength=%d, Data=%s", 
-		DataFromSensor.SensorID, DataFromSensor.DataLength, DataFromSensor.Data);
+	LogEvent(LE_DEBUG, __FUNCTION__ ": SensorID=%d DataLength=%d, Data(hexa)=%X, Data(chars)=%s", 
+		DataFromSensor.SensorID, DataFromSensor.DataLength, DataFromSensor.Data, DataFromSensor.Data);
+
+	//char hexval[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+	//std::string Str;
+	//for (int i = 0; i < DataFromSensor.DataLength; i++)
+	//{
+	//	Str += hexval[((DataFromSensor.Data[i] >> 4) & 0xF)];
+	//	Str += hexval[(DataFromSensor.Data[i]) & 0x0F];
+	//}
+
+	//LogEvent(LE_INFOHIGH, "CSensorController::HandleDataReceived: SensorID=%d DataLength=%d, Data(hexa)=%X", 
+	//	DataFromSensor.SensorID, DataFromSensor.DataLength, DataFromSensor.Data);
+
+	//// TEMP !!!!!!!!!!!!!!!!!!!!!
+	//return;
 
 
-	SSensorDataBuffer* SensorDataBuffer;
+	if (m_ConnectionStatus != SensorConnected)
+	{
+		Assert(false);
+		LogEvent(LE_WARNING, __FUNCTION__ ": Data received on Sensor %d Port %d, while it is assumed to be disconnected !!",
+			m_SensorID, m_ComPort);
+		// return; - who cares?
+	}
+
+	if (m_HandshakeStatus == SensorHandshakeFailed)
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Data received on Sensor %d Port %d, yet handshake previously failed !! IGNORING DATA",
+			m_SensorID, m_ComPort);
+		delete[] DataFromSensor.Data;
+		return;
+	}
+
+	SSensorInformation* SensorDataBuffer;
 	if (!GetValueFromMap(m_SensorsDataBuffferMap, DataFromSensor.SensorID, SensorDataBuffer))
 	{
-		LogEvent(LE_ERROR, "CSensorController::HandleDataReceived: SensorID %d is not in map!! cannot handle its data", DataFromSensor.SensorID);
+		LogEvent(LE_ERROR, __FUNCTION__ ": SensorID %d is not in map!! cannot handle its data", DataFromSensor.SensorID);
 		delete[] DataFromSensor.Data;
 		return;
 	}
 
 	if (SensorDataBuffer->m_DataBufferOffset + DataFromSensor.DataLength > DATA_BUFFER_SIZE)
 	{
-		LogEvent(LE_ERROR, "CSensorController::HandleDataReceived: DATA OVERFLOW! MaxSize=%d, DesiredSize=%d"
+		LogEvent(LE_ERROR, __FUNCTION__ ": DATA OVERFLOW! MaxSize=%d, DesiredSize=%d"
 			,DATA_BUFFER_SIZE, SensorDataBuffer->m_DataBufferOffset + DataFromSensor.DataLength);
 		Assert(false);
-		// ToDo: might get out of sync!! cannot just delete.
+		// might get out of sync!! cannot just delete.
 		// Best easiest approach: Disconnect and Reconnect to BTB.
+		ResetConnection();
+		delete[] DataFromSensor.Data;
+		return;
 	}
 
 	// Add new data to end of buffer
 	memcpy(SensorDataBuffer->m_DataBuffer + SensorDataBuffer->m_DataBufferOffset, DataFromSensor.Data, DataFromSensor.DataLength);
 	delete[] DataFromSensor.Data;
+	SensorDataBuffer->m_DataBufferOffset += DataFromSensor.DataLength;
 
 	// parse all complete messages in buffer
 	DWORD ParsedBytes = 0, ParsedBytesSoFar = 0;
 	do 
 	{
-		ParsedBytes = ParseData(DataFromSensor.SensorID, SensorDataBuffer->m_DataBuffer + ParsedBytesSoFar, SensorDataBuffer->m_DataBufferOffset - ParsedBytesSoFar);
+		BYTE *CurrentPositionInBuffer = SensorDataBuffer->m_DataBuffer + ParsedBytesSoFar;
+		int CurrentBufferSize = SensorDataBuffer->m_DataBufferOffset - ParsedBytesSoFar;
+
+		if (CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY && !IsMessageComplete(CurrentPositionInBuffer, CurrentBufferSize))
+		{
+			LogEvent(LE_INFO, __FUNCTION__ ": There is not yet a complete message on Sensor %d Port %d.",
+				m_SensorID, m_ComPort);
+			break; // there's no complete message in buffer
+		}
+
+		ParsedBytes = ParseData(DataFromSensor.SensorID, CurrentPositionInBuffer, CurrentBufferSize);
 		if (ParsedBytes == 0)
 			break;
 		ParsedBytesSoFar += ParsedBytes;
 	}
 	while (ParsedBytesSoFar < SensorDataBuffer->m_DataBufferOffset);
 
-	// move buffer leftovers to beginning
-	if (ParsedBytesSoFar != SensorDataBuffer->m_DataBufferOffset)
-	{
-		memcpy(SensorDataBuffer->m_DataBuffer, SensorDataBuffer->m_DataBuffer+ParsedBytesSoFar, 
-			SensorDataBuffer->m_DataBufferOffset - ParsedBytesSoFar);
-	}
 
-	SensorDataBuffer->m_DataBufferOffset -= ParsedBytesSoFar;
+	if (m_ConnectionStatus != SensorResettingConnection && m_HandshakeStatus != SensorHandshakeFailed)
+	{
+		// move buffer leftovers to beginning
+		if (ParsedBytesSoFar > 0 && ParsedBytesSoFar != SensorDataBuffer->m_DataBufferOffset)
+		{
+			memcpy(SensorDataBuffer->m_DataBuffer, SensorDataBuffer->m_DataBuffer+ParsedBytesSoFar, 
+				SensorDataBuffer->m_DataBufferOffset - ParsedBytesSoFar);
+		}
+
+		SensorDataBuffer->m_DataBufferOffset -= ParsedBytesSoFar;
+	}
 }
 
 DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 {
 	// BTB header only consists of MessageType:
-	EBlueMagicBTBIncomingMessageType MessageType = *(EBlueMagicBTBIncomingMessageType *)Data;
+	EBlueMagicBTBIncomingMessageType MessageType = (EBlueMagicBTBIncomingMessageType)*(BYTE *)Data;
 
 	if (!IsHeaderValid(MessageType))
 	{
-		LogEvent(LE_ERROR, __FUNCTION__ "CSensorController::ParseData: Invalid Message: Type [%s]", 
+		LogEvent(LE_ERROR, __FUNCTION__ ": Invalid Message: Type [%s]", 
 			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
-		// ToDo: might get out of sync!! cannot just delete.
-		// Best easiest approach: Disconnect and Reconnect to BTB.
-		return 0;
+		
+		return ParseInvalidData(SensorID, Data, DataLength);
 	}
 
-	LogEvent(LE_INFOLOW, __FUNCTION__ "CSensorController::ParseData: Message: Type [%s]", 
+	LogEvent(LE_INFOLOW, __FUNCTION__ ": Message: Type [%s]", 
 		CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
+
+	if (m_HandshakeStatus != SensorHandshaked && MessageType != BTBInfo)
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": HandShake not performed, refuse processing the message (Type=%s)", 
+			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
+
+		return ParseInvalidData(SensorID, Data, DataLength);
+	}
 
 	// Ask the messages factory to create the appropriate message:
 	CBlueMagicBTBIncomingMessage* BlueMagicBTBMessage = CreateBlueMagicBTBMessage(MessageType);
 	if (BlueMagicBTBMessage == NULL)
 	{
-		LogEvent(LE_ERROR, __FUNCTION__ "CSensorController::ParseData: failed to create BlueMagicBTBMessage %s",
+		LogEvent(LE_ERROR, __FUNCTION__ ": failed to create BlueMagicBTBMessage %s",
 			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
-		return 0;
+
+		return ParseInvalidData(SensorID, Data, DataLength);
 	}
 
 	// Deserialize it:
@@ -166,7 +243,17 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 
 	// If message is incomplete return parsed bytes 0.
 	if (!IsCompleteMessage)
+	{
+		Assert(!CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY);
+		delete BlueMagicBTBMessage;
 		return 0;
+	}
+	Assert(BlueMagicBTBMessage->MessageLength() >= 0);
+	Assert(BlueMagicBTBMessage->MessageType() == MessageType);
+
+
+	OnValidMessageArrived(SensorID);
+
 
 	if (/*m_TraceInterfaceMessages ||*/ GetLogLevel() <= LE_INFOLOW)
 	{
@@ -176,14 +263,29 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str(), BlueMagicBTBMessage->MessageLength(), StringSerializer.GetString().c_str());
 	}
 
-	// Finally, call the appropriate event:
-	Assert(BlueMagicBTBMessage->MessageLength() >= 0);
-	CallEventOnMessage(SensorID, BlueMagicBTBMessage, DataLength);
+	// RETURN ParsedBytes = size + sizeof(BYTE) for header !!!!
+	int MessageSize = BlueMagicBTBMessage->MessageLength();
+	int ParsedBytes = MessageSize + sizeof(BYTE);
+
+	if (MessageType == BTBInfo) // Handshake Message
+	{
+		OnBTBInfoMessage((CBlueMagicBTBInfoMessage *)BlueMagicBTBMessage);
+		
+		if (m_HandshakeStatus == SensorHandshakeFailed)
+			ParsedBytes = 0; // intentionally. so parsing will cease immediately!
+	}
+	else if (MessageType == BTBKeepAlive)
+	{
+		OnBTBKeepAliveMessage((CBlueMagicBTBKeepAliveMessage *)BlueMagicBTBMessage);
+	}
+	else // Any other message
+	{
+		// Finally, call the appropriate event:
+		CallEventOnMessage(SensorID, BlueMagicBTBMessage, DataLength);
+	}
 
 	delete BlueMagicBTBMessage;
-
-	// RETURN size + sizeof(BYTE) for header !!!!
-	return BlueMagicBTBMessage->MessageLength() + sizeof(BYTE);
+	return ParsedBytes;
 }
 
 bool CSensorController::IsHeaderValid(EBlueMagicBTBIncomingMessageType MessageType)
@@ -208,23 +310,29 @@ void CSensorController::CallEventOnMessage(int /*SensorID*/, const CBlueMagicBTB
 
 bool CSensorController::SendBlueMagicMessageToSensor(const CBlueMagicBTBOutgoingMessage* Message, const int& SensorID /*= CTcpSocketServer::SEND_ALL*/)
 {
-	//CCriticalSectionLocker Lock(m_HandshakeLock);
-	//if (CheckHandshake && ConnectionId != CTcpSocketServer::SEND_ALL)
-	//{
-	//	bool HandShakeOk;
-	//	if (!GetValueFromMap(m_HandShakeOkMap, ConnectionId, HandShakeOk))
-	//	{
-	//		LogEvent(LE_ERROR, __FUNCTION__ ": Connection %d is not open, cannot send the message (App [%s], Interface [%s], Version[%d])",
-	//			ConnectionId, m_AppName.c_str(), m_InterfaceName.c_str(), m_Version);
-	//		return false;
-	//	}
-	//	else if (!HandShakeOk)
-	//	{
-	//		LogEvent(LE_ERROR, __FUNCTION__ ": HandShake not performed for connection %d, refuse sending the message (App [%s], Interface [%s], Version[%d])",
-	//			ConnectionId, m_AppName.c_str(), m_InterfaceName.c_str(), m_Version);
-	//		return false;
-	//	}
-	//}
+	// ToDo - in the future:
+	// 1. Allow sending of a message to a specific SensorID (via bridge?)
+	// 2. Check handshake of that specific SensorID !!
+
+	if (m_HandshakeStatus == SensorHandshakeFailed)
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Attempting to send message %s to sensor %d on port %d who failed handshake. NOT SENDING MESSAGE",
+			CBlueMagicBTBOutgoingMessage::BlueMagicBTBMessageTypeToString((EBlueMagicBTBOutgoingMessageType)Message->MessageType()).c_str(), m_SensorID, m_ComPort);
+
+		delete Message;
+		return false;
+	}
+
+	if (m_HandshakeStatus == SensorNotHandshaked 
+		&& Message->MessageType() != BTBGetInfo 
+		&& Message->MessageType() != BTBDefineTopology )
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Attempting to send message %s to sensor %d on port %d who has not handshaked. NOT SENDING MESSAGE",
+			CBlueMagicBTBOutgoingMessage::BlueMagicBTBMessageTypeToString((EBlueMagicBTBOutgoingMessageType)Message->MessageType()).c_str(), m_SensorID, m_ComPort);
+
+		delete Message;
+		return false;
+	}
 
 	// Start by Serializing the message, leaving a place for the header
 	int HeaderSize = sizeof(BYTE);
@@ -233,6 +341,7 @@ bool CSensorController::SendBlueMagicMessageToSensor(const CBlueMagicBTBOutgoing
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ ": Error serializing message (Type %d %s)",
 			Message->MessageType(), CBlueMagicBTBOutgoingMessage::BlueMagicBTBMessageTypeToString((EBlueMagicBTBOutgoingMessageType)Message->MessageType()).c_str());
+		delete Message;
 		return false;
 	}
 
@@ -253,45 +362,8 @@ bool CSensorController::SendBlueMagicMessageToSensor(const CBlueMagicBTBOutgoing
 		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to send data on ComPort %d SensorID %d. Data Length = %d",
 			m_ComPort, m_SensorID, Serializer.GetSize());
 
+	delete Message;
 	return IsSent;
-	// Last, Send the message itself
-	// IMPORTANT: message should be sent in one peace, since socket SendMessage may be called from different threads!
-	//bool Ret = true;
-	//if (!CheckHandshake || ConnectionId != CTcpSocketServer::SEND_ALL)
-	//{
-	//	bool SendIlmMessageFromServerToClientSucceeded = m_TcpSocketServer.SendMessage(Serializer.GetData(), Serializer.GetSize(), ConnectionId);
-	//	//Assert(SendIlmMessageFromServerToClientSucceeded);
-	//	if (!SendIlmMessageFromServerToClientSucceeded)
-	//	{
-	//		LogEvent(LE_ERROR, __FUNCTION__ "(%s): Error sending message (Type %d) to connection %d",
-	//			m_InterfaceName.c_str(), IlmMessage->MessageType(), ConnectionId);
-	//		return false;
-	//	}
-	//}
-	//else
-	//{
-	//	const std::map<int, bool>::const_iterator End = m_HandShakeOkMap.end();
-	//	for (std::map<int, bool>::const_iterator Iter = m_HandShakeOkMap.begin(); Iter != End; ++Iter)
-	//	{
-	//		if (Iter->second) // Handshake is ok!
-	//		{
-	//			const int& _ConnectionId = Iter->first;
-	//			bool SendIlmMessageFromServerToClientSucceeded = m_TcpSocketServer.SendMessage(Serializer.GetData(), Serializer.GetSize(), _ConnectionId);
-	//			//Assert(SendIlmMessageFromServerToClientSucceeded);
-	//			if (!SendIlmMessageFromServerToClientSucceeded)
-	//			{
-	//				LogEvent(LE_ERROR, __FUNCTION__ "(%s): Error sending message (Type %d) to connection %d",
-	//					m_InterfaceName.c_str(), IlmMessage->MessageType(), _ConnectionId);
-	//				Ret = false;
-	//			}
-	//		}
-	//		else
-	//			LogEvent(LE_INFO, __FUNCTION__ "(%s) SEND_ALL: connection %d without handshake - message will not be sent",
-	//			m_InterfaceName.c_str(), Iter->first);
-	//	}
-	//}
-
-	//return Ret;
 }
 
 void CSensorController::GetInfo()
@@ -325,4 +397,195 @@ void CSensorController::HandleGetData()
 
 void CSensorController::HandleDefineTopology(/*......*/)
 {
+}
+
+void CSensorController::OnTimeout()
+{
+	// Connection Retries Mechanism:
+	DWORD TickCount = GetTickCount();
+	if (m_ConnectionStatus == SensorAttemptsAtConnection &&
+		TickCount - m_LastConnectionAttemptTickCount > TIME_BETWEEN_CONNCETION_ATTEMPTS)
+	{
+		LogEvent(LE_INFOHIGH, __FUNCTION__ ": Attempting to reconnect to Sensor..");
+		ConnectToPort();
+	}
+
+	if (m_ConnectionStatus == SensorConnected && m_HandshakeStatus == SensorNotHandshaked &&
+		TickCount - m_LastHandshakeAttemptTickCount > TIME_BETWEEN_HANDSHAKE_ATTEMPTS)
+	{
+		LogEvent(LE_INFOHIGH, __FUNCTION__ ": Attempting to send handshake to Sensor..");
+		DoHandshake();
+	}
+
+	if (m_ConnectionStatus == SensorConnected && m_HandshakeStatus == SensorHandshaked &&
+		TickCount - m_LastPacketRecievedTickCount > TIME_BETWEEN_KEEP_ALIVES)
+	{
+		LogEvent(LE_WARNING, __FUNCTION__ ": Connection to COM %d Sensor %d TimedOut !",
+			m_ComPort, m_SensorID);
+		OnConnectionTimedOut();
+	}
+		
+}
+
+void CSensorController::StartConnectionRetiresMechanism()
+{
+	m_ConnectionStatus = SensorAttemptsAtConnection;
+	m_LastConnectionAttemptTickCount = GetTickCount();
+}
+
+void CSensorController::DoHandshake()
+{
+	Assert(m_ConnectionStatus == SensorConnected && m_HandshakeStatus != SensorHandshaked);
+
+	LogEvent(LE_INFOHIGH, __FUNCTION__ ": Attempting to send handshake (GetInfo) to Sensor..");
+
+	m_LastHandshakeAttemptTickCount = GetTickCount();
+	GetInfo();
+}
+
+void CSensorController::ResetConnection()
+{
+	// ToDo - Implement this !!
+	//Assert(false); // TEMPORARY.
+	LogEvent(LE_ERROR, __FUNCTION__ "RESET NOT IMPLEMENTED YET !!");
+
+	// Clean m_SensorsDataBuffferMap:
+}
+
+void CSensorController::OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessage)
+{
+	SetClockForSensor(BTBInfoMessage->m_SensorInfo.Clock, BTBInfoMessage->m_SensorInfo.SensorId);
+
+	if (m_HandshakeStatus == SensorHandshakeFailed)
+	{
+		Assert(false);
+		LogEvent(LE_ERROR, __FUNCTION__ ": Should not receive messages on sensor %d port %d with failed handshake",
+			m_SensorID, m_ComPort);
+		return;
+	}
+
+	ESensorHandshakeStatus NewHandshakeStatus = SensorHandshaked;
+	if (BTBInfoMessage->m_SensorInfo.Version != BLUEMAGIC_VERSION)
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": WRONG VERSION!! Presumably Sensor %d on port %d reports on version %d while software version is %d",
+			m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.Version, BLUEMAGIC_VERSION);
+
+		NewHandshakeStatus = SensorHandshakeFailed;
+	}
+
+	if (BTBInfoMessage->m_SensorInfo.SensorId != m_SensorID)
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": WRONG SensorID!! Presumably Sensor %d on port %d reports SensorID %d",
+			m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.SensorId);
+
+		NewHandshakeStatus = SensorHandshakeFailed;
+	}
+
+	if (BTBInfoMessage->m_SensorInfo.SensorBDADDRESS != m_BDADDRESS)
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": WRONG BDADDRESS!! Presumably Sensor %d on port %d reports BDADDRESS %s while expected %s",
+			m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.SensorBDADDRESS.c_str(), m_BDADDRESS.c_str());
+
+		NewHandshakeStatus = SensorHandshakeFailed;
+	}
+
+	Assert(NewHandshakeStatus != SensorNotHandshaked);
+	if (m_HandshakeStatus == SensorHandshaked && NewHandshakeStatus == SensorHandshakeFailed)
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Sensor %d on port %d succeeded handshake in the past yet failed now !!",
+			m_SensorID, m_ComPort);
+	}
+
+	if (NewHandshakeStatus == SensorHandshaked)
+	{
+		LogEvent(LE_INFOHIGH, __FUNCTION__ ": Sensor %d on port %d Handshaked successfully. Version = %d, SensorId = %d, SensorBDADDRESS = %s",
+			m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.Version, BTBInfoMessage->m_SensorInfo.SensorId, BTBInfoMessage->m_SensorInfo.SensorBDADDRESS.c_str());
+	}
+	else
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Sensor %d on port %d Handshaked FAILED. Version = %d, SensorId = %d, SensorBDADDRESS = %s",
+			m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.Version, BTBInfoMessage->m_SensorInfo.SensorId, BTBInfoMessage->m_SensorInfo.SensorBDADDRESS.c_str());
+	}
+
+	m_HandshakeStatus = NewHandshakeStatus;
+}
+
+void CSensorController::SetClockForSensor(int Clock, int SensorID)
+{
+	SSensorInformation* SensorInformation;
+	if (!GetValueFromMap(m_SensorsDataBuffferMap, SensorID, SensorInformation))
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": SensorID %d is not in map!! cannot handle its data", SensorID);
+		return;
+	}
+
+	DWORD TickCount = GetTickCount();
+	SensorInformation->m_TickCountForClock0 = TickCount - Clock * 1000 /*millisec in sec*/;
+}
+
+int CSensorController::GetClockForSensor(int SensorID)
+{
+	SSensorInformation* SensorInformation;
+	if (!GetValueFromMap(m_SensorsDataBuffferMap, SensorID, SensorInformation))
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": SensorID %d is not in map!! cannot handle its data", SensorID);
+		return 0;
+	}
+
+	return SensorInformation->m_TickCountForClock0;
+}
+
+
+bool CSensorController::IsMessageComplete(BYTE *Data, int DataLength)
+{
+	Assert(CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY);
+	if (!CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY)
+		return true;
+
+	return CBlueMagicBTBIncomingMessage::IsMessageComplete(Data, DataLength);
+}
+
+DWORD CSensorController::ParseInvalidData(int SensorID, BYTE *Data, int DataLength)
+{
+	if (CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY) // then we can simply skip to next message
+	{
+		if (IsMessageComplete(Data, DataLength))
+		{
+			LogEvent(LE_WARNING, "Parsing Invalid data on SensorID %d. Skipping to next message", SensorID);
+			return CBlueMagicBTBIncomingMessage::GetPositionOfNextMessage(Data, DataLength);
+		}
+		else // probably will be possible next packet, with more data
+		{
+			LogEvent(LE_WARNING, "Parsing Invalid data on SensorID %d. Waiting for more data", SensorID);
+			return 0;
+		}
+	}
+	else
+	{
+		LogEvent(LE_ERROR, "Parsing Invalid data on SensorID %d. Resetting Connection!", SensorID);
+		// Might get out of sync!! cannot just delete.
+		// Best easiest approach: Disconnect and Reconnect to BTB.
+		ResetConnection(); 
+		return 0;
+
+	}
+}
+
+void CSensorController::OnConnectionTimedOut()
+{
+	LogEvent(LE_WARNING, __FUNCTION__ ": Connection to COM %d Sensor %d TimedOut !",
+		m_ComPort, m_SensorID);
+
+	ResetConnection();
+}
+
+
+void CSensorController::OnBTBKeepAliveMessage(CBlueMagicBTBKeepAliveMessage *BTBKeepAliveMessage)
+{
+	SetClockForSensor(BTBKeepAliveMessage->m_Clock, BTBKeepAliveMessage->m_SensorId);
+}
+
+void CSensorController::OnValidMessageArrived(int SensorID)
+{
+	m_LastPacketRecievedTickCount = GetTickCount();
 }

@@ -3,7 +3,7 @@
 // Used by PositioningModule.RC
 //
 #define IDR_MAINFRAME					128
-#define IDD_POSITIONINGMODULE_DIALOG				102
+#define IDD_POSITIONINGMODULE_DIALOG	102
 #define IDP_SOCKETS_INIT_FAILED			103
 
 // Next default values for new objects

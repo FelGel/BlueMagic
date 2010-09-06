@@ -14,12 +14,28 @@ struct SDataFromSensor
 	DWORD DataLength;
 };
 
-struct SSensorDataBuffer
+struct SSensorInformation
 {
-	SSensorDataBuffer() {m_DataBufferOffset = 0;};
+	SSensorInformation() {m_DataBufferOffset = 0; m_TickCountForClock0 = 0;};
 
 	BYTE m_DataBuffer[DATA_BUFFER_SIZE];
 	DWORD m_DataBufferOffset;
+	DWORD m_TickCountForClock0;
+};
+
+enum ESensorConnectionStatus
+{
+	SensorNotConnected,
+	SensorConnected,
+	SensorAttemptsAtConnection,
+	SensorResettingConnection,
+};
+
+enum ESensorHandshakeStatus
+{
+	SensorNotHandshaked,
+	SensorHandshaked,
+	SensorHandshakeFailed
 };
 
 class CSensorController : public CThreadWithQueue, public ISerialPortEvents, ISensorCommands
@@ -31,26 +47,47 @@ public:
 	bool Init(ISensorEvents *Handler);
 	void Close(); // called right before it is deleted
 
-protected:
-	virtual void OnDataReceived(int SerialPortID, BYTE *Data, int DataLength);
-
 	virtual void GetInfo();
 	virtual void GetData();
 	virtual void DefineTopology(/*......*/);
 
+protected:
+	virtual void OnDataReceived(int SerialPortID, BYTE *Data, int DataLength);
+	virtual void OnTimeout();
+
 private:
+	// Handle Incoming Messages from BTB
 	void HandleDataReceived(const SDataFromSensor& DataFromSensor);
 	DWORD ParseData(int SensorID, BYTE *Data, int DataLength);
+	DWORD ParseInvalidData(int SensorID, BYTE *Data, int DataLength);
 	bool IsHeaderValid(EBlueMagicBTBIncomingMessageType MessageType);
+	bool IsMessageComplete(BYTE *Data, int DataLength);
 	CBlueMagicBTBIncomingMessage* CreateBlueMagicBTBMessage(EBlueMagicBTBIncomingMessageType MessageType);
 	void CallEventOnMessage(int /*SensorID*/, const CBlueMagicBTBIncomingMessage* Message, UINT /*MessageSize*/);
 
+	// Handle Outgoing Message to BTB
 	void HandleGetInfo();
 	void HandleGetData();
 	void HandleDefineTopology(/*......*/);
-
-	bool ConnectToPort();
 	bool SendBlueMagicMessageToSensor(const CBlueMagicBTBOutgoingMessage* Message, const int& SensorID /*= CTcpSocketServer::SEND_ALL*/);
+
+	// Connection setup
+	bool ConnectToPort();
+	void StartConnectionRetiresMechanism();
+	
+	// handshake setup
+	void DoHandshake();
+	void OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessage);
+	
+	// Connection maintenance
+	void ResetConnection();
+	void OnConnectionTimedOut();
+	void OnValidMessageArrived(int SensorID);
+	void OnBTBKeepAliveMessage(CBlueMagicBTBKeepAliveMessage *BTBKeepAliveMessage);
+
+	// Clocks
+	void SetClockForSensor(int Clock, int SensorID);
+	int  GetClockForSensor(int SensorID);
 
 private:
 	ISensorEvents *m_EventsHandler;
@@ -60,5 +97,12 @@ private:
 	int m_ComPort;
 	std::string m_BDADDRESS;
 
-	std::map<int /*SensorId*/, SSensorDataBuffer*> m_SensorsDataBuffferMap;
+	ESensorConnectionStatus m_ConnectionStatus;
+	DWORD m_LastConnectionAttemptTickCount;
+	DWORD m_LastPacketRecievedTickCount;
+
+	ESensorHandshakeStatus m_HandshakeStatus;
+	DWORD m_LastHandshakeAttemptTickCount;
+
+	std::map<int /*SensorId*/, SSensorInformation*> m_SensorsDataBuffferMap;
 };
