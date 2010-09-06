@@ -171,7 +171,17 @@ void CSensorController::HandleDataReceived(const SDataFromSensor& DataFromSensor
 	DWORD ParsedBytes = 0, ParsedBytesSoFar = 0;
 	do 
 	{
-		ParsedBytes = ParseData(DataFromSensor.SensorID, SensorDataBuffer->m_DataBuffer + ParsedBytesSoFar, SensorDataBuffer->m_DataBufferOffset - ParsedBytesSoFar);
+		BYTE *CurrentPositionInBuffer = SensorDataBuffer->m_DataBuffer + ParsedBytesSoFar;
+		int CurrentBufferSize = SensorDataBuffer->m_DataBufferOffset - ParsedBytesSoFar;
+
+		if (CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY && !IsMessageComplete(CurrentPositionInBuffer, CurrentBufferSize))
+		{
+			LogEvent(LE_INFO, __FUNCTION__ ": There is not yet a complete message on Sensor %d Port %d.",
+				m_SensorID, m_ComPort);
+			break; // there's no complete message in buffer
+		}
+
+		ParsedBytes = ParseData(DataFromSensor.SensorID, CurrentPositionInBuffer, CurrentBufferSize);
 		if (ParsedBytes == 0)
 			break;
 		ParsedBytesSoFar += ParsedBytes;
@@ -202,10 +212,7 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 		LogEvent(LE_ERROR, __FUNCTION__ ": Invalid Message: Type [%s]", 
 			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
 		
-		// Might get out of sync!! cannot just delete.
-		// Best easiest approach: Disconnect and Reconnect to BTB.
-		ResetConnection(); 
-		return 0;
+		return ParseInvalidData(SensorID, Data, DataLength);
 	}
 
 	LogEvent(LE_INFOLOW, __FUNCTION__ ": Message: Type [%s]", 
@@ -216,8 +223,7 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 		LogEvent(LE_ERROR, __FUNCTION__ ": HandShake not performed, refuse processing the message (Type=%s)", 
 			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
 
-		ResetConnection(); // otherwise they might be out of synch anyway
-		//return 0; TEMP
+		return ParseInvalidData(SensorID, Data, DataLength);
 	}
 
 	// Ask the messages factory to create the appropriate message:
@@ -226,7 +232,8 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ ": failed to create BlueMagicBTBMessage %s",
 			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
-		return 0;
+
+		return ParseInvalidData(SensorID, Data, DataLength);
 	}
 
 	// Deserialize it:
@@ -236,6 +243,7 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 	// If message is incomplete return parsed bytes 0.
 	if (!IsCompleteMessage)
 	{
+		Assert(!CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY);
 		delete BlueMagicBTBMessage;
 		return 0;
 	}
@@ -421,8 +429,10 @@ void CSensorController::DoHandshake()
 
 void CSensorController::ResetConnection()
 {
-	// Clean m_SensorsDataBuffferMap:
+	// ToDo - Implement this !!
+	Assert(false); // TEMPORARY.
 
+	// Clean m_SensorsDataBuffferMap:
 }
 
 void CSensorController::OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessage)
@@ -509,3 +519,37 @@ int CSensorController::GetClockForSensor(int SensorID)
 }
 
 
+bool CSensorController::IsMessageComplete(BYTE *Data, int DataLength)
+{
+	Assert(CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY);
+	if (!CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY)
+		return true;
+
+	return CBlueMagicBTBIncomingMessage::IsMessageComplete(Data, DataLength);
+}
+
+DWORD CSensorController::ParseInvalidData(int SensorID, BYTE *Data, int DataLength)
+{
+	if (CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY) // then we can simply skip to next message
+	{
+		if (IsMessageComplete(Data, DataLength))
+		{
+			LogEvent(LE_WARNING, "Parsing Invalid data on SensorID %d. Skipping to next message", SensorID);
+			return CBlueMagicBTBIncomingMessage::GetPositionOfNextMessage(Data, DataLength);
+		}
+		else // probably will be possible next packet, with more data
+		{
+			LogEvent(LE_WARNING, "Parsing Invalid data on SensorID %d. Waiting for more data", SensorID);
+			return 0;
+		}
+	}
+	else
+	{
+		LogEvent(LE_ERROR, "Parsing Invalid data on SensorID %d. Resetting Connection!", SensorID);
+		// Might get out of sync!! cannot just delete.
+		// Best easiest approach: Disconnect and Reconnect to BTB.
+		ResetConnection(); 
+		return 0;
+
+	}
+}

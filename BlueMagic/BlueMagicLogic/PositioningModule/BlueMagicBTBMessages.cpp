@@ -50,6 +50,22 @@ std::string CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(EBlueM
 }
 
 
+bool CBlueMagicBTBIncomingMessage::IsMessageComplete(BYTE *Data, int DataLength)
+{
+	return (GetPositionOfNextMessage(Data, DataLength) != -1);
+}
+
+int CBlueMagicBTBIncomingMessage::GetPositionOfNextMessage(BYTE *Data, int DataLength)
+{
+	for (int i = 0; i < DataLength-1; i++)
+	{
+		if (Data[i] == TEXTUAL_BTB_PROTOCOL_MESSAGE_TERMINATOR && Data[i+1] == TEXTUAL_BTB_PROTOCOL_MESSAGE_POST_TERMINATOR)
+			return i + 2;
+	}
+
+	return -1;
+}
+
 std::string CBlueMagicBTBOutgoingMessage::BlueMagicBTBMessageTypeToString(EBlueMagicBTBOutgoingMessageType MessageType)
 {
 	switch(MessageType)

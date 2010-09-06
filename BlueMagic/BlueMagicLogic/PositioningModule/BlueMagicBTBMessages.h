@@ -9,8 +9,9 @@
 #include "ISensorEvents.h"
 #include <string>
 
-#define		IS_TEXTUAL_BTB_PROTOCOL				1
-#define		BLUE_MAGIC_BTB_MESSAGE_MAX_SIZE		1024
+#define		IS_TEXTUAL_BTB_PROTOCOL						1
+#define		CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY	(IS_TEXTUAL_BTB_PROTOCOL == 1) // DO NOT CHANGE THIS LINE! It is derivation of IS_TEXTUAL_BTB_PROTOCOL's value
+#define		BLUE_MAGIC_BTB_MESSAGE_MAX_SIZE				1024
 
 
 
@@ -42,6 +43,8 @@ public:
 	virtual void CallEventOnMessage(ISensorEvents* SensorEvents) const = 0;
 
 	static std::string BlueMagicBTBMessageTypeToString(EBlueMagicBTBIncomingMessageType MessageType);
+	static bool IsMessageComplete(BYTE *Data, int DataLength);
+	static int GetPositionOfNextMessage(BYTE *Data, int DataLength);
 
 #if IS_TEXTUAL_BTB_PROTOCOL == 1
 	CBlueMagicBTBIncomingMessage();

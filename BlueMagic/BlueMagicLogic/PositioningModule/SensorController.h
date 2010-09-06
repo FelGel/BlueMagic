@@ -59,7 +59,9 @@ private:
 	// Handle Incoming Messages from BTB
 	void HandleDataReceived(const SDataFromSensor& DataFromSensor);
 	DWORD ParseData(int SensorID, BYTE *Data, int DataLength);
+	DWORD ParseInvalidData(int SensorID, BYTE *Data, int DataLength);
 	bool IsHeaderValid(EBlueMagicBTBIncomingMessageType MessageType);
+	bool IsMessageComplete(BYTE *Data, int DataLength);
 	CBlueMagicBTBIncomingMessage* CreateBlueMagicBTBMessage(EBlueMagicBTBIncomingMessageType MessageType);
 	void CallEventOnMessage(int /*SensorID*/, const CBlueMagicBTBIncomingMessage* Message, UINT /*MessageSize*/);
 
