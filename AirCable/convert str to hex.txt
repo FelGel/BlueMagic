@@ -1,0 +1,10 @@
+922 Q = 0; 
+923 IF Q > 11 THEN 932;
+924 A = x8toi $0[Q];
+925 $300[0] = A;
+926 B = hex8 A;
+927 PRINTS $300[0];
+928 Q = Q + 2;
+929 REM PRINTS $0;
+930 REM PRINTS "\";
+931 GOTO 923;

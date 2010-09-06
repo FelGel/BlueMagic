@@ -1,0 +1,82 @@
+@ERASE
+
+0 REM BlueSpells Scanner Version 0.1
+
+@INIT 1
+0 REM Set LED on
+1 A = pioset 20
+0 REM Baud rate for serial line
+2 A = baud 1152
+0 REM SENSOR_ID
+3 N = 10
+0 REM INQUIRY SCAN COUNTER
+4 M = 0
+0 REM IS_DISCOVERABLE 
+5 I = 0
+0 REM VERSION
+6 V = 1
+0 REM Debug toggle
+7 Z = 0
+0 REM power for scanning in dBm
+0 REM A = defpower 10
+400 RESERVED
+500 001E377281F0
+502 0025BF100359
+503 0025BF100357
+13 A = getaddr
+14 REM IF $0 <> "0025BF100359" THEN 16
+15 REM N = 2 
+16 REM IF $0 <> "0025BF100357" THEN 18
+17 REM N = 3
+18 PRINTV " SENSOR_ID = "
+19 PRINTV N
+20 PRINTS "\n\r"
+24 A = zerocnt
+25 PRINTU $0
+26 STTYS 2
+29 RETURN
+
+@IDLE 30
+30 ALARM 1
+31 A = pioset 20
+32 RETURN
+
+@SLAVE 70
+70 A = pioclr 20
+75 ALARM 1
+197 RETURN
+
+
+@ALARM 600
+600 A = status
+610 IF A <> 0 THEN 660
+620 A = slave 15
+650 ALARM 10
+655 GOTO 700
+660 A = exist "found.log"
+663 IF A = 0 THEN 693
+667 F = open "found.log"
+668 C = size
+671 B = 32
+672 IF C > B THEN 674
+673 B = C
+674 C = C - B
+675 A = read B
+676 $0[B] = 0
+677 PRINTS $0
+678 IF C > 0 THEN 672
+680 REM PRINTS "\n\r\n\r"
+683 REM PRINTS B
+685 REM PRINTS "\n\r"
+686 REM PRINTS C
+687 REM PRINTS "\n\r"
+688 F = close
+690 GOTO 695
+693 PRINTS "NO FILE FOUND"
+695 A = disconnect 0
+700 RETURN
+
+
+
+
+

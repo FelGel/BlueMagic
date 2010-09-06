@@ -3,48 +3,37 @@
 0 REM BlueSpells Scanner Version 0.1
 
 @INIT 1
+1 PRINTU "\n\n\n\rBLUESPELLS"
+2 PRINTU " SENSOR V0.1\n\r"
 0 REM Set LED on
-1 A = pioset 20
+3 A = pioset 20
 0 REM Baud rate for serial line
-2 A = baud 1152
-0 REM SENSOR_ID
-3 N = 10
-0 REM INQUIRY SCAN COUNTER
-4 M = 0
-0 REM IS_DISCOVERABLE 
-5 I = 0
-0 REM VERSION
-6 V = 1
+4 A = baud 1152
 0 REM Debug toggle
-7 Z = 0
+5 Z = 0
 0 REM power for scanning in dBm
-0 REM A = defpower 10
+6 REM A = defpower 10
 400 RESERVED
 500 001E377281F0
 502 0025BF100359
 503 0025BF100357
+7 M = 0
+8 I = 0
 9 A = exist "found.log"
 10 IF A = 0 THEN 12
 11 F = delete "found.log"
 12 F = open "found.log"
 13 A = getaddr
-14 REM IF $0 <> "0025BF100359" THEN 16
-15 REM N = 2 
-16 REM IF $0 <> "0025BF100357" THEN 18
-17 REM N = 3
-18 PRINTV " SENSOR_ID = "
-19 PRINTV N
-20 PRINTV "\n"
-21 B = strlen $0
-22 F = write B
-23 F = close
-24 A = zerocnt
-25 PRINTU $0
-26 STTYS 2
+14 PRINTV "\n"
+15 B = strlen $0
+16 F = write B
+17 F = close
+18 A = zerocnt
+19 PRINTU $0
 29 RETURN
 
 @IDLE 30
-30 REM A = slave 0
+30 REM A = slave -1
 31 PRINTU "\n\rIDLE\n\r"
 33 A = pioclr 20
 48 ALARM 1
@@ -58,44 +47,33 @@
 903 GOTO 939;
 905 A = strlen $0;
 906 IF A = 21 THEN 911;
-907 REM PRINTS "SIZE ERROR: ";
-908 REM PRINTS A;
-909 REM PRINTS "\n\r";
+907 PRINTS "SIZE ERROR: ";
+908 PRINTS A;
+909 PRINTS "\n\r";
 910 GOTO 939;
 911 A = pioset 20
 912 A = pioclr 20;
-913 $300 = $0;
-914 $0[0] = "1";
-915 PRINTV " ";
-916 PRINTV N;
-917 PRINTV " ";
-918 A = readcnt;
-919 PRINTV A;
-921 $301 = $300[17];
-922 PRINTV $301;
-923 PRINTV " ";
-924 $300[12] = 0;
-925 REM $301 = $300[0];
-926 PRINTV $300;
-927 PRINTV "\n\r";
-931 F = append "found.log";
-932 Q = size;
+913 PRINTV " ";
+914 A = readcnt;
+915 PRINTV A;
+916 PRINTV "\n";
+917 F = append "found.log";
+918 Q = size;
 0 REM If file is too large, we just have to let the results go :(
-933 IF Q > 8000 THEN 939;
-934 B = strlen $0;
-935 F = write B;
-936 PRINTS $0;
-937 REM PRINTS "\r";
-938 F = close;
+919 IF Q > 8000 THEN 939;
+920 B = strlen $0;
+921 F = write B;
+922 PRINTS $0;
+923 PRINTS "\r";
+930 F = close;
 939 RETURN
 
 @SLAVE 940
 940 A = slave -1
-941 REM A = slave 0
-942 REM A = link 2 
-943 A = getaddr
-944 REM PRINTS $0
-945 REM PRINTS " CONNECTED\n\r"
+941 REM A = link 2 
+942 A = getaddr
+943 PRINTS $0
+945 PRINTS " CONNECTED\n\r"
 950 A = getaddr
 953 $0 = $503
 955 A = strcmp A
@@ -129,18 +107,18 @@
 59 GOTO 98
 60 A = pioclr 20
 61 M = M + 1
-62 IF M > 100 THEN 100
-63 REM PRINTS "\n\r#"
-64 REM PRINTS M
-65 REM PRINTS "  "
+62 IF M > 10 THEN 100
+63 PRINTS "\n\r#"
+64 PRINTS M
+65 PRINTS "  "
 66 A = getms
-67 REM PRINTS A
-68 REM PRINTS "  "
+67 PRINTS A
+68 PRINTS "  "
 69 A = getaddr
-70 REM PRINTS $0
-71 REM PRINTS "  "
-72 REM PRINTS "\n\rPress 's' "
-75 REM PRINTS "to stop\n\r"
+70 PRINTS $0
+71 PRINTS "  "
+72 PRINTS "\n\rPress 's' "
+75 PRINTS "to stop\n\r"
 0 REM $300[0] = 0
 0 REM TIMEOUTM 1
 0 REM INPUTM $300
@@ -152,10 +130,7 @@
 87 REM TIMEOUTU 1
 90 REM INPUTU $300
 91 IF $300[0] = 115 THEN 100
-92 IF $300[0] <> 54 THEN 96
-93 GOSUB 750
-96 GOSUB 780
-97 A = inquiry -10
+93 A = inquiry -10
 98 ALARM 18
 99 RETURN
 
@@ -191,45 +166,15 @@
 175 WAIT 3
 180 GOTO 196
 190 PRINTS "REBOOTING\n\r"
-191 A = disconnect 1
-192 A = disconnect 0
 195 A = reboot
 196 ALARM 1
 197 RETURN
 
 
-
-
-0 REM BTB_INFO
-750 PRINTS "3 "
-751 PRINTS N
-752 PRINTS " "
-753 A = readcnt
-754 PRINTS A
-755 PRINTS " "
-756 PRINTS V
-757 PRINTS " "
-758 A = getaddr 
-759 PRINTS $0
-760 PRINTS "\n\r"
-779 RETURN
-
-
-0 REM KEEP_ALIVE
-780 PRINTS "0 "
-781 PRINTS N
-782 PRINTS " "
-783 A = readcnt
-784 PRINTS A
-795 PRINTS "\n\r"
-799 RETURN
-
-0 REM CONNECTION STATUS
 800 A = status
 801 E = 0
 802 IF A < 10000 THEN 805
 803 A = A - 10000
-804 REM E = E + 4
 805 IF A < 1000 THEN 810
 806 A = A - 1000
 810 IF A < 100 THEN 820
