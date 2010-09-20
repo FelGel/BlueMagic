@@ -397,6 +397,7 @@ void CSensorController::HandleGetData()
 
 void CSensorController::HandleDefineTopology(/*......*/)
 {
+	// ToDo
 }
 
 void CSensorController::OnTimeout()

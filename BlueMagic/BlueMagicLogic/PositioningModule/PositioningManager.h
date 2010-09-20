@@ -3,6 +3,7 @@
 #include "..\common\threadwithqueue.h"
 #include "ISensorEvents.h"
 #include "SensorControllersContainer.h"
+#include "EstablishmentTopology.h"
 
 class CPositioningManager :	public CThreadWithQueue, public ISensorEvents
 {
@@ -22,4 +23,5 @@ public:
 
 private:
 	CSensorControllersContainer m_SensorControllersContainer;
+	CEstablishmentTopology m_EstablishmentTopology;//CEstablishmentTopologysContainer m_Establishments; 
 };

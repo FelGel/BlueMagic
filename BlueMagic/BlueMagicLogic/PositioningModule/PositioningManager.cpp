@@ -30,6 +30,12 @@ bool CPositioningManager::Init()
 		return false;
 	}
 
+	if (!m_EstablishmentTopology.Init())
+	{
+		LogEvent(LE_FATAL, __FUNCTION__ ": FATAL ERROR! Could not Initialize Establishment Topology!!");
+		return false;
+	}
+
 	// start thread
 	SetTimeout(POSITION_MANAGER_THREAD_TIMEOUT);
 	bool Success = StartThread();
