@@ -14,7 +14,7 @@ struct SSensorInfo
 struct SScannedData
 {
 	/*UCHAR*/ int SensorId;
-	/*short*/ int Clock;
+	DWORD Time; ///*short*/ int Clock;
 	/*BYTE*/  int RSSI;
 	//BYTE  ScannedBDADDRESS[BDADDRESS_LENGTH_IN_BYTES];
 	std::string ScannedBDADDRESS;

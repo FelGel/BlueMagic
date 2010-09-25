@@ -51,7 +51,9 @@ public:
 	virtual bool DeSerialize(IDeSerializer* DeSerializer);
 	virtual bool Parse(CTokenParser MessageStringParser) = 0;
 	virtual int MessageLength() const {return m_MessageLength;}
+	
 	int m_MessageLength;
+	IDeSerializer *m_DeSerializer;
 #endif
 };
 

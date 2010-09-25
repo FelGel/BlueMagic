@@ -4,6 +4,9 @@
 #include "Common/Serializer.h"
 #include "Common/DeSerializer.h"
 
+#include "SensorBufferDeSerializer.h"
+#include "SensorController.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -87,6 +90,7 @@ CBlueMagicBTBIncomingMessage::CBlueMagicBTBIncomingMessage() : m_MessageLength(0
 
 bool CBlueMagicBTBIncomingMessage::DeSerialize(IDeSerializer* DeSerializer)
 {
+	m_DeSerializer = DeSerializer;
 	bool Result = true;
 
 	bool IsFirstByte = true;
@@ -202,12 +206,14 @@ bool CBlueMagicBTBDataMessage::Parse(CTokenParser MessageStringParser)
 
 	SScannedData ScannedData;
 	ScannedData.SensorId = atoi(SensorIDString.c_str());
-	ScannedData.Clock = atoi(ClockString.c_str());
+	int Clock = atoi(ClockString.c_str());
 	ScannedData.RSSI = atoi(RSSIString.c_str());
 	ScannedData.ScannedBDADDRESS = BDADDRESSString;
 
+	ScannedData.Time = ((CSensorBufferDeSerializer *)m_DeSerializer)->GetSensorController()->GetTimeForSensorClock(ScannedData.SensorId, Clock);
+
 	LogEvent(LE_INFO, __FUNCTION__ ": Data message Parsed: SensorId=%d, Clock=%d, RSSI=%d, BDADDRESS=%s", 
-		ScannedData.SensorId, ScannedData.Clock, ScannedData.RSSI, ScannedData.ScannedBDADDRESS.c_str());
+		ScannedData.SensorId, Clock, ScannedData.RSSI, ScannedData.ScannedBDADDRESS.c_str());
 
 	m_ScannedDataList.AddTail(ScannedData);
 

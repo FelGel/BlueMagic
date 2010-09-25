@@ -196,11 +196,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CuidGenerator.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\EstablishmentTopology.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\geometry.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PositioningAlgorithm.cpp"
 				>
 			</File>
 			<File
@@ -213,6 +221,10 @@
 			</File>
 			<File
 				RelativePath=".\PositioningModuleDlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SensorBufferDeSerializer.cpp"
 				>
 			</File>
 			<File
@@ -270,6 +282,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\CuidGenerator.h"
+				>
+			</File>
+			<File
 				RelativePath=".\EstablishmentTopology.h"
 				>
 			</File>
@@ -278,11 +294,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\IPositioningInterface.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ISensorCommands.h"
 				>
 			</File>
 			<File
 				RelativePath=".\ISensorEvents.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PositioningAlgorithm.h"
 				>
 			</File>
 			<File
@@ -299,6 +323,10 @@
 			</File>
 			<File
 				RelativePath=".\Resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SensorBufferDeSerializer.h"
 				>
 			</File>
 			<File

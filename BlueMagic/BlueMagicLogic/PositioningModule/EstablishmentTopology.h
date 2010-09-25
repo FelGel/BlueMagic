@@ -12,6 +12,8 @@ public:
 
 	bool Init();
 
+	int GetEstablishmentID() {return m_EstablishmentID;}
+
 private:
 	//members:
 	int m_EstablishmentID;

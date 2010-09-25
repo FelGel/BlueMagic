@@ -5,6 +5,7 @@
 #include "SensorController.h"
 #include "Common/collectionhelper.h"
 #include "Common/BufferDeSerializer.h"
+#include "SensorBufferDeSerializer.h"
 #include "Common/BufferSerializer.h"
 #include "Common/StringSerializer.h"
 #include "BlueMagicBTBMessages.h"
@@ -16,6 +17,8 @@
 #define TIME_BETWEEN_HANDSHAKE_ATTEMPTS		30000 //milisec
 #define TIME_BETWEEN_KEEP_ALIVES			60000 //milisec
 
+#define MAX_SENSOR_CLOCK_VALUE				SHRT_MAX
+#define MIN_SENSOR_CLOCK_VALUE				SHRT_MIN
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -238,7 +241,7 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength)
 	}
 
 	// Deserialize it:
-	CBufferDeSerializer MessageDeserializer(NULL, (const BYTE *)Data, DataLength, sizeof(BYTE) /*Header=1BYTE(TYPE)*/, true /*IMPORTANT !!*/);
+	CSensorBufferDeSerializer MessageDeserializer(this, NULL, (const BYTE *)Data, DataLength, sizeof(BYTE) /*Header=1BYTE(TYPE)*/, true /*IMPORTANT !!*/);
 	bool IsCompleteMessage = BlueMagicBTBMessage->DeSerialize(&MessageDeserializer);
 
 	// If message is incomplete return parsed bytes 0.
@@ -521,10 +524,15 @@ void CSensorController::SetClockForSensor(int Clock, int SensorID)
 	}
 
 	DWORD TickCount = GetTickCount();
-	SensorInformation->m_TickCountForClock0 = TickCount - Clock * 1000 /*millisec in sec*/;
+	SensorInformation->m_ClockCorrelationData.MatchingTickCount = TickCount;
+	SensorInformation->m_ClockCorrelationData.SensorClock = Clock;
+
+	//SensorInformation->m_TickCountForClock0 = TickCount - Clock * 1000 /*millisec in sec*/;
+
+	// NOTE: Clock might be negative
 }
 
-int CSensorController::GetClockForSensor(int SensorID)
+DWORD CSensorController::GetTimeForSensorClock(int SensorID, int Clock)
 {
 	SSensorInformation* SensorInformation;
 	if (!GetValueFromMap(m_SensorsDataBuffferMap, SensorID, SensorInformation))
@@ -533,9 +541,31 @@ int CSensorController::GetClockForSensor(int SensorID)
 		return 0;
 	}
 
-	return SensorInformation->m_TickCountForClock0;
-}
+	if (SensorInformation->m_ClockCorrelationData.SensorClock > MAX_SENSOR_CLOCK_VALUE)
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Clock information has not been received yet for Sensor %d !!", SensorID);
+		return 0;
+	}
 
+	// Assumptions:
+	// 1. SensorClock was update BEFORE current Clock!
+	// 2. A full int16 loop HAS NOT ELAPSED since last Clock Update!
+
+	DWORD Time = 0;
+	if (Clock >= SensorInformation->m_ClockCorrelationData.SensorClock)
+		Time = SensorInformation->m_ClockCorrelationData.MatchingTickCount 
+			+ (Clock - SensorInformation->m_ClockCorrelationData.SensorClock) * 1000 /*millisec in sec*/;
+	else
+		Time = SensorInformation->m_ClockCorrelationData.MatchingTickCount 
+		+ (MAX_SENSOR_CLOCK_VALUE - SensorInformation->m_ClockCorrelationData.SensorClock) * 1000 /*millisec in sec*/;
+		+ (Clock - MIN_SENSOR_CLOCK_VALUE ) * 1000 /*millisec in sec*/;
+
+	LogEvent(LE_INFO, __FUNCTION__ ": SensorID = %d, Clock =%d, LastSyncClock = %d, LastTickCount = %d, CalculatedTime = %d",
+		SensorID, Clock, SensorInformation->m_ClockCorrelationData.SensorClock, 
+		SensorInformation->m_ClockCorrelationData.MatchingTickCount, Time);
+
+	return Time;
+}
 
 bool CSensorController::IsMessageComplete(BYTE *Data, int DataLength)
 {
