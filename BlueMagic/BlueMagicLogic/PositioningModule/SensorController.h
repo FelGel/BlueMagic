@@ -14,13 +14,25 @@ struct SDataFromSensor
 	DWORD DataLength;
 };
 
+struct SClockCorrelationData
+{
+	SClockCorrelationData()
+	{
+		SensorClock = SHRT_MAX + 1;
+		MatchingTickCount = 0;
+	}
+
+	int SensorClock;
+	DWORD MatchingTickCount;
+};
+
 struct SSensorInformation
 {
-	SSensorInformation() {m_DataBufferOffset = 0; m_TickCountForClock0 = 0;};
+	SSensorInformation() {m_DataBufferOffset = 0;};
 
 	BYTE m_DataBuffer[DATA_BUFFER_SIZE];
 	DWORD m_DataBufferOffset;
-	DWORD m_TickCountForClock0;
+	SClockCorrelationData m_ClockCorrelationData;
 };
 
 enum ESensorConnectionStatus
@@ -50,6 +62,8 @@ public:
 	virtual void GetInfo();
 	virtual void GetData();
 	virtual void DefineTopology(/*......*/);
+
+	DWORD GetTimeForSensorClock(int SensorID, int Clock); // for certain clock
 
 protected:
 	virtual void OnDataReceived(int SerialPortID, BYTE *Data, int DataLength);
@@ -87,7 +101,6 @@ private:
 
 	// Clocks
 	void SetClockForSensor(int Clock, int SensorID);
-	int  GetClockForSensor(int SensorID);
 
 private:
 	ISensorEvents *m_EventsHandler;
