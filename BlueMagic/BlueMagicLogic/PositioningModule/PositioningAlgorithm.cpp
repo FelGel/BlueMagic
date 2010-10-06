@@ -15,7 +15,7 @@ void CPositioningAlgorithm::Advise(CEstablishmentTopology* EstablishmentTopology
 	m_PositioningEventsHandler = PositioningEventsHandler;
 }
 
-void CPositioningAlgorithm::OnScannedData(const SScannedData& ScannedData)
+void CPositioningAlgorithm::OnScannedData(const int &SensorId, const SScannedData& ScannedData)
 {
 	// ToDo :
 	// 1. process

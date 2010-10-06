@@ -16,9 +16,10 @@ public:
 	virtual void OnErrorInTopology(UCHAR SensorId);
 	virtual void OnSensorInfo(SSensorInfo SensorInfo);
 	virtual void OnSensorsInfo(CList<SSensorInfo> *SensorsInfo);
-	virtual void OnIncomingScannedData(CList<SScannedData> *ScannedDataList);
+	virtual void OnIncomingScannedData(int SensorId, SScannedData ScannedData);
 	virtual void OnConnected(UCHAR SensorId);
 	virtual void OnDisconnected(UCHAR SensorId);
+	virtual void OnSensorInSystem(int SensorId, bool IsController, std::string BDADDRESS, std::vector<int> ChildrenSensorIDs);
 
 	// Positioning Algorithm Events
 	virtual void OnPositioning(std::string BDADDRESS, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore);
@@ -28,12 +29,21 @@ public:
 	bool Init();
 	virtual void OnThreadClose();
 
+	// Debugging ScanFiles
+	void CreateScanFile(const int SensorId);
+	void UpdateScanFile(const int &SensorId, const SScannedData& ScannedData);
+	void CloseAllScanFiles();
+
 private:
-	void HandleDataReceived(const SScannedData& ScannedData);
+	void HandleDataReceived(const int &SensorId, const SScannedData& ScannedData);
+	void HandleNewSensorInSystem(const int &SensorId, const bool &IsController, const std::string &BDADDRESS, const std::vector<int> &ChildrenSensorIDs);
 
 private:
 	CSensorControllersContainer m_SensorControllersContainer;
 	CEstablishmentTopology m_EstablishmentTopology;//CEstablishmentTopologysContainer m_Establishments; 
 	CPositioningAlgorithm m_PositioningAlgorithm;
 	IPositioningInterface *m_PositioningInterfaceHandler;
+
+	/* TEMP -> Write to File*/
+	std::map<int /*SensorID*/, CStdioFile*> m_ScanFiles; // SensorId to ScanFile
 };

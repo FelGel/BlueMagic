@@ -1,6 +1,6 @@
 #pragma once
 
-#include <list>
+#include <vector>
 #define BDADDRESS_LENGTH_IN_BYTES 6
 
 struct SSensorInfo
@@ -13,7 +13,6 @@ struct SSensorInfo
 
 struct SScannedData
 {
-	/*UCHAR*/ int SensorId;
 	DWORD Time; ///*short*/ int Clock;
 	/*BYTE*/  int RSSI;
 	//BYTE  ScannedBDADDRESS[BDADDRESS_LENGTH_IN_BYTES];
@@ -26,7 +25,8 @@ public:
 	virtual void OnErrorInTopology(UCHAR SensorId) = 0;
 	virtual void OnSensorInfo(SSensorInfo SensorInfo) = 0;
 	virtual void OnSensorsInfo(CList<SSensorInfo> *SensorsInfo) = 0;
-	virtual void OnIncomingScannedData(CList<SScannedData> *ScannedData) = 0;
+	virtual void OnIncomingScannedData(int SensorId, SScannedData ScannedData) = 0;
 	virtual void OnConnected(UCHAR SensorId) = 0;
 	virtual void OnDisconnected(UCHAR SensorId) = 0;
+	virtual void OnSensorInSystem(int SensorId, bool IsController, std::string BDADDRESS, std::vector<int> ChildrenSensorIDs) = 0;
 };

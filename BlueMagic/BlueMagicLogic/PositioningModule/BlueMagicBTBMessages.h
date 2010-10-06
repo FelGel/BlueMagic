@@ -117,10 +117,11 @@ public:
 	virtual int                 MessageType() const { return BTBIncomingData; }
 
 	virtual void				CallEventOnMessage(ISensorEvents* SensorEvents) const
-	{ SensorEvents->OnIncomingScannedData((CList<SScannedData> *)&m_ScannedDataList); }
+	{ SensorEvents->OnIncomingScannedData(m_SensorId, m_ScannedData); }
 
 	//Members:
-	CList<SScannedData> m_ScannedDataList;
+	/*BYTE*/int m_SensorId;
+	SScannedData m_ScannedData;
 };
 RegisterBlueMagicBTBMessage(BTBIncomingData, CBlueMagicBTBDataMessage)
 

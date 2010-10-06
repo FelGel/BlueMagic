@@ -14,6 +14,9 @@ public:
 
 	void RemoveObjects();
 
+	DWORD				GetNumberOfSensorControllers()		{return GetNumberOfObjects();}
+	CSensorController*	GetSensorControllerAt(int index)	{return (CSensorController*)GetObjectAt(index);}
+
 private:
 	// Implemented CSensorControllersContainer method
 	virtual CSensorController* CreateObject(const char* ConfigSection, int ObjectIndex);

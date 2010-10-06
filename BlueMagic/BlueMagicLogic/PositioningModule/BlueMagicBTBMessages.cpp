@@ -204,18 +204,19 @@ bool CBlueMagicBTBDataMessage::Parse(CTokenParser MessageStringParser)
 	DefineAndGetStringParam(RSSIString);
 	DefineAndGetStringParam(BDADDRESSString);
 
+	m_SensorId = atoi(SensorIDString.c_str());
+
 	SScannedData ScannedData;
-	ScannedData.SensorId = atoi(SensorIDString.c_str());
 	int Clock = atoi(ClockString.c_str());
 	ScannedData.RSSI = atoi(RSSIString.c_str());
 	ScannedData.ScannedBDADDRESS = BDADDRESSString;
 
-	ScannedData.Time = ((CSensorBufferDeSerializer *)m_DeSerializer)->GetSensorController()->GetTimeForSensorClock(ScannedData.SensorId, Clock);
+	ScannedData.Time = ((CSensorBufferDeSerializer *)m_DeSerializer)->GetSensorController()->GetTimeForSensorClock(m_SensorId, Clock);
 
 	LogEvent(LE_INFO, __FUNCTION__ ": Data message Parsed: SensorId=%d, Clock=%d, RSSI=%d, BDADDRESS=%s", 
-		ScannedData.SensorId, Clock, ScannedData.RSSI, ScannedData.ScannedBDADDRESS.c_str());
+		m_SensorId, Clock, ScannedData.RSSI, ScannedData.ScannedBDADDRESS.c_str());
 
-	m_ScannedDataList.AddTail(ScannedData);
+	m_ScannedData = ScannedData;
 
 	return true;
 }

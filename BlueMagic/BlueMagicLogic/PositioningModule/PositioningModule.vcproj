@@ -338,6 +338,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SensorInformation.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Serial.h"
 				>
 			</File>

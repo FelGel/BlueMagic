@@ -1,11 +1,10 @@
 #pragma once
 #include "..\common\threadwithqueue.h"
+#include "SensorInformation.h"
 #include "ISensorEvents.h"
 #include "ISensorCommands.h"
 #include "SerialPort.h"
 #include "BlueMagicBTBMessages.h"
-
-#define DATA_BUFFER_SIZE	10 * 1024 // 10kb
 
 struct SDataFromSensor
 {
@@ -14,46 +13,12 @@ struct SDataFromSensor
 	DWORD DataLength;
 };
 
-struct SClockCorrelationData
-{
-	SClockCorrelationData()
-	{
-		SensorClock = SHRT_MAX + 1;
-		MatchingTickCount = 0;
-	}
 
-	int SensorClock;
-	DWORD MatchingTickCount;
-};
-
-struct SSensorInformation
-{
-	SSensorInformation() {m_DataBufferOffset = 0;};
-
-	BYTE m_DataBuffer[DATA_BUFFER_SIZE];
-	DWORD m_DataBufferOffset;
-	SClockCorrelationData m_ClockCorrelationData;
-};
-
-enum ESensorConnectionStatus
-{
-	SensorNotConnected,
-	SensorConnected,
-	SensorAttemptsAtConnection,
-	SensorResettingConnection,
-};
-
-enum ESensorHandshakeStatus
-{
-	SensorNotHandshaked,
-	SensorHandshaked,
-	SensorHandshakeFailed
-};
 
 class CSensorController : public CThreadWithQueue, public ISerialPortEvents, ISensorCommands
 {
 public:
-	CSensorController(int SensorID, int ComPort, std::string BDADDRESS);
+	CSensorController(int SensorID, int ComPort, std::string BDADDRESS, std::vector<int> ChildrenSensorIDs);
 	~CSensorController(void);
 
 	bool Init(ISensorEvents *Handler);
@@ -72,7 +37,7 @@ protected:
 private:
 	// Handle Incoming Messages from BTB
 	void HandleDataReceived(const SDataFromSensor& DataFromSensor);
-	DWORD ParseData(int SensorID, BYTE *Data, int DataLength);
+	DWORD ParseData(int SensorID, BYTE *Data, int DataLength, SSensorInformation* SensorInfo);
 	DWORD ParseInvalidData(int SensorID, BYTE *Data, int DataLength);
 	bool IsHeaderValid(EBlueMagicBTBIncomingMessageType MessageType);
 	bool IsMessageComplete(BYTE *Data, int DataLength);
@@ -91,31 +56,44 @@ private:
 	
 	// handshake setup
 	void DoHandshake();
-	void OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessage);
+	void OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessage, SSensorInformation* SensorInfo);
+	void CheckHandshakeStatus(DWORD TickCount);
+	ESensorHandshakeStatus GetSensorBranchHandshakeStatus(int SensorID);
+	ESensorHandshakeStatus GetSensorControllerBranchHandshakeStatus();
 	
 	// Connection maintenance
-	void ResetConnection();
-	void OnConnectionTimedOut();
+	void ResetConnection(int SensorID);
+	void OnConnectionTimedOut(SSensorInformation *SensorInformation);
 	void OnValidMessageArrived(int SensorID);
 	void OnBTBKeepAliveMessage(CBlueMagicBTBKeepAliveMessage *BTBKeepAliveMessage);
+	void CheckPhysicalConnectionStatus(DWORD TickCount);
+	void CheckLogicalConnectionStatus(DWORD TickCount);
 
 	// Clocks
 	void SetClockForSensor(int Clock, int SensorID);
+
+	// Sensor Info Service Functions 
+	SSensorInformation* GetSensorControllerInfo();
+	bool BuildSensorControllerInfoTree();
+	bool BuildSensorControllerInfoBranch(int SensorID);
+	bool LookupRemoteSensorInConfigurationAndParse(int SensorID);
+	bool ParseRemoteSensorsConfiguration(int ObjectIndex, std::string ConfigSection);
+	void ReportSensorsStatusToPositionManager();
 
 private:
 	ISensorEvents *m_EventsHandler;
 	CSerialPort m_SerialPort;
 
+	std::string m_BDADDRESS;
 	int m_SensorID;
 	int m_ComPort;
-	std::string m_BDADDRESS;
 
-	ESensorConnectionStatus m_ConnectionStatus;
+	ESensorConnectionStatus m_PhysicalConnectionStatus;
 	DWORD m_LastConnectionAttemptTickCount;
-	DWORD m_LastPacketRecievedTickCount;
+	DWORD m_LastHandshakeAttemptTickCount; // One counter per SensorController as GetInfo is a broadcast message
 
-	ESensorHandshakeStatus m_HandshakeStatus;
-	DWORD m_LastHandshakeAttemptTickCount;
+	BYTE m_DataBuffer[DATA_BUFFER_SIZE];
+	DWORD m_DataBufferOffset;
 
 	std::map<int /*SensorId*/, SSensorInformation*> m_SensorsDataBuffferMap;
 };
