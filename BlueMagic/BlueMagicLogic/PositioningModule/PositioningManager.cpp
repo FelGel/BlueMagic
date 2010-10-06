@@ -58,7 +58,7 @@ void CPositioningManager::OnErrorInTopology(UCHAR /*SensorId*/)
 
 }
 
-void CPositioningManager::OnSensorInfo(int SensorId, SSensorInfo /*SensorInfo*/)
+void CPositioningManager::OnSensorInfo(int /*SensorId*/, SSensorInfo /*SensorInfo*/)
 {
 
 }

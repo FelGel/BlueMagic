@@ -86,7 +86,7 @@ std::string CBlueMagicBTBOutgoingMessage::BlueMagicBTBMessageTypeToString(EBlueM
 
 
 #if IS_TEXTUAL_BTB_PROTOCOL == 1
-CBlueMagicBTBIncomingMessage::CBlueMagicBTBIncomingMessage() : m_MessageLength(0) {}
+CBlueMagicBTBIncomingMessage::CBlueMagicBTBIncomingMessage() : m_MessageLength(0), m_SensorId(0) {}
 
 bool CBlueMagicBTBIncomingMessage::DeSerialize(IDeSerializer* DeSerializer)
 {
@@ -121,15 +121,25 @@ bool CBlueMagicBTBIncomingMessage::DeSerialize(IDeSerializer* DeSerializer)
 	m_MessageLength = DataMessageString.length() + 2/*first byte + post terminator*/;
 
 	CTokenParser MessageStringParser(DataMessageString.c_str());
+	
+	if (!ParseHeader(MessageStringParser))
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to parse header. Message %s", 
+			BlueMagicBTBMessageTypeToString((EBlueMagicBTBIncomingMessageType)MessageType()).c_str());
+		return false;
+	}
+
 	return Parse(MessageStringParser);
 }
 #endif
 
+bool CBlueMagicBTBIncomingMessage::ParseHeader(CTokenParser &MessageStringParser)
+{
+	DefineAndGetStringParam(SensorIDString); // NOTE: this line May return FALSE !!
+	m_SensorId = atoi(SensorIDString.c_str());
 
-
-
-CBlueMagicBTBKeepAliveMessage::CBlueMagicBTBKeepAliveMessage(BYTE SensorId, short Clock) 
-: m_SensorId(SensorId), m_Clock(Clock) {}
+	return true;
+}
 
 bool CBlueMagicBTBKeepAliveMessage::Serialize(ISerializer* /*Serializer*/) const
 {
@@ -146,12 +156,12 @@ bool CBlueMagicBTBKeepAliveMessage::Serialize(ISerializer* /*Serializer*/) const
 }
 
 #if (IS_TEXTUAL_BTB_PROTOCOL == 1)
-bool CBlueMagicBTBKeepAliveMessage::Parse(CTokenParser MessageStringParser)
+bool CBlueMagicBTBKeepAliveMessage::Parse(CTokenParser &MessageStringParser)
 {
-	DefineAndGetStringParam(SensorIDString);
+//	DefineAndGetStringParam(SensorIDString);
 	DefineAndGetStringParam(ClockString);
 
-	m_SensorId = atoi(SensorIDString.c_str());
+//	m_SensorId = atoi(SensorIDString.c_str());
 	m_Clock = atoi(ClockString.c_str());
 
 	LogEvent(LE_INFO, __FUNCTION__ ": KeepAlive message Parsed: SensorId=%d, Clock=%d", 
@@ -197,14 +207,14 @@ bool CBlueMagicBTBDataMessage::Serialize(ISerializer* /*Serializer*/) const
 
 
 #if IS_TEXTUAL_BTB_PROTOCOL == 1
-bool CBlueMagicBTBDataMessage::Parse(CTokenParser MessageStringParser)
+bool CBlueMagicBTBDataMessage::Parse(CTokenParser &MessageStringParser)
 {
-	DefineAndGetStringParam(SensorIDString);
+//	DefineAndGetStringParam(SensorIDString);
 	DefineAndGetStringParam(ClockString);
 	DefineAndGetStringParam(RSSIString);
 	DefineAndGetStringParam(BDADDRESSString);
 
-	m_SensorId = atoi(SensorIDString.c_str());
+//	m_SensorId = atoi(SensorIDString.c_str());
 
 	SScannedData ScannedData;
 	int Clock = atoi(ClockString.c_str());
@@ -260,14 +270,14 @@ bool CBlueMagicBTBInfoMessage::Serialize(ISerializer* /*Serializer*/) const
 }
 
 #if (IS_TEXTUAL_BTB_PROTOCOL == 1)
-bool CBlueMagicBTBInfoMessage::Parse(CTokenParser MessageStringParser)
+bool CBlueMagicBTBInfoMessage::Parse(CTokenParser &MessageStringParser)
 {
-	DefineAndGetStringParam(SensorIDString);
+//	DefineAndGetStringParam(SensorIDString);
 	DefineAndGetStringParam(ClockString);
 	DefineAndGetStringParam(Version);
 	DefineAndGetStringParam(SensorBDADDRESS);
 
-	m_SensorId = atoi(SensorIDString.c_str());
+//	m_SensorId = atoi(SensorIDString.c_str());
 	m_SensorInfo.Clock = atoi(ClockString.c_str());
 	m_SensorInfo.Version = atoi(Version.c_str());
 	m_SensorInfo.SensorBDADDRESS = SensorBDADDRESS;

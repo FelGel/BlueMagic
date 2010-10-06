@@ -805,7 +805,6 @@ bool CSensorController::LookupRemoteSensorInConfigurationAndParse(int SensorID)
 		return false;
 	}
 
-	bool ObjectsCreatedOk = true;
 	for (int i = 0; (unsigned)i < ObjectSections.size(); ++i) 
 	{
 		std::string ObjectSection = ObjectSections[i].ItemValue;
