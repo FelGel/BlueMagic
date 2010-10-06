@@ -144,9 +144,10 @@ public:
 	virtual int                 MessageType() const { return BTBInfo; }
 
 	virtual void				CallEventOnMessage(ISensorEvents* SensorEvents) const
-	{ SensorEvents->OnSensorInfo(m_SensorInfo); }
+	{ SensorEvents->OnSensorInfo(m_SensorId, m_SensorInfo); }
 
 	//Members:
+	/*BYTE*/int m_SensorId;
 	SSensorInfo m_SensorInfo;
 };
 RegisterBlueMagicBTBMessage(BTBInfo, CBlueMagicBTBInfoMessage)

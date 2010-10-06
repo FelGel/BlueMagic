@@ -267,13 +267,13 @@ bool CBlueMagicBTBInfoMessage::Parse(CTokenParser MessageStringParser)
 	DefineAndGetStringParam(Version);
 	DefineAndGetStringParam(SensorBDADDRESS);
 
-	m_SensorInfo.SensorId = atoi(SensorIDString.c_str());
+	m_SensorId = atoi(SensorIDString.c_str());
 	m_SensorInfo.Clock = atoi(ClockString.c_str());
 	m_SensorInfo.Version = atoi(Version.c_str());
 	m_SensorInfo.SensorBDADDRESS = SensorBDADDRESS;
 
 	LogEvent(LE_INFO, __FUNCTION__ ": BTB INFO message Parsed: SensorId=%d, Clock=%d, Version=%d, SensorBDADDRESS=%s", 
-		m_SensorInfo.SensorId, m_SensorInfo.Clock, m_SensorInfo.Version, m_SensorInfo.SensorBDADDRESS.c_str());
+		m_SensorId, m_SensorInfo.Clock, m_SensorInfo.Version, m_SensorInfo.SensorBDADDRESS.c_str());
 
 	return true;
 }

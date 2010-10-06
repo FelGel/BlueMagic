@@ -58,15 +58,11 @@ void CPositioningManager::OnErrorInTopology(UCHAR /*SensorId*/)
 
 }
 
-void CPositioningManager::OnSensorInfo(SSensorInfo /*SensorInfo*/)
+void CPositioningManager::OnSensorInfo(int SensorId, SSensorInfo /*SensorInfo*/)
 {
 
 }
 
-void CPositioningManager::OnSensorsInfo(CList<SSensorInfo> * /*SensorsInfo*/)
-{
-
-}
 
 void CPositioningManager::OnIncomingScannedData(int SensorId, SScannedData ScannedData)
 {
@@ -142,7 +138,7 @@ void CPositioningManager::CreateScanFile(const int SensorId)
 		SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
 
 	CStdioFile *ScanFile = new CStdioFile;
-	if (!ScanFile->Open(FileName, CFile::modeCreate | CFile::modeWrite | CFile::typeText ))
+	if (!ScanFile->Open(FileName, CFile::modeCreate | CFile::modeWrite | CFile::typeText /*| CFile::shareDenyWrite*/))
 	{
 		DWORD err = GetLastError();
 		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to open %s!! ErrorCode = %d", FileName, err);
@@ -167,7 +163,7 @@ void CPositioningManager::UpdateScanFile(const int &SensorId, const SScannedData
 	SYSTEMTIME SystemTime;
 	GetSystemTime(&SystemTime);
 
-	DataString.Format("%s, %d, %d:%d:%d.%d\n", ScannedData.ScannedBDADDRESS.c_str(), ScannedData.RSSI,
+	DataString.Format("%s, %d, %d:%d:%d\n", ScannedData.ScannedBDADDRESS.c_str(), ScannedData.RSSI,
 		SystemTime.wHour,SystemTime.wMinute,SystemTime.wSecond);
 
 	CStdioFile *ScanFile;

@@ -5,7 +5,6 @@
 
 struct SSensorInfo
 {
-	/*UCHAR*/ int SensorId;
 	/*short*/ int Clock;
 	int Version;
 	std::string SensorBDADDRESS;
@@ -23,8 +22,7 @@ class ISensorEvents
 {
 public:
 	virtual void OnErrorInTopology(UCHAR SensorId) = 0;
-	virtual void OnSensorInfo(SSensorInfo SensorInfo) = 0;
-	virtual void OnSensorsInfo(CList<SSensorInfo> *SensorsInfo) = 0;
+	virtual void OnSensorInfo(int SensorId, SSensorInfo SensorInfo) = 0;
 	virtual void OnIncomingScannedData(int SensorId, SScannedData ScannedData) = 0;
 	virtual void OnConnected(UCHAR SensorId) = 0;
 	virtual void OnDisconnected(UCHAR SensorId) = 0;

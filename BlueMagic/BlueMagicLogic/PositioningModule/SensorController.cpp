@@ -472,7 +472,7 @@ void CSensorController::ResetConnection(int SensorID)
 
 void CSensorController::OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessage, SSensorInformation* SensorInfo)
 {
-	SetClockForSensor(BTBInfoMessage->m_SensorInfo.Clock, BTBInfoMessage->m_SensorInfo.SensorId);
+	SetClockForSensor(BTBInfoMessage->m_SensorInfo.Clock, BTBInfoMessage->m_SensorId);
 
 	if (SensorInfo->m_HandshakeStatus == SensorHandshakeFailed)
 	{
@@ -491,10 +491,10 @@ void CSensorController::OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessag
 		NewHandshakeStatus = SensorHandshakeFailed;
 	}
 
-	if (BTBInfoMessage->m_SensorInfo.SensorId != SensorInfo->m_SensorID)
+	if (BTBInfoMessage->m_SensorId != SensorInfo->m_SensorID)
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ ": WRONG SensorID!! Presumably Sensor %d (via port %d) reports SensorID %d",
-			SensorInfo->m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.SensorId);
+			SensorInfo->m_SensorID, m_ComPort, BTBInfoMessage->m_SensorId);
 
 		NewHandshakeStatus = SensorHandshakeFailed;
 	}
@@ -518,15 +518,15 @@ void CSensorController::OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessag
 	{
 		if (SensorInfo->m_HandshakeStatus != SensorHandshaked)
 			LogEvent(LE_INFOHIGH, __FUNCTION__ ": Sensor %d on (via port %d) Handshaked successfully. Version = %d, SensorId = %d, SensorBDADDRESS = %s",
-				SensorInfo->m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.Version, BTBInfoMessage->m_SensorInfo.SensorId, BTBInfoMessage->m_SensorInfo.SensorBDADDRESS.c_str());
+				SensorInfo->m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.Version, BTBInfoMessage->m_SensorId, BTBInfoMessage->m_SensorInfo.SensorBDADDRESS.c_str());
 		else
 			LogEvent(LE_INFO, __FUNCTION__ ": Sensor %d on (via port %d) Handshake verified. Version = %d, SensorId = %d, SensorBDADDRESS = %s",
-			SensorInfo->m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.Version, BTBInfoMessage->m_SensorInfo.SensorId, BTBInfoMessage->m_SensorInfo.SensorBDADDRESS.c_str());
+			SensorInfo->m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.Version, BTBInfoMessage->m_SensorId, BTBInfoMessage->m_SensorInfo.SensorBDADDRESS.c_str());
 	}
 	else
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ ": Sensor %d on (via port %d) Handshaked FAILED. Version = %d, SensorId = %d, SensorBDADDRESS = %s",
-			SensorInfo->m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.Version, BTBInfoMessage->m_SensorInfo.SensorId, BTBInfoMessage->m_SensorInfo.SensorBDADDRESS.c_str());
+			SensorInfo->m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.Version, BTBInfoMessage->m_SensorId, BTBInfoMessage->m_SensorInfo.SensorBDADDRESS.c_str());
 	}
 
 	SensorInfo->m_HandshakeStatus = NewHandshakeStatus;
