@@ -122,6 +122,11 @@ void CSensorController::HandleDataReceived(const SDataFromSensor& DataFromSensor
 	LogEvent(LE_DEBUG, __FUNCTION__ ": SensorID=%d DataLength=%d, Data(hexa)=%X, Data(chars)=%s", 
 		DataFromSensor.SensorID, DataFromSensor.DataLength, DataFromSensor.Data, DataFromSensor.Data);
 
+	Assert(DataFromSensor.SensorID == m_SensorID);
+	if (DataFromSensor.SensorID != m_SensorID)
+		LogEvent(LE_ERROR, __FUNCTION__ ": SensorController %d has received a message from other SensorController, %d",
+			m_SensorID, DataFromSensor.SensorID);
+
 	//char hexval[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
 	//std::string Str;
@@ -148,24 +153,8 @@ void CSensorController::HandleDataReceived(const SDataFromSensor& DataFromSensor
 
 	if (GetSensorControllerInfo()->m_HandshakeStatus == SensorHandshakeFailed)
 	{
-		LogEvent(LE_ERROR, __FUNCTION__ ": Data received on Sensor %d Port %d, (from Sensor %d), yet handshake of Sensor Controller (%d) previously failed !! IGNORING DATA",
-			m_SensorID, m_ComPort, DataFromSensor.SensorID, m_SensorID);
-		delete[] DataFromSensor.Data;
-		return;
-	}
-
-	SSensorInformation* SensorInfo;
-	if (!GetValueFromMap(m_SensorsDataBuffferMap, DataFromSensor.SensorID, SensorInfo))
-	{
-		LogEvent(LE_ERROR, __FUNCTION__ ": SensorID %d is not in map!! cannot handle its data", DataFromSensor.SensorID);
-		delete[] DataFromSensor.Data;
-		return;
-	}
-
-	if (SensorInfo->m_HandshakeStatus == SensorHandshakeFailed)
-	{
-		LogEvent(LE_ERROR, __FUNCTION__ ": Data received on Sensor %d Port %d, (from Sensor %d), yet handshake of sensor %d previously failed !! IGNORING DATA",
-			m_SensorID, m_ComPort, DataFromSensor.SensorID, DataFromSensor.SensorID);
+		LogEvent(LE_ERROR, __FUNCTION__ ": Data received on Sensor Controller %d Port %d, yet handshake of Sensor Controller previously failed !! IGNORING DATA",
+			m_SensorID, m_ComPort);
 		delete[] DataFromSensor.Data;
 		return;
 	}
@@ -201,7 +190,7 @@ void CSensorController::HandleDataReceived(const SDataFromSensor& DataFromSensor
 			break; // there's no complete message in buffer
 		}
 
-		ParsedBytes = ParseData(DataFromSensor.SensorID, CurrentPositionInBuffer, CurrentBufferSize, SensorInfo);
+		ParsedBytes = ParseData(CurrentPositionInBuffer, CurrentBufferSize);
 		if (ParsedBytes == 0)
 			break;
 		ParsedBytesSoFar += ParsedBytes;
@@ -225,11 +214,9 @@ void CSensorController::HandleDataReceived(const SDataFromSensor& DataFromSensor
 		LogEvent(LE_WARNING, __FUNCTION__ ": either handshake failed or PhysicalConnectionStatus is resetting for sensor %d", m_SensorID);
 }
 
-DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength, SSensorInformation* SensorInfo)
+DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 {
-	Assert(SensorInfo != NULL);
-
-	// BTB header only consists of MessageType:
+	// First examine MessageType:
 	EBlueMagicBTBIncomingMessageType MessageType = (EBlueMagicBTBIncomingMessageType)*(BYTE *)Data;
 
 	if (!IsHeaderValid(MessageType))
@@ -237,28 +224,19 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength, SSe
 		LogEvent(LE_ERROR, __FUNCTION__ ": Invalid Message: Type [%s]", 
 			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
 		
-		return ParseInvalidData(SensorID, Data, DataLength);
+		return ParseInvalidData(Data, DataLength);
 	}
 
 	LogEvent(LE_INFOLOW, __FUNCTION__ ": Message: Type [%s]", 
 		CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
 
-	if (GetSensorControllerInfo()->m_HandshakeStatus != SensorHandshaked 
-		&& (MessageType != BTBInfo || SensorID != m_SensorID))
+	// Verify SensorController is properly Handshaked
+	if (GetSensorControllerInfo()->m_HandshakeStatus != SensorHandshaked && (MessageType != BTBInfo))
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ ": Sensor Controller HandShake not performed, refuse processing the message (Type=%s) from SensorID %d", 
-			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str(), SensorID);
+			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str(), m_SensorID);
 
-		return ParseInvalidData(SensorID, Data, DataLength);
-	}
-
-	if (SensorInfo->m_HandshakeStatus != SensorHandshaked 
-		&& MessageType != BTBInfo && SensorID == SensorInfo->m_SensorID)
-	{
-		LogEvent(LE_ERROR, __FUNCTION__ ": HandShake not performed on Sensor %d, refuse processing the message (Type=%s)", 
-			SensorID, CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
-
-		return ParseInvalidData(SensorID, Data, DataLength);
+		return ParseInvalidData(Data, DataLength);
 	}
 
 	// Ask the messages factory to create the appropriate message:
@@ -268,7 +246,7 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength, SSe
 		LogEvent(LE_ERROR, __FUNCTION__ ": failed to create BlueMagicBTBMessage %s",
 			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
 
-		return ParseInvalidData(SensorID, Data, DataLength);
+		return ParseInvalidData(Data, DataLength);
 	}
 
 	// Deserialize it:
@@ -285,9 +263,32 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength, SSe
 	Assert(BlueMagicBTBMessage->MessageLength() >= 0);
 	Assert(BlueMagicBTBMessage->MessageType() == MessageType);
 
+	
+	// RETURN ParsedBytes = size + sizeof(BYTE) for header !!!!
+	int MessageSize = BlueMagicBTBMessage->MessageLength();
+	int ParsedBytes = MessageSize + sizeof(BYTE);
 
-	OnValidMessageArrived(SensorID);
 
+	// Extract SSensorInformation based on Sending Sensor in Header
+	SSensorInformation* SensorInfo;
+	if (!GetValueFromMap(m_SensorsDataBuffferMap, BlueMagicBTBMessage->m_SensorId, SensorInfo))
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": SensorID %d is not in map!! cannot handle its data", BlueMagicBTBMessage->m_SensorId);
+		
+		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
+	}
+
+	// Verify The Sending Sensor is properly Handshaked
+	if (SensorInfo->m_HandshakeStatus != SensorHandshaked 
+		&& MessageType != BTBInfo && SensorInfo->m_SensorID == SensorInfo->m_SensorID)
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": HandShake not performed on Sensor %d (via Sensor Controller %d), refuse processing the message (Type=%s)", 
+			SensorInfo->m_SensorID, m_SensorID, CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
+
+		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
+	}
+
+	OnValidMessageArrived(SensorInfo->m_SensorID);
 
 	if (/*m_TraceInterfaceMessages ||*/ GetLogLevel() <= LE_INFOLOW)
 	{
@@ -297,15 +298,11 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength, SSe
 			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str(), BlueMagicBTBMessage->MessageLength(), StringSerializer.GetString().c_str());
 	}
 
-	// RETURN ParsedBytes = size + sizeof(BYTE) for header !!!!
-	int MessageSize = BlueMagicBTBMessage->MessageLength();
-	int ParsedBytes = MessageSize + sizeof(BYTE);
-
 	if (MessageType == BTBInfo) // Handshake Message
 	{
 		OnBTBInfoMessage((CBlueMagicBTBInfoMessage *)BlueMagicBTBMessage, SensorInfo);
 		
-		if (SensorInfo->m_HandshakeStatus == SensorHandshakeFailed)
+		if (GetSensorControllerInfo()->m_HandshakeStatus == SensorHandshakeFailed)
 			ParsedBytes = 0; // intentionally. so parsing will cease immediately!
 	}
 	else if (MessageType == BTBKeepAlive)
@@ -315,7 +312,7 @@ DWORD CSensorController::ParseData(int SensorID, BYTE *Data, int DataLength, SSe
 	else // Any other message
 	{
 		// Finally, call the appropriate event:
-		CallEventOnMessage(SensorID, BlueMagicBTBMessage, DataLength);
+		CallEventOnMessage(BlueMagicBTBMessage, DataLength);
 	}
 
 	delete BlueMagicBTBMessage;
@@ -332,7 +329,7 @@ CBlueMagicBTBIncomingMessage* CSensorController::CreateBlueMagicBTBMessage(EBlue
 	return CBlueMagicMessageFactory<EBlueMagicBTBIncomingMessageType, CBlueMagicBTBIncomingMessage>::GetBlueMagicMessageFactory()->CreateBlueMagicMessage(MessageType);
 }
 
-void CSensorController::CallEventOnMessage(int /*SensorID*/, const CBlueMagicBTBIncomingMessage* Message, UINT /*MessageSize*/)
+void CSensorController::CallEventOnMessage(const CBlueMagicBTBIncomingMessage* Message, UINT /*MessageSize*/)
 {
 	Assert(m_EventsHandler != NULL);
 	if (m_EventsHandler == NULL)
@@ -594,27 +591,27 @@ bool CSensorController::IsMessageComplete(BYTE *Data, int DataLength)
 	return CBlueMagicBTBIncomingMessage::IsMessageComplete(Data, DataLength);
 }
 
-DWORD CSensorController::ParseInvalidData(int SensorID, BYTE *Data, int DataLength)
+DWORD CSensorController::ParseInvalidData(BYTE *Data, int DataLength)
 {
 	if (CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY) // then we can simply skip to next message
 	{
 		if (IsMessageComplete(Data, DataLength))
 		{
-			LogEvent(LE_WARNING, "Parsing Invalid data on SensorID %d. Skipping to next message", SensorID);
+			LogEvent(LE_WARNING, "Parsing Invalid data on SensorID %d. Skipping to next message", m_SensorID);
 			return CBlueMagicBTBIncomingMessage::GetPositionOfNextMessage(Data, DataLength);
 		}
 		else // probably will be possible next packet, with more data
 		{
-			LogEvent(LE_WARNING, "Parsing Invalid data on SensorID %d. Waiting for more data", SensorID);
+			LogEvent(LE_WARNING, "Parsing Invalid data on SensorID %d. Waiting for more data", m_SensorID);
 			return 0;
 		}
 	}
 	else
 	{
-		LogEvent(LE_ERROR, "Parsing Invalid data on SensorID %d. Resetting Connection!", SensorID);
+		LogEvent(LE_ERROR, "Parsing Invalid data on SensorID %d. Resetting Connection!", m_SensorID);
 		// Might get out of sync!! cannot just delete.
 		// Best easiest approach: Disconnect and Reconnect to BTB.
-		ResetConnection(SensorID); 
+		ResetConnection(m_SensorID); 
 		return 0;
 
 	}

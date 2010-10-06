@@ -14,7 +14,6 @@
 #define		BLUE_MAGIC_BTB_MESSAGE_MAX_SIZE				1024
 
 
-
 // Decoder Messages Enum:
 // ----------------------
 enum EBlueMagicBTBIncomingMessageType
@@ -36,6 +35,7 @@ enum EBlueMagicBTBOutgoingMessageType
 	EBlueMagicBTBOutgoingMessageType_MAX
 };
 // If more than 4, EBlueMagicMessageType should be changed!!!
+
 
 class CBlueMagicBTBIncomingMessage : public CBlueMagicMessage
 {
