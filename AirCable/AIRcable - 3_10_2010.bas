@@ -128,8 +128,8 @@
 58 A = slave -20
 59 GOTO 98
 60 A = pioclr 20
-61 M = M + 1
-62 IF M > 100 THEN 100
+61 REM M = M + 1
+62 REM IF M > 100 THEN 100
 63 REM PRINTS "\n\r#"
 64 REM PRINTS M
 65 REM PRINTS "  "
