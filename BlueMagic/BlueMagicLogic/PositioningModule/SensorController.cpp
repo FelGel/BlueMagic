@@ -64,6 +64,8 @@ bool CSensorController::Init(ISensorEvents *Handler)
 		return false;
 	}
 
+	DoHandshake();
+
 	return true;
 }
 
@@ -101,8 +103,6 @@ bool CSensorController::ConnectToPort()
 		m_SensorID, m_ComPort);
 
 	m_PhysicalConnectionStatus = SensorConnected;
-
-	DoHandshake();
 
 	return true;
 }
@@ -185,7 +185,7 @@ void CSensorController::HandleDataReceived(const SDataFromSensor& DataFromSensor
 
 		if (CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY && !IsMessageComplete(CurrentPositionInBuffer, CurrentBufferSize))
 		{
-			LogEvent(LE_INFO, __FUNCTION__ ": There is not yet a complete message on Sensor %d Port %d.",
+			LogEvent(LE_INFOLOW, __FUNCTION__ ": There is not yet a complete message on Sensor %d Port %d.",
 				m_SensorID, m_ComPort);
 			break; // there's no complete message in buffer
 		}
@@ -233,8 +233,8 @@ DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 	// Verify SensorController is properly Handshaked
 	if (GetSensorControllerInfo()->m_HandshakeStatus != SensorHandshaked && (MessageType != BTBInfo))
 	{
-		LogEvent(LE_ERROR, __FUNCTION__ ": Sensor Controller HandShake not performed, refuse processing the message (Type=%s) from SensorID %d", 
-			CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str(), m_SensorID);
+		LogEvent(LE_ERROR, __FUNCTION__ ": Sensor Controller %d HandShake not performed, refuse processing the message (Type=%s)", 
+			m_SensorID, CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
 
 		return ParseInvalidData(Data, DataLength);
 	}
@@ -278,12 +278,23 @@ DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
 	}
 
+	// Verify The Sensor Controller is properly Handshaked
+	if (GetSensorControllerInfo()->m_HandshakeStatus != SensorHandshaked 
+		&& (MessageType != BTBInfo || GetSensorControllerInfo()->m_SensorID != BlueMagicBTBMessage->m_SensorId))
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Sensor Controller %d HandShake not performed, refuse processing the message (Type=%s) from SensorID %d", 
+			m_SensorID, CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str(), BlueMagicBTBMessage->m_SensorId);
+
+		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
+	}
+
 	// Verify The Sending Sensor is properly Handshaked
-	if (SensorInfo->m_HandshakeStatus != SensorHandshaked 
-		&& MessageType != BTBInfo && SensorInfo->m_SensorID == SensorInfo->m_SensorID)
+	if (SensorInfo->m_HandshakeStatus != SensorHandshaked && MessageType != BTBInfo)
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ ": HandShake not performed on Sensor %d (via Sensor Controller %d), refuse processing the message (Type=%s)", 
 			SensorInfo->m_SensorID, m_SensorID, CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str());
+
+		DoHandshake();
 
 		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
 	}
@@ -517,7 +528,7 @@ void CSensorController::OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessag
 			LogEvent(LE_INFOHIGH, __FUNCTION__ ": Sensor %d on (via port %d) Handshaked successfully. Version = %d, SensorId = %d, SensorBDADDRESS = %s",
 				SensorInfo->m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.Version, BTBInfoMessage->m_SensorId, BTBInfoMessage->m_SensorInfo.SensorBDADDRESS.c_str());
 		else
-			LogEvent(LE_INFO, __FUNCTION__ ": Sensor %d on (via port %d) Handshake verified. Version = %d, SensorId = %d, SensorBDADDRESS = %s",
+			LogEvent(LE_WARNING, __FUNCTION__ ": Sensor %d on (via port %d) Handshake verified. Version = %d, SensorId = %d, SensorBDADDRESS = %s",
 			SensorInfo->m_SensorID, m_ComPort, BTBInfoMessage->m_SensorInfo.Version, BTBInfoMessage->m_SensorId, BTBInfoMessage->m_SensorInfo.SensorBDADDRESS.c_str());
 	}
 	else
@@ -558,7 +569,7 @@ DWORD CSensorController::GetTimeForSensorClock(int SensorID, int Clock)
 
 	if (SensorInformation->m_ClockCorrelationData.SensorClock > MAX_SENSOR_CLOCK_VALUE)
 	{
-		LogEvent(LE_ERROR, __FUNCTION__ ": Clock information has not been received yet for Sensor %d !!", SensorID);
+		LogEvent(LE_WARNING, __FUNCTION__ ": Clock information has not been received yet for Sensor %d !!", SensorID);
 		return 0;
 	}
 

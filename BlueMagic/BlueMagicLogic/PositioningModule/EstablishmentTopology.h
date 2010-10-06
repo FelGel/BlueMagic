@@ -1,8 +1,6 @@
 #pragma once
 
-#pragma warning(disable:4239 4996)
 #include "geometry.h"
-#pragma warning(default:4239 4996)
 
 class CEstablishmentTopology
 {
