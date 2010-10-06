@@ -28,10 +28,10 @@ CPositioningModuleDlg::CPositioningModuleDlg(CWnd* pParent /*=NULL*/)
 
 void CPositioningModuleDlg::DoDataExchange(CDataExchange* pDX)
 {
-	CDialog::DoDataExchange(pDX);
+	CTabDlg::DoDataExchange(pDX);
 }
 
-BEGIN_MESSAGE_MAP(CPositioningModuleDlg, CDialog)
+BEGIN_MESSAGE_MAP(CPositioningModuleDlg, CTabDlg)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
@@ -43,7 +43,7 @@ END_MESSAGE_MAP()
 
 //BOOL CPositioningModuleDlg::OnInitDialog()
 //{
-//	CDialog::OnInitDialog();
+//	CTabDlg::OnInitDialog();
 //
 //	// Set the icon for this dialog.  The framework does this automatically
 //	//  when the application's main window is not a dialog
@@ -81,7 +81,7 @@ void CPositioningModuleDlg::OnPaint()
 	}
 	else
 	{
-		CDialog::OnPaint();
+		CTabDlg::OnPaint();
 	}
 }
 
