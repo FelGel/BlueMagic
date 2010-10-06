@@ -50,3 +50,8 @@ bool CPositioningModuleApp::PerformCleanup()
 }
 
 CPositioningModuleApp theApp;
+
+void CPositioningModuleApp::SendMessageToDialog(SDialogMessage *Message)
+{
+	m_PositioningModuleDlg.SendMessageToGuiThread((WPARAM)Message);
+}

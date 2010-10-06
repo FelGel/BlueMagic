@@ -2,6 +2,7 @@
 #include "PositioningManager.h"
 #include "CuidGenerator.h"
 #include "Common/collectionhelper.h"
+#include "DialogMessages.h"
 
 #define POSITION_MANAGER_QUEUE_SIZE 10000
 #define POSITION_MANAGER_THREAD_TIMEOUT 100 //milisec
@@ -17,6 +18,7 @@ static char THIS_FILE[] = __FILE__;
 CPositioningManager::CPositioningManager(void) : CThreadWithQueue("PositioningManager", POSITION_MANAGER_QUEUE_SIZE)
 {
 	m_PositioningInterfaceHandler = NULL;
+	m_DialogMessagesInterfaceHandler = NULL;
 }
 
 CPositioningManager::~CPositioningManager(void)
@@ -96,6 +98,7 @@ void CPositioningManager::HandleDataReceived(const int &SensorId, const SScanned
 
 	/* TEMP -> Write to File*/
 	UpdateScanFile(SensorId, ScannedData);
+	UpdateDialog(SensorId, ScannedData);
 }
 
 void CPositioningManager::OnPositioning(std::string BDADDRESS, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore)
@@ -158,11 +161,10 @@ void CPositioningManager::CreateScanFile(const int SensorId)
 void CPositioningManager::UpdateScanFile(const int &SensorId, const SScannedData& ScannedData)
 {
 	/* TEMP -> Write to File*/
-	CString DataString;
-
 	SYSTEMTIME SystemTime;
 	GetSystemTime(&SystemTime);
 
+	CString DataString;
 	DataString.Format("%s, %d, %d:%d:%d\n", ScannedData.ScannedBDADDRESS.c_str(), ScannedData.RSSI,
 		SystemTime.wHour,SystemTime.wMinute,SystemTime.wSecond);
 
@@ -175,6 +177,23 @@ void CPositioningManager::UpdateScanFile(const int &SensorId, const SScannedData
 
 	ScanFile->WriteString(DataString);
 	/////////////////////////
+}
+
+void CPositioningManager::UpdateDialog(const int &SensorId, const SScannedData& ScannedData)
+{
+	if (m_DialogMessagesInterfaceHandler != NULL)
+	{
+		SYSTEMTIME SystemTime;
+		GetSystemTime(&SystemTime);
+
+		CString TimeStamp;
+		TimeStamp.Format("%d:%d:%d", SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
+
+		SDialogMessage *DialogMessage = new SDialogMessage(SensorId, ScannedData, TimeStamp);
+
+		m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogMessage);
+	}
+
 }
 
 void CPositioningManager::CloseAllScanFiles()

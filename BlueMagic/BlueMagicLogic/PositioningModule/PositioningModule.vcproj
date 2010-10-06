@@ -286,6 +286,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DialogMessages.h"
+				>
+			</File>
+			<File
 				RelativePath=".\EstablishmentTopology.h"
 				>
 			</File>

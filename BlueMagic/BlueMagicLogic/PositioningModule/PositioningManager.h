@@ -5,6 +5,7 @@
 #include "SensorControllersContainer.h"
 #include "EstablishmentTopology.h"
 #include "PositioningAlgorithm.h"
+#include "DialogMessages.h"
 
 class CPositioningManager :	public CThreadWithQueue, public ISensorEvents, public IPositioningEvents
 {
@@ -25,13 +26,16 @@ public:
 
 	// General Public functions
 	void Advise(IPositioningInterface *PositioningInterfaceHandler) {m_PositioningInterfaceHandler = PositioningInterfaceHandler;}
+	void Advise(IDialogMessagesInterface *DialogMessagesInterfaceHandler) {m_DialogMessagesInterfaceHandler = DialogMessagesInterfaceHandler;}
+	
 	bool Init();
 	virtual void OnThreadClose();
 
-	// Debugging ScanFiles
+	// Debugging & Monitoring
 	void CreateScanFile(const int SensorId);
-	void UpdateScanFile(const int &SensorId, const SScannedData& ScannedData);
 	void CloseAllScanFiles();
+	void UpdateScanFile(const int &SensorId, const SScannedData& ScannedData);
+	void UpdateDialog(const int &SensorId, const SScannedData& ScannedData);
 
 private:
 	void HandleDataReceived(const int &SensorId, const SScannedData& ScannedData);
@@ -45,4 +49,5 @@ private:
 
 	/* TEMP -> Write to File*/
 	std::map<int /*SensorID*/, CStdioFile*> m_ScanFiles; // SensorId to ScanFile
+	IDialogMessagesInterface *m_DialogMessagesInterfaceHandler;
 };

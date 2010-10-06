@@ -10,16 +10,18 @@
 #include "resource.h"		// main symbols
 #include "../ApplicationUtils/ResourcedGuiApplication.h"
 #include "PositioningModuleDlg.h"
+#include "DialogMessages.h"
 
 // CPositioningModuleApp:
 // See PositioningModule.cpp for the implementation of this class
 //
 
-class CPositioningModuleApp : public CResourcedGuiApplication
+class CPositioningModuleApp : public CResourcedGuiApplication, public IDialogMessagesInterface
 {
 public:
 	CPositioningModuleApp();
 
+	virtual void SendMessageToDialog(SDialogMessage *Message);
 // Overrides
 	//public:
 	//virtual BOOL InitInstance();

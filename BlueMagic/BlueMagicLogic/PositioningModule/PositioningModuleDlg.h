@@ -18,6 +18,9 @@ public:
 // Dialog Data
 	enum { IDD = IDD_POSITIONINGMODULE_DIALOG };
 
+	void SendMessageToGuiThread(WPARAM wParam) {GoToGuiThread(wParam);}
+	virtual void OnGuiThread(WPARAM /*wParam*/) {}
+
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 
