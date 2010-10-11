@@ -15,11 +15,13 @@
 
 #define SENSOR_CONTROLLER_QUEUE_SIZE		10000
 #define SENSOR_CONTROLLER_THREAD_TIMEOUT	100 //milisec
-#define TIME_BETWEEN_CONNCETION_ATTEMPTS	5000 //milisec
-#define TIME_BETWEEN_HANDSHAKE_ATTEMPTS		5000 //milisec
-#define TIME_BETWEEN_KEEP_ALIVES			60000 //milisec
+#define DEFAULT_TIME_BETWEEN_CONNCETION_ATTEMPTS	5000 //milisec
+#define DEFAULT_TIME_BETWEEN_HANDSHAKE_ATTEMPTS		5000 //milisec
+#define DEFAULT_TIME_BETWEEN_KEEP_ALIVES			60000 //milisec
 
 #define TICKS_IN_SECOND(x) ((x) * 1000)
+
+static const char* GENERAL_SENSORS_CONFIG_SECTION = "GeneralSensorsConfiguration";
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -30,8 +32,9 @@ static char THIS_FILE[] = __FILE__;
 CSensorController::CSensorController(int SensorID, int ComPort, std::string BDADDRESS, std::vector<int> ChildrenSensorIDs) 
 	: CThreadWithQueue("SensorController", SENSOR_CONTROLLER_QUEUE_SIZE), m_SerialPort(this, ComPort, SensorID),
 		m_SensorID(SensorID), m_ComPort(ComPort), m_BDADDRESS(BDADDRESS), m_EventsHandler(NULL), m_DataBufferOffset(0),
-		m_PhysicalConnectionStatus(SensorNotConnected), m_LastConnectionAttemptTickCount(0), m_LastHandshakeAttemptTickCount(0)
-		
+		m_PhysicalConnectionStatus(SensorNotConnected), m_LastConnectionAttemptTickCount(0), m_LastHandshakeAttemptTickCount(0),
+		m_TimeBetweenConnectionAttempts(DEFAULT_TIME_BETWEEN_CONNCETION_ATTEMPTS), m_TimeBetweenHandshakeAttempts(DEFAULT_TIME_BETWEEN_HANDSHAKE_ATTEMPTS), 
+		m_AllowedTimeBetweenKeepAlives(DEFAULT_TIME_BETWEEN_KEEP_ALIVES)
 {
 	InsertValueToMap(m_SensorsDataBuffferMap, SensorID, new SSensorInformation(BDADDRESS, SensorID, ChildrenSensorIDs));
 }
@@ -44,6 +47,8 @@ CSensorController::~CSensorController(void)
 bool CSensorController::Init(ISensorEvents *Handler)
 {
 	m_EventsHandler = Handler;
+
+	ReadGeneralSensorsConfiguration();
 
 	if (!BuildSensorControllerInfoTree())
 	{
@@ -701,7 +706,7 @@ SSensorInformation* CSensorController::GetSensorControllerInfo()
 void CSensorController::CheckHandshakeStatus(DWORD TickCount)
 {
 	if (m_PhysicalConnectionStatus == SensorConnected 
-		&& TickCount - m_LastHandshakeAttemptTickCount > TIME_BETWEEN_HANDSHAKE_ATTEMPTS
+		&& TickCount - m_LastHandshakeAttemptTickCount > m_TimeBetweenHandshakeAttempts
 		&& GetSensorControllerBranchHandshakeStatus() == SensorNotHandshaked)
 	{
 		LogEvent(LE_INFOHIGH, __FUNCTION__ ": Attempting to send handshake to Sensor..");
@@ -714,7 +719,7 @@ void CSensorController::CheckPhysicalConnectionStatus(DWORD TickCount)
 	// Connection Retries Mechanism:
 
 	if (m_PhysicalConnectionStatus == SensorAttemptsAtConnection &&
-		TickCount - m_LastConnectionAttemptTickCount > TIME_BETWEEN_CONNCETION_ATTEMPTS)
+		TickCount - m_LastConnectionAttemptTickCount > m_TimeBetweenConnectionAttempts)
 	{
 		LogEvent(LE_INFOHIGH, __FUNCTION__ ": Attempting to reconnect to Sensor..");
 		ConnectToPort();
@@ -732,7 +737,7 @@ void CSensorController::CheckLogicalConnectionStatus(DWORD TickCount)
 		SSensorInformation *SensorInformation = Iter->second;
 		
 		if (m_PhysicalConnectionStatus == SensorConnected && SensorInformation->m_HandshakeStatus == SensorHandshaked &&
-			TickCount - SensorInformation->m_LastPacketRecievedTickCount > TIME_BETWEEN_KEEP_ALIVES)
+			TickCount - SensorInformation->m_LastPacketRecievedTickCount > m_AllowedTimeBetweenKeepAlives)
 		{
 			OnConnectionTimedOut(SensorInformation);
 		}
@@ -873,4 +878,11 @@ void CSensorController::ReportSensorsStatusToPositionManager()
 		m_EventsHandler->OnSensorInSystem(SensorInformation->m_SensorID, SensorInformation->m_SensorID == m_SensorID, SensorInformation->m_BDADDRESS, SensorInformation->m_ChildrenSensorIDs);
 	}
 
+}
+
+void CSensorController::ReadGeneralSensorsConfiguration()
+{
+	m_TimeBetweenConnectionAttempts = GetConfigInt(GENERAL_SENSORS_CONFIG_SECTION, "TimeBetweenConnectionAttempts", DEFAULT_TIME_BETWEEN_CONNCETION_ATTEMPTS);
+	m_TimeBetweenHandshakeAttempts = GetConfigInt(GENERAL_SENSORS_CONFIG_SECTION, "TimeBetweenHandshakeAttempts", DEFAULT_TIME_BETWEEN_HANDSHAKE_ATTEMPTS);
+	m_AllowedTimeBetweenKeepAlives = GetConfigInt(GENERAL_SENSORS_CONFIG_SECTION, "AllowedTimeBetweenKeepAlives", DEFAULT_TIME_BETWEEN_KEEP_ALIVES);	
 }
