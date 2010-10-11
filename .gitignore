@@ -21,6 +21,7 @@
 *.txt.orig
 *.zip
 
+
 # Temporary \ Self-Generated Folders
 # -------------------------------------
 */debug/
@@ -35,8 +36,8 @@
 */release/
 /release/
 /ApplicationLogs/
-/ScanFiles/
-/ScanFiles/*
+ScanFiles/
+ScanFiles/*
 
 # Specific uniteresting file names:
 # -------------------------------------
