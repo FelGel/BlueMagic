@@ -32,7 +32,9 @@ public:
 	virtual void OnThreadClose();
 
 	// Debugging & Monitoring
+	void CreateCombinedScanFile();
 	void CreateScanFile(const int SensorId);
+	bool CreateScanFile(CString FileName, CStdioFile *ScanFile);
 	void CloseAllScanFiles();
 	void UpdateScanFile(const int &SensorId, const SScannedData& ScannedData);
 	void UpdateDialog(const int &SensorId, const SScannedData& ScannedData);
@@ -50,4 +52,5 @@ private:
 	/* TEMP -> Write to File*/
 	std::map<int /*SensorID*/, CStdioFile*> m_ScanFiles; // SensorId to ScanFile
 	IDialogMessagesInterface *m_DialogMessagesInterfaceHandler;
+	CStdioFile m_CombinedScanFiles; 
 };

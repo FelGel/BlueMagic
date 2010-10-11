@@ -43,6 +43,8 @@ bool CPositioningManager::Init()
 
 	m_PositioningAlgorithm.Advise(&m_EstablishmentTopology, this);
 
+	CreateCombinedScanFile();
+
 	// start thread
 	SetTimeout(POSITION_MANAGER_THREAD_TIMEOUT);
 	bool Success = StartThread();
@@ -128,6 +130,24 @@ void CPositioningManager::HandleNewSensorInSystem(const int &SensorId, const boo
 	CreateScanFile(SensorId);
 }
 
+void CPositioningManager::CreateCombinedScanFile()
+{
+	/* TEMP -> Write to File*/
+	SYSTEMTIME SystemTime;
+	GetLocalTime(&SystemTime);
+
+	CString FileName;
+	FileName.Format("..\\ScanFiles\\Combined ScanFile %02d.%02d.%02d %02d-%02d-%02d.csv", 
+		SystemTime.wDay, SystemTime.wMonth, SystemTime.wYear, 
+		SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
+
+	if (!CreateScanFile(FileName, &m_CombinedScanFiles))
+		return;
+
+	LogEvent(LE_INFO, __FUNCTION__ ": File %s created successfully", FileName);
+	/////////////////////////
+}
+
 void CPositioningManager::CreateScanFile(const int SensorId)
 {
 	/* TEMP -> Write to File*/
@@ -141,13 +161,9 @@ void CPositioningManager::CreateScanFile(const int SensorId)
 		SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
 
 	CStdioFile *ScanFile = new CStdioFile;
-	if (!ScanFile->Open(FileName, CFile::modeCreate | CFile::modeWrite | CFile::typeText /*| CFile::shareDenyWrite*/))
-	{
-		DWORD err = GetLastError();
-		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to open %s!! ErrorCode = %d", FileName, err);
+	if (!CreateScanFile(FileName, ScanFile))
 		return;
-	}
-
+	
 	if (!InsertValueToMap(m_ScanFiles, SensorId, ScanFile))
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to add File %s to Map ! Do you have error in configuration?", FileName);
@@ -156,6 +172,18 @@ void CPositioningManager::CreateScanFile(const int SensorId)
 
 	LogEvent(LE_INFO, __FUNCTION__ ": File %s created successfully", FileName);
 	/////////////////////////
+}
+
+bool CPositioningManager::CreateScanFile(CString FileName, CStdioFile *ScanFile)
+{
+	if (!ScanFile->Open(FileName, CFile::modeCreate | CFile::modeWrite | CFile::typeText /*| CFile::shareDenyWrite*/))
+	{
+		DWORD err = GetLastError();
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to open %s!! ErrorCode = %d", FileName, err);
+		return false;
+	}
+
+	return true;
 }
 
 void CPositioningManager::UpdateScanFile(const int &SensorId, const SScannedData& ScannedData)
@@ -176,6 +204,12 @@ void CPositioningManager::UpdateScanFile(const int &SensorId, const SScannedData
 	}
 
 	ScanFile->WriteString(DataString);
+
+
+	CString CombinedDataString;
+	CombinedDataString.Format("%d, %s, %d, %02d:%02d:%02d\n", SensorId, ScannedData.ScannedBDADDRESS.c_str(), ScannedData.RSSI,
+		SystemTime.wHour,SystemTime.wMinute,SystemTime.wSecond);
+	m_CombinedScanFiles.WriteString(CombinedDataString);
 	/////////////////////////
 }
 
@@ -211,5 +245,7 @@ void CPositioningManager::CloseAllScanFiles()
 	}
 
 	m_ScanFiles.clear();
+
+	m_CombinedScanFiles.Close();
 	///////////////////////
 }
