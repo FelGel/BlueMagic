@@ -1,6 +1,8 @@
 #include "StdAfx.h"
 #include "PositioningManager.h"
 #include "CuidGenerator.h"
+#include "Common/collectionhelper.h"
+#include "DialogMessages.h"
 
 #define POSITION_MANAGER_QUEUE_SIZE 10000
 #define POSITION_MANAGER_THREAD_TIMEOUT 100 //milisec
@@ -16,6 +18,7 @@ static char THIS_FILE[] = __FILE__;
 CPositioningManager::CPositioningManager(void) : CThreadWithQueue("PositioningManager", POSITION_MANAGER_QUEUE_SIZE)
 {
 	m_PositioningInterfaceHandler = NULL;
+	m_DialogMessagesInterfaceHandler = NULL;
 }
 
 CPositioningManager::~CPositioningManager(void)
@@ -57,25 +60,15 @@ void CPositioningManager::OnErrorInTopology(UCHAR /*SensorId*/)
 
 }
 
-void CPositioningManager::OnSensorInfo(SSensorInfo /*SensorInfo*/)
+void CPositioningManager::OnSensorInfo(int /*SensorId*/, SSensorInfo /*SensorInfo*/)
 {
 
 }
 
-void CPositioningManager::OnSensorsInfo(CList<SSensorInfo> * /*SensorsInfo*/)
+
+void CPositioningManager::OnIncomingScannedData(int SensorId, SScannedData ScannedData)
 {
-
-}
-
-void CPositioningManager::OnIncomingScannedData(CList<SScannedData> *ScannedDataList)
-{
-	while (!ScannedDataList->IsEmpty())
-	{
-		SScannedData ScannedData = (*ScannedDataList).GetHead();
-		AddHandlerToQueue(&CPositioningManager::HandleDataReceived, ScannedData);
-
-		ScannedDataList->RemoveHead();
-	}
+	AddHandlerToQueue(&CPositioningManager::HandleDataReceived, SensorId, ScannedData);
 
 	// MARKED IN PURPOSE !! ScannedData will be deleted later by the SensorController!
 	// delete ScannedData;
@@ -94,11 +87,18 @@ void CPositioningManager::OnDisconnected(UCHAR /*SensorId*/)
 void CPositioningManager::OnThreadClose()
 {
 	m_SensorControllersContainer.RemoveObjects();
+
+	/* TEMP -> Write to File*/
+	CloseAllScanFiles();
 }
 
-void CPositioningManager::HandleDataReceived(const SScannedData& ScannedData)
+void CPositioningManager::HandleDataReceived(const int &SensorId, const SScannedData& ScannedData)
 {
-	m_PositioningAlgorithm.OnScannedData(ScannedData);
+	m_PositioningAlgorithm.OnScannedData(SensorId, ScannedData);
+
+	/* TEMP -> Write to File*/
+	UpdateScanFile(SensorId, ScannedData);
+	UpdateDialog(SensorId, ScannedData);
 }
 
 void CPositioningManager::OnPositioning(std::string BDADDRESS, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore)
@@ -110,4 +110,106 @@ void CPositioningManager::OnPositioning(std::string BDADDRESS, SPosition Positio
 		std::string CUID = CCuidGenerator::ConvertToCuid(BDADDRESS);
 		m_PositioningInterfaceHandler->OnPosition(CUID, Position, Accuracy, TimeStamp, StoreID, IsInStore);
 	}
+}
+
+void CPositioningManager::OnSensorInSystem(int SensorId, bool IsController, std::string BDADDRESS, std::vector<int> ChildrenSensorIDs)
+{
+	AddHandlerToQueue(&CPositioningManager::HandleNewSensorInSystem, SensorId, IsController, BDADDRESS, ChildrenSensorIDs);	
+}
+
+void CPositioningManager::HandleNewSensorInSystem(const int &SensorId, const bool &IsController, const std::string &BDADDRESS, const std::vector<int> &ChildrenSensorIDs)
+{
+	// ToDo - In future, perhaps hold SensorInformation.. (alternately, ask it from SensorController each time (either through queue (multi-task) or direct & dirty)
+	LogEvent(LE_INFOHIGH, __FUNCTION__ ": New %s in System. SensorId = %d, BDADDRESS = %s, Children = %s",
+		(IsController) ? "Sensor CONTROLLER" : "REMOTE Sensor", SensorId, BDADDRESS.c_str(), 
+		(ChildrenSensorIDs.size() == 0) ? "None" : IntVectorToStr(ChildrenSensorIDs).c_str());
+
+	/* TEMP -> Write to File*/
+	CreateScanFile(SensorId);
+}
+
+void CPositioningManager::CreateScanFile(const int SensorId)
+{
+	/* TEMP -> Write to File*/
+	SYSTEMTIME SystemTime;
+	GetLocalTime(&SystemTime);
+
+	CString FileName;
+	FileName.Format("..\\ScanFiles\\ScanFile_Sensor%d %02d.%02d.%02d %02d-%02d-%02d.csv", 
+		SensorId, 
+		SystemTime.wDay, SystemTime.wMonth, SystemTime.wYear, 
+		SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
+
+	CStdioFile *ScanFile = new CStdioFile;
+	if (!ScanFile->Open(FileName, CFile::modeCreate | CFile::modeWrite | CFile::typeText /*| CFile::shareDenyWrite*/))
+	{
+		DWORD err = GetLastError();
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to open %s!! ErrorCode = %d", FileName, err);
+		return;
+	}
+
+	if (!InsertValueToMap(m_ScanFiles, SensorId, ScanFile))
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to add File %s to Map ! Do you have error in configuration?", FileName);
+		return;
+	}
+
+	LogEvent(LE_INFO, __FUNCTION__ ": File %s created successfully", FileName);
+	/////////////////////////
+}
+
+void CPositioningManager::UpdateScanFile(const int &SensorId, const SScannedData& ScannedData)
+{
+	/* TEMP -> Write to File*/
+	SYSTEMTIME SystemTime;
+	GetLocalTime(&SystemTime);
+
+	CString DataString;
+	DataString.Format("%s, %d, %02d:%02d:%02d\n", ScannedData.ScannedBDADDRESS.c_str(), ScannedData.RSSI,
+		SystemTime.wHour,SystemTime.wMinute,SystemTime.wSecond);
+
+	CStdioFile *ScanFile;
+	if (!GetValueFromMap(m_ScanFiles, SensorId, ScanFile))
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to find ScanFile for SensorID %d in Map !!", SensorId);
+		return;
+	}
+
+	ScanFile->WriteString(DataString);
+	/////////////////////////
+}
+
+void CPositioningManager::UpdateDialog(const int &SensorId, const SScannedData& ScannedData)
+{
+	if (m_DialogMessagesInterfaceHandler != NULL)
+	{
+		SYSTEMTIME SystemTime;
+		GetLocalTime(&SystemTime);
+
+		CString TimeStamp;
+		TimeStamp.Format("%02d:%02d:%02d", SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
+
+		SDialogMessage *DialogMessage = new SDialogMessage(SensorId, ScannedData, TimeStamp);
+
+		m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogMessage);
+	}
+
+}
+
+void CPositioningManager::CloseAllScanFiles()
+{
+	/* TEMP -> Write to File*/
+	std::map<int /*SensorID*/, CStdioFile*>::iterator Iter = m_ScanFiles.begin();
+	std::map<int /*SensorID*/, CStdioFile*>::iterator End = m_ScanFiles.end();
+
+	for(;Iter != End; ++Iter)
+	{
+		((CStdioFile*)Iter->second)->Close(); // close file
+
+		delete Iter->second;
+		Iter->second = NULL;
+	}
+
+	m_ScanFiles.clear();
+	///////////////////////
 }

@@ -53,11 +53,32 @@ CSensorController* CSensorControllersContainer::CreateObject(const char* ConfigS
 	int ComPort  = GetIntValue(ConfigSection, "ComPort=", -1);
 	std::string BDADDRESS = GetStringValue(ConfigSection, "BDADDRESS=", "");
 	
+	std::string ChildrenStr = GetStringValue(ConfigSection, "Children=", "");
+
+	if (ChildrenStr == "")
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Empty Children list (Index %d SensorID %d)! If this is intentional, enter the keyword 'None' instead!", 
+			ObjectIndex, SensorID);
+		return NULL;
+	}
+	
+	std::vector<int> ChildrenSensorIDs;
+	if (ChildrenStr != "None")
+	{
+		ParseIntVectorString(ChildrenStr.c_str(), ChildrenSensorIDs);
+		if (ChildrenSensorIDs.size() == 0)
+		{
+			LogEvent(LE_ERROR, __FUNCTION__ ": Empty or Invalid Children list (Index %d SensorID %d)! If this is intentional, enter the keyword 'None' instead!", 
+				ObjectIndex, SensorID);
+			return NULL;
+		}
+	}
+	
 	if (!AreObjectParametersValid(ObjectIndex, SensorID, ComPort, BDADDRESS))
 		return NULL;
 
 	CSensorController* SensorController = NULL;
-	SensorController = new CSensorController(SensorID, ComPort, BDADDRESS);//CREATE_CC_RECEIVER(ReceiverType, ConfigSection, ReceiverId);
+	SensorController = new CSensorController(SensorID, ComPort, BDADDRESS, ChildrenSensorIDs);
 	if(SensorController == NULL)
 		return NULL;
 

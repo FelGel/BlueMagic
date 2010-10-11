@@ -14,7 +14,6 @@
 #define		BLUE_MAGIC_BTB_MESSAGE_MAX_SIZE				1024
 
 
-
 // Decoder Messages Enum:
 // ----------------------
 enum EBlueMagicBTBIncomingMessageType
@@ -37,6 +36,7 @@ enum EBlueMagicBTBOutgoingMessageType
 };
 // If more than 4, EBlueMagicMessageType should be changed!!!
 
+
 class CBlueMagicBTBIncomingMessage : public CBlueMagicMessage
 {
 public:
@@ -49,12 +49,18 @@ public:
 #if IS_TEXTUAL_BTB_PROTOCOL == 1
 	CBlueMagicBTBIncomingMessage();
 	virtual bool DeSerialize(IDeSerializer* DeSerializer);
-	virtual bool Parse(CTokenParser MessageStringParser) = 0;
+	virtual bool Parse(CTokenParser &MessageStringParser) = 0;
 	virtual int MessageLength() const {return m_MessageLength;}
 	
 	int m_MessageLength;
 	IDeSerializer *m_DeSerializer;
 #endif
+
+private:
+	bool ParseHeader(CTokenParser &MessageStringParser);
+
+public:
+	/*BYTE*/int m_SensorId; /*Originator*/
 };
 
 
@@ -76,12 +82,11 @@ class CBlueMagicBTBKeepAliveMessage : public CBlueMagicBTBIncomingMessage
 {
 public:
 	CBlueMagicBTBKeepAliveMessage() {}
-	CBlueMagicBTBKeepAliveMessage(BYTE SensorId, short Clock);
 	virtual ~CBlueMagicBTBKeepAliveMessage() {}
 
 	virtual bool				Serialize(ISerializer* Serializer) const;
 #if IS_TEXTUAL_BTB_PROTOCOL == 1
-	virtual bool				Parse(CTokenParser MessageStringParser);
+	virtual bool				Parse(CTokenParser &MessageStringParser);
 #else
 	virtual bool				DeSerialize(IDeSerializer* DeSerializer);
 	virtual int					MessageLength() const { return sizeof(m_SensorId)+sizeof(m_Clock); }
@@ -93,7 +98,6 @@ public:
 	{ LogEvent(LE_ERROR, "CBlueMagicBTBKeepAliveMessage should not call on event !!"); }
 
 	//Members:
-	/*BYTE*/int m_SensorId;
 	/*short*/int m_Clock;
 };
 RegisterBlueMagicBTBMessage(BTBKeepAlive, CBlueMagicBTBKeepAliveMessage)
@@ -108,7 +112,7 @@ public:
 	virtual bool				Serialize(ISerializer* Serializer) const;
 
 #if IS_TEXTUAL_BTB_PROTOCOL == 1
-	virtual bool				Parse(CTokenParser MessageStringParser);
+	virtual bool				Parse(CTokenParser &MessageStringParser);
 #else
 	virtual bool				DeSerialize(IDeSerializer* DeSerializer);
 	virtual int					MessageLength() const;
@@ -117,10 +121,10 @@ public:
 	virtual int                 MessageType() const { return BTBIncomingData; }
 
 	virtual void				CallEventOnMessage(ISensorEvents* SensorEvents) const
-	{ SensorEvents->OnIncomingScannedData((CList<SScannedData> *)&m_ScannedDataList); }
+	{ SensorEvents->OnIncomingScannedData(m_SensorId, m_ScannedData); }
 
 	//Members:
-	CList<SScannedData> m_ScannedDataList;
+	SScannedData m_ScannedData;
 };
 RegisterBlueMagicBTBMessage(BTBIncomingData, CBlueMagicBTBDataMessage)
 
@@ -134,7 +138,7 @@ public:
 	virtual bool				Serialize(ISerializer* Serializer) const;
 
 #if IS_TEXTUAL_BTB_PROTOCOL == 1
-	virtual bool				Parse(CTokenParser MessageStringParser);
+	virtual bool				Parse(CTokenParser &MessageStringParser);
 #else
 	virtual bool				DeSerialize(IDeSerializer* DeSerializer);
 	virtual int					MessageLength() const;
@@ -143,7 +147,7 @@ public:
 	virtual int                 MessageType() const { return BTBInfo; }
 
 	virtual void				CallEventOnMessage(ISensorEvents* SensorEvents) const
-	{ SensorEvents->OnSensorInfo(m_SensorInfo); }
+	{ SensorEvents->OnSensorInfo(m_SensorId, m_SensorInfo); }
 
 	//Members:
 	SSensorInfo m_SensorInfo;

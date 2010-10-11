@@ -78,6 +78,9 @@ protected:
 	virtual Object* CreateObject(const char* ConfigSection, int ObjectIndex) = 0;
 	virtual void OnRemoveObject(Object *RemovedObject) = 0;
 
+	DWORD	GetNumberOfObjects()	{return m_Objects.size();}
+	Object* GetObjectAt(int index)	{return m_Objects[index];}
+
 private:
 	std::vector<Object*> m_Objects;
 };

@@ -20,7 +20,7 @@ public:
 
 	void Advise(CEstablishmentTopology* EstablishmentTopology, IPositioningEvents *PositioningEventsHandler);
 
-	void OnScannedData(const SScannedData& ScannedData);
+	void OnScannedData(const int &SensorId, const SScannedData& ScannedData);
 
 private:
 	CEstablishmentTopology* m_EstablishmentTopology;

@@ -39,6 +39,9 @@ void CPositioningModuleApp::AddDialogs()
 
 bool CPositioningModuleApp::PerformInitalization()
 {
+	m_PositioningModuleDlg.InitScanList();
+
+	m_PositioningManager.Advise(this);
 	return m_PositioningManager.Init();
 }
 
@@ -50,3 +53,8 @@ bool CPositioningModuleApp::PerformCleanup()
 }
 
 CPositioningModuleApp theApp;
+
+void CPositioningModuleApp::SendMessageToDialog(SDialogMessage *Message)
+{
+	m_PositioningModuleDlg.SendMessageToGuiThread((WPARAM)Message);
+}

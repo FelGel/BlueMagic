@@ -10,6 +10,8 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+#pragma warning(disable:4996)
+
 BOOL PeekAndPump()
 {
 	static MSG msg;
@@ -251,3 +253,5 @@ LONG CMyView::PixelsToTwips(long lPixels, short nDirection)
 		pMalloc->Free(pidl);
 	}
 */
+
+#pragma warning(default:4996)

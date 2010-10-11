@@ -34,28 +34,33 @@ CSerialPort::~CSerialPort(void)
 		switch(eEvent)
 		{
 			case EEventRecv:
-				DWORD dwBytesRead = 0;
-				do
 				{
-					LONG lLastError = Read(Buffer,BUFFER_SIZE,&dwBytesRead);
-					if (lLastError != ERROR_SUCCESS)
+					DWORD dwBytesRead = 0;
+					do
 					{
-						LogEvent(LE_ERROR, __FUNCTION__ ": Failed to read Buffer. Error=%d",
-							GetLastError());
-						return;
-					}
+						LONG lLastError = Read(Buffer,BUFFER_SIZE,&dwBytesRead);
+						if (lLastError != ERROR_SUCCESS)
+						{
+							LogEvent(LE_ERROR, __FUNCTION__ ": Failed to read Buffer. Error=%d",
+								GetLastError());
+							return;
+						}
 
-					if (dwBytesRead == 0)
-					{
-						LogEvent(LE_WARNING, __FUNCTION__ ": Read 0 bytes from Port");
-						return;
-					}
+						if (dwBytesRead == 0)
+						{
+							LogEvent(LE_INFOLOW, __FUNCTION__ ": Read 0 bytes from Port");
+							return;
+						}
 
-					BYTE *Data = new BYTE[dwBytesRead];
-					memcpy(Data, Buffer, dwBytesRead);
-					m_SerialPortEvents->OnDataReceived(m_SerialPortID, Data, dwBytesRead);
-				} while (dwBytesRead == BUFFER_SIZE);
-				return;
+						BYTE *Data = new BYTE[dwBytesRead];
+						memcpy(Data, Buffer, dwBytesRead);
+						m_SerialPortEvents->OnDataReceived(m_SerialPortID, Data, dwBytesRead);
+					} while (dwBytesRead == BUFFER_SIZE);
+					return;
+				}
+
+			default:
+				;// Do Nothing, and reach WARNING bellow.
 		}
 	}
 

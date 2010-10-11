@@ -5,6 +5,9 @@
 
 #define BLUEMAGIC_VERSION	1
 
+#define MIN_VALID_SENSORID  1
+#define MAX_VALID_SENSORID  255
+
 
 enum EBlueMagicMessageType
 {

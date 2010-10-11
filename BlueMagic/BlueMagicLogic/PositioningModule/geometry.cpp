@@ -26,14 +26,21 @@
 #include "stdafx.h"
 #include <math.h>
 #include "utils.h"
-#include "geometry.h"
 #include "Common\LogEvent.h"
+
+
+#include "geometry.h"
+
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+
+
+#pragma warning(disable:4239 4996)
+
 
 C3Point GetClosestPoint2D(C3Point& start, C3Point& end, C3Point& P)
 // returns the point on the line defined by [start,end] that is closest to point P
@@ -1109,3 +1116,6 @@ REAL CPolygon::Curvature(int i)
 
 	return Curvature;
 }
+
+
+#pragma warning(default:4239 4996)

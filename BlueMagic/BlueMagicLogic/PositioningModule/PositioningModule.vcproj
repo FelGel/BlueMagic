@@ -286,6 +286,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DialogMessages.h"
+				>
+			</File>
+			<File
 				RelativePath=".\EstablishmentTopology.h"
 				>
 			</File>
@@ -338,6 +342,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SensorInformation.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Serial.h"
 				>
 			</File>
@@ -382,5 +390,9 @@
 		</File>
 	</Files>
 	<Globals>
+		<Global
+			Name="RESOURCE_FILE"
+			Value="PositioningModule.rc"
+		/>
 	</Globals>
 </VisualStudioProject>
