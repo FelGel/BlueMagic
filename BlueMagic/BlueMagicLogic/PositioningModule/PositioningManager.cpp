@@ -132,10 +132,10 @@ void CPositioningManager::CreateScanFile(const int SensorId)
 {
 	/* TEMP -> Write to File*/
 	SYSTEMTIME SystemTime;
-	GetSystemTime(&SystemTime);
+	GetLocalTime(&SystemTime);
 
 	CString FileName;
-	FileName.Format("ScanFile_Sensor%d %d.%d.%d %d-%d-%d.csv", 
+	FileName.Format("..\\ScanFiles\\ScanFile_Sensor%d %02d.%02d.%02d %02d-%02d-%02d.csv", 
 		SensorId, 
 		SystemTime.wDay, SystemTime.wMonth, SystemTime.wYear, 
 		SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
@@ -162,10 +162,10 @@ void CPositioningManager::UpdateScanFile(const int &SensorId, const SScannedData
 {
 	/* TEMP -> Write to File*/
 	SYSTEMTIME SystemTime;
-	GetSystemTime(&SystemTime);
+	GetLocalTime(&SystemTime);
 
 	CString DataString;
-	DataString.Format("%s, %d, %d:%d:%d\n", ScannedData.ScannedBDADDRESS.c_str(), ScannedData.RSSI,
+	DataString.Format("%s, %d, %02d:%02d:%02d\n", ScannedData.ScannedBDADDRESS.c_str(), ScannedData.RSSI,
 		SystemTime.wHour,SystemTime.wMinute,SystemTime.wSecond);
 
 	CStdioFile *ScanFile;
@@ -184,10 +184,10 @@ void CPositioningManager::UpdateDialog(const int &SensorId, const SScannedData& 
 	if (m_DialogMessagesInterfaceHandler != NULL)
 	{
 		SYSTEMTIME SystemTime;
-		GetSystemTime(&SystemTime);
+		GetLocalTime(&SystemTime);
 
 		CString TimeStamp;
-		TimeStamp.Format("%d:%d:%d", SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
+		TimeStamp.Format("%02d:%02d:%02d", SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
 
 		SDialogMessage *DialogMessage = new SDialogMessage(SensorId, ScannedData, TimeStamp);
 

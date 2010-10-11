@@ -35,6 +35,7 @@
 */release/
 /release/
 /ApplicationLogs/
+/ScanFiles/
 
 # Specific uniteresting file names:
 # -------------------------------------

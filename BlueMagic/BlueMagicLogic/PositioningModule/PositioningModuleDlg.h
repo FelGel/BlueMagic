@@ -6,6 +6,7 @@
 
 #include "..\ApplicationUtils/TabDlg.h"
 #include "PositioningManager.h"
+#include "afxcmn.h"
 
 // CPositioningModuleDlg dialog
 class CPositioningModuleDlg : public CTabDlg
@@ -18,8 +19,13 @@ public:
 // Dialog Data
 	enum { IDD = IDD_POSITIONINGMODULE_DIALOG };
 
+	void InitScanList();
+	void AddNewScanEntry(SDialogMessage *Message);
+	void RemoveOldScanEntry(SDialogMessage *Message);
 	void SendMessageToGuiThread(WPARAM wParam) {GoToGuiThread(wParam);}
-	virtual void OnGuiThread(WPARAM /*wParam*/) {}
+	
+	virtual void LoadData();
+	virtual void OnGuiThread(WPARAM /*wParam*/);
 
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
@@ -34,4 +40,9 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+
+private:
+	CListCtrl m_ScanListCtrl;
+	bool m_OneEntryPerBDADDRESS;
+	//int m_NextAvailableItemIndex;
 };

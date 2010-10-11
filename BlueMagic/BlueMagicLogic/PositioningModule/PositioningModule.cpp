@@ -39,6 +39,8 @@ void CPositioningModuleApp::AddDialogs()
 
 bool CPositioningModuleApp::PerformInitalization()
 {
+	m_PositioningModuleDlg.InitScanList();
+
 	m_PositioningManager.Advise(this);
 	return m_PositioningManager.Init();
 }
