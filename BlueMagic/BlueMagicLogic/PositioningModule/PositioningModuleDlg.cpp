@@ -19,8 +19,8 @@ static char THIS_FILE[] = __FILE__;
 
 
 
-CPositioningModuleDlg::CPositioningModuleDlg(CWnd* pParent /*=NULL*/)
-	: CTabDlg(CPositioningModuleDlg::IDD, pParent), m_OneEntryPerBDADDRESS(true)/*, m_NextAvailableItemIndex(0)*/
+CPositioningModuleDlg::CPositioningModuleDlg(bool OneEntryPerBDADDRESS, CWnd* pParent /*=NULL*/)
+	: CTabDlg(CPositioningModuleDlg::IDD, pParent), m_OneEntryPerBDADDRESS(OneEntryPerBDADDRESS)/*, m_NextAvailableItemIndex(0)*/
 {
 	//m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -121,7 +121,7 @@ void CPositioningModuleDlg::InitScanList()
 	ADD_COL(100, "BDADDRESS");
 	ADD_COL(60,	"SensorID");
 	ADD_COL(100, "Time");
-	ADD_COL(60,	"RSSI");
+	ADD_COL(40,	"RSSI");
 #undef ADD_COL
 	m_ScanListCtrl.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
@@ -206,5 +206,6 @@ void CPositioningModuleDlg::RemoveOldScanEntry(SDialogMessage *Message)
 
 void CPositioningModuleDlg::LoadData()
 {
-	m_OneEntryPerBDADDRESS = GetConfigBool(CONFIG_SECTION, "OneEntryPerBDADDRESS", true);
+	// Determined in CTOR
+	//m_OneEntryPerBDADDRESS = GetConfigBool(CONFIG_SECTION, "OneEntryPerBDADDRESS", true);
 }

@@ -22,7 +22,9 @@ END_MESSAGE_MAP()
 const char* APP_VERSION = "0.1";
 
 CPositioningModuleApp::CPositioningModuleApp()  :
-CResourcedGuiApplication("PositioningModuleApp", APP_VERSION, IDR_MAINFRAME)
+CResourcedGuiApplication("PositioningModuleApp", APP_VERSION, IDR_MAINFRAME),
+	m_PositioningModuleRealTimeDlg(true), 
+	m_PositioningModuleAggregatedDlg(false)
 {
 	// TODO: add construction code here,
 	// Place all significant initialization in InitInstance
@@ -32,14 +34,16 @@ CResourcedGuiApplication("PositioningModuleApp", APP_VERSION, IDR_MAINFRAME)
 
 void CPositioningModuleApp::AddDialogs()
 {
-	CResourcedGuiApplication::AddDialog(m_PositioningModuleDlg, CPositioningModuleDlg::IDD, "PositioningModuleDlg");
+	CResourcedGuiApplication::AddDialog(m_PositioningModuleRealTimeDlg, CPositioningModuleDlg::IDD, "Scan Status");
+	CResourcedGuiApplication::AddDialog(m_PositioningModuleAggregatedDlg, CPositioningModuleDlg::IDD, "Scan Log");
 
 	return;
 }
 
 bool CPositioningModuleApp::PerformInitalization()
 {
-	m_PositioningModuleDlg.InitScanList();
+	m_PositioningModuleRealTimeDlg.InitScanList();
+	m_PositioningModuleAggregatedDlg.InitScanList();
 
 	m_PositioningManager.Advise(this);
 	return m_PositioningManager.Init();
@@ -56,5 +60,8 @@ CPositioningModuleApp theApp;
 
 void CPositioningModuleApp::SendMessageToDialog(SDialogMessage *Message)
 {
-	m_PositioningModuleDlg.SendMessageToGuiThread((WPARAM)Message);
+	SDialogMessage *CopyMessage = new SDialogMessage(Message->m_SensorId, Message->m_ScannedData, Message->m_TimeStamp);
+
+	m_PositioningModuleRealTimeDlg.SendMessageToGuiThread((WPARAM)Message);
+	m_PositioningModuleAggregatedDlg.SendMessageToGuiThread((WPARAM)CopyMessage);
 }

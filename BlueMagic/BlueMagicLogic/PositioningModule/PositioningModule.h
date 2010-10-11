@@ -36,7 +36,8 @@ private:
 
 private:
 	CPositioningManager m_PositioningManager;
-	CPositioningModuleDlg m_PositioningModuleDlg;
+	CPositioningModuleDlg m_PositioningModuleRealTimeDlg;
+	CPositioningModuleDlg m_PositioningModuleAggregatedDlg;
 };
 
 extern CPositioningModuleApp theApp;

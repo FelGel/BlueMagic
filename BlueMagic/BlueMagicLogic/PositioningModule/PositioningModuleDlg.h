@@ -13,7 +13,7 @@ class CPositioningModuleDlg : public CTabDlg
 {
 // Construction
 public:
-	CPositioningModuleDlg(CWnd* pParent = NULL);	// standard constructor
+	CPositioningModuleDlg(bool OneEntryPerBDADDRESS, CWnd* pParent = NULL);	// standard constructor
 	virtual ~CPositioningModuleDlg();
 
 // Dialog Data
