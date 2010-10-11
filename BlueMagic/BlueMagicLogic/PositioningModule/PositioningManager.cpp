@@ -76,14 +76,17 @@ void CPositioningManager::OnIncomingScannedData(int SensorId, SScannedData Scann
 	// delete ScannedData;
 }
 
-void CPositioningManager::OnConnected(UCHAR /*SensorId*/)
+void CPositioningManager::OnSensorStatusUpdate(int SensorId, bool IsController, ESensorConnectionStatus SensorConnectionStatus, ESensorHandshakeStatus SensorHandshakeStatus, ESensorActivityStatus SensorActivityStatus)
 {
-
+	AddHandlerToQueue(&CPositioningManager::HandleSensorStatusUpdate, SensorId, IsController, SensorConnectionStatus, SensorHandshakeStatus, SensorActivityStatus);
 }
 
-void CPositioningManager::OnDisconnected(UCHAR /*SensorId*/)
-{
 
+void CPositioningManager::HandleSensorStatusUpdate(const int &SensorId, const bool &IsController, const ESensorConnectionStatus &SensorConnectionStatus, const ESensorHandshakeStatus &SensorHandshakeStatus, const ESensorActivityStatus &SensorActivityStatus)
+{
+	SDialogSensorMessage *DialogMessage = new SDialogSensorMessage(SensorId, IsController, SensorConnectionStatus, SensorHandshakeStatus, SensorActivityStatus);
+
+	m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogMessage);
 }
 
 void CPositioningManager::OnThreadClose()
@@ -223,7 +226,7 @@ void CPositioningManager::UpdateDialog(const int &SensorId, const SScannedData& 
 		CString TimeStamp;
 		TimeStamp.Format("%02d:%02d:%02d", SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
 
-		SDialogMessage *DialogMessage = new SDialogMessage(SensorId, ScannedData, TimeStamp);
+		SDialogDataMessage *DialogMessage = new SDialogDataMessage(SensorId, ScannedData, TimeStamp);
 
 		m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogMessage);
 	}

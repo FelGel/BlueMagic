@@ -68,6 +68,7 @@ private:
 	void OnBTBKeepAliveMessage(CBlueMagicBTBKeepAliveMessage *BTBKeepAliveMessage);
 	void CheckPhysicalConnectionStatus(DWORD TickCount);
 	void CheckLogicalConnectionStatus(DWORD TickCount);
+	void SensorIsActive(SSensorInformation *SensorInformation);
 
 	// Clocks
 	void SetClockForSensor(int Clock, int SensorID);
@@ -75,6 +76,10 @@ private:
 	// Sensor Info Service Functions 
 	SSensorInformation* GetSensorControllerInfo();	
 	void ReportSensorsStatusToPositionManager();
+
+	// Status Update
+	void DoStatusUpdateIfNecessary(DWORD TickCount);
+	void SendStatusUpdate(SSensorInformation *SensorInformation);
 
 	// Init related
 	void ReadGeneralSensorsConfiguration();
@@ -95,6 +100,8 @@ private:
 	DWORD m_LastConnectionAttemptTickCount;
 	DWORD m_LastHandshakeAttemptTickCount; // One counter per SensorController as GetInfo is a broadcast message
 
+	DWORD m_LastKeepAliveTestingTickCount;
+
 	BYTE m_DataBuffer[DATA_BUFFER_SIZE];
 	DWORD m_DataBufferOffset;
 
@@ -103,4 +110,9 @@ private:
 	DWORD m_TimeBetweenConnectionAttempts; 
 	DWORD m_TimeBetweenHandshakeAttempts;
 	DWORD m_AllowedTimeBetweenKeepAlives;
+
+	DWORD m_StatusUpdateResolution;
+	DWORD m_LastStatusUpdateTickCount;
+
+	bool m_DebugFlag1;
 };

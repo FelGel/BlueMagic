@@ -1,5 +1,7 @@
 #pragma once
+
 #include <list>
+#include "Common/Utils.h"
 
 #define DATA_BUFFER_SIZE	10 * 1024 // 10kb
 #define MAX_SENSOR_CLOCK_VALUE				SHRT_MAX
@@ -60,4 +62,8 @@ struct SSensorInformation
 	// DWORD m_LastHandshakeAttemptTickCount; - done as a Broadcast !!
 
 	std::vector<int> m_ChildrenSensorIDs;
+
+	static std::string SensorConnectionStatusToShortString(ESensorConnectionStatus SensorConnectionStatus);
+	static std::string SensorHandshakeStatusToShortString(ESensorHandshakeStatus SensorHandshakeStatus);
+	static std::string SensorActivityStatusToShortString(ESensorActivityStatus SensorActivityStatus);
 };

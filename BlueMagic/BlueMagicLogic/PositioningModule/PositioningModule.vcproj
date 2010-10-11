@@ -236,6 +236,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\SensorInformation.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SensorsStatusDlg.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Serial.cpp"
 				>
 			</File>
@@ -343,6 +351,10 @@
 			</File>
 			<File
 				RelativePath=".\SensorInformation.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SensorsStatusDlg.h"
 				>
 			</File>
 			<File

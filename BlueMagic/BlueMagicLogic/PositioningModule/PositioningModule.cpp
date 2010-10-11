@@ -36,6 +36,7 @@ void CPositioningModuleApp::AddDialogs()
 {
 	CResourcedGuiApplication::AddDialog(m_PositioningModuleRealTimeDlg, CPositioningModuleDlg::IDD, "Scan Status");
 	CResourcedGuiApplication::AddDialog(m_PositioningModuleAggregatedDlg, CPositioningModuleDlg::IDD, "Scan Log");
+	CResourcedGuiApplication::AddDialog(m_SensorsStatusDlg, CSensorsStatusDlg::IDD, "Sensors Status");
 
 	return;
 }
@@ -44,6 +45,7 @@ bool CPositioningModuleApp::PerformInitalization()
 {
 	m_PositioningModuleRealTimeDlg.InitScanList();
 	m_PositioningModuleAggregatedDlg.InitScanList();
+	m_SensorsStatusDlg.InitScanList();
 
 	m_PositioningManager.Advise(this);
 	return m_PositioningManager.Init();
@@ -58,10 +60,17 @@ bool CPositioningModuleApp::PerformCleanup()
 
 CPositioningModuleApp theApp;
 
-void CPositioningModuleApp::SendMessageToDialog(SDialogMessage *Message)
+void CPositioningModuleApp::SendMessageToDialog(SDialogDataMessage *Message)
 {
-	SDialogMessage *CopyMessage = new SDialogMessage(Message->m_SensorId, Message->m_ScannedData, Message->m_TimeStamp);
+	SDialogDataMessage *CopyMessage = new SDialogDataMessage(Message->m_SensorId, Message->m_ScannedData, Message->m_TimeStamp);
+	SDialogDataMessage *CopyMessage2 = new SDialogDataMessage(Message->m_SensorId, Message->m_ScannedData, Message->m_TimeStamp);
 
 	m_PositioningModuleRealTimeDlg.SendMessageToGuiThread((WPARAM)Message);
 	m_PositioningModuleAggregatedDlg.SendMessageToGuiThread((WPARAM)CopyMessage);
+	m_SensorsStatusDlg.SendMessageToGuiThread((WPARAM)CopyMessage2);
+}
+
+void CPositioningModuleApp::SendMessageToDialog(SDialogSensorMessage *Message)
+{
+	m_SensorsStatusDlg.SendMessageToGuiThread((WPARAM)Message);
 }
