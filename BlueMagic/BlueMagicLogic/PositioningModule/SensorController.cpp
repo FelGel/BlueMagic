@@ -266,6 +266,7 @@ DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 	if (!IsCompleteMessage)
 	{
 		Assert(!CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY);
+		
 		delete BlueMagicBTBMessage;
 		return 0;
 	}
@@ -284,6 +285,7 @@ DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ ": SensorID %d is not in map!! cannot handle its data", BlueMagicBTBMessage->m_SensorId);
 		
+		delete BlueMagicBTBMessage;
 		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
 	}
 
@@ -294,6 +296,7 @@ DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 		LogEvent(LE_ERROR, __FUNCTION__ ": Sensor Controller %d HandShake not performed, refuse processing the message (Type=%s) from SensorID %d", 
 			m_SensorID, CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str(), BlueMagicBTBMessage->m_SensorId);
 
+		delete BlueMagicBTBMessage;
 		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
 	}
 
@@ -305,6 +308,7 @@ DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 
 		DoHandshake();
 
+		delete BlueMagicBTBMessage;
 		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
 	}
 
