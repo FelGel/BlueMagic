@@ -200,6 +200,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DistanceMeasurementsDlg.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\EstablishmentTopology.cpp"
 				>
 			</File>
@@ -221,6 +225,10 @@
 			</File>
 			<File
 				RelativePath=".\PositioningModuleDlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ScannedBdAdressesDataBase.cpp"
 				>
 			</File>
 			<File
@@ -298,6 +306,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DistanceMeasurementsDlg.h"
+				>
+			</File>
+			<File
 				RelativePath=".\EstablishmentTopology.h"
 				>
 			</File>
@@ -335,6 +347,10 @@
 			</File>
 			<File
 				RelativePath=".\Resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ScannedBdAdressesDataBase.h"
 				>
 			</File>
 			<File

@@ -99,6 +99,7 @@ HCURSOR CPositioningModuleDlg::OnQueryDragIcon()
 void CPositioningModuleDlg::OnGuiThread(WPARAM wParam)
 {
 	SDialogDataMessage *Message = (SDialogDataMessage *)wParam;
+	Assert(Message->m_MessageType == DialogDataMessage);
 
 	if (m_OneEntryPerBDADDRESS)
 		RemoveOldScanEntry(Message);

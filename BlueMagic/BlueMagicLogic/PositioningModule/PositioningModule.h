@@ -12,6 +12,7 @@
 #include "PositioningModuleDlg.h"
 #include "SensorsStatusDlg.h"
 #include "DialogMessages.h"
+#include "DistanceMeasurementsDlg.h"
 
 // CPositioningModuleApp:
 // See PositioningModule.cpp for the implementation of this class
@@ -41,6 +42,7 @@ private:
 	CPositioningModuleDlg m_PositioningModuleRealTimeDlg;
 	CPositioningModuleDlg m_PositioningModuleAggregatedDlg;
 	CSensorsStatusDlg     m_SensorsStatusDlg;
+	CDistanceMeasurementsDlg m_DistancesMeasurementsDlg;
 };
 
 extern CPositioningModuleApp theApp;

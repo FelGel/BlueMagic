@@ -60,6 +60,8 @@ void CSensorsStatusDlg::InitScanList()
 void CSensorsStatusDlg::OnGuiThread(WPARAM wParam)
 {
 	SDialogMessage *Message = (SDialogMessage *)wParam;
+	Assert(Message->m_MessageType == DialogDataMessage 
+		|| Message->m_MessageType == DialogSensorMessage);
 
 // 	if (m_OneEntryPerBDADDRESS)
 // 		RemoveOldSensorEntry(Message);
