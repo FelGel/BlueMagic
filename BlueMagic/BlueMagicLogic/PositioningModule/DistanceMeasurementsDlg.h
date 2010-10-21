@@ -1,19 +1,10 @@
 #pragma once
 
 #include "..\ApplicationUtils/TabDlg.h"
+#include "PositioningAlgorithms\RssiToDistanceBasicAlgorithm.h"
+#include "PositioningAlgorithms\DistanceSmoothingBasicAlgorithmManager.h"
 #include "afxcmn.h"
 #include <map>
-
-#define ILLEGAL_A +999999
-#define ILLEGAL_N +999999
-
-struct SSensorParameters
-{
-	SSensorParameters() : A(ILLEGAL_A), N(ILLEGAL_N) {}
-	SSensorParameters(double _A, double _N) : A(_A), N(_N) {}
-	double A;
-	double N;
-};
 
 // CDistanceMeasurementsDlg dialog
 
@@ -28,6 +19,7 @@ public:
 
 	virtual void OnGuiThread(WPARAM /*wParam*/);
 	virtual void LoadData();
+	virtual void SaveData();
 
 // Dialog Data
 	enum { IDD = IDD_DISTANCE_MEASUREMENTS };
@@ -44,8 +36,16 @@ private:
 	int GetIndexForNewEntry(SDialogDataMessage *Message);
 
 	double CalcDistance(int SensorID, int RSSI);
+	double SmoothDistance(int SensorID, double Distance, std::string BDADDRESS, DWORD Time, double &Velocity, double &TS);
 	
-public:
+private:
+	std::map<int /*SensorID*/, CRssiToDistanceBasicAlgorithm> m_DistanceAlgorithms;
+	std::map<int /*SensorID*/, CDistanceSmoothingBasicAlgorithmManager> m_SmoothingAlgorithms;
+
+// DLG PARAMS:
 	CListCtrl m_DistanceMesaurementsList;
-	std::map<int /*SensorID*/, SSensorParameters> m_SensorsParameters;
+	double m_SmoothingParamA;
+	double m_SmoothingParamB;
+public:
+	afx_msg void OnBnClickedButton1();
 };
