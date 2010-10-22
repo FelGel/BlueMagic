@@ -5,11 +5,15 @@
 // POSITIONINGALGORITHMS_API functions as being imported from a DLL, whereas this DLL sees symbols
 // defined with this macro as being exported.
 #ifdef POSITIONINGALGORITHMS_EXPORTS
+	//#ifndef POSITIONINGALGORITHMS_API
+	//#pragma message("Positioning EXPORT\n")
+	//#endif
 #define POSITIONINGALGORITHMS_API __declspec(dllexport)
-#pragma message("Positioning EXPORT\n")
 #else
+	//#ifndef POSITIONINGALGORITHMS_API
+	//#pragma message("Positioning IMPORT\n")
+	//#endif
 #define POSITIONINGALGORITHMS_API __declspec(dllimport)
-#pragma message("Positioning IMPORT\n")
 #endif
 
 // This class is exported from the PositioningAlgorithms.dll

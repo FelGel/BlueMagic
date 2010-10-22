@@ -37,7 +37,7 @@ void CDistanceSmoothingBasicAlgorithmManager::Init(double a, double b)
 double CDistanceSmoothingBasicAlgorithmManager::SmoothDistance(std::string BDADDRESS, double Rcurrent, double Tcurrent)
 {
 	// This must be done, and auto creation via GET_DISTANCE_SMOOTHING_ALGORITHM_FOR_BDADDRESS 
-	// cannot be trusted
+	// cannot be used for first creation as Initiating CTOR must be used (or Init called right after)
 	if (!IsValueInMap(m_DetectedBDaddresses, BDADDRESS))
 	{
 		CDistanceSmoothingBasicAlgorithm algorithm(m_a, m_b);

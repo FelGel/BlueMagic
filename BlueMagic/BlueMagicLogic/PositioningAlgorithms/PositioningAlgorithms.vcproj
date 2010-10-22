@@ -172,55 +172,8 @@
 	</References>
 	<Files>
 		<Filter
-			Name="Source Files"
-			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
-			>
-			<File
-				RelativePath=".\DistanceSmoothingBasicAlgorithm.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DistanceSmoothingBasicAlgorithmManager.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Matrix.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PositioningAlgorithms.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\RssiToDistanceBasicAlgorithm.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\stdafx.cpp"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-			</File>
-		</Filter>
-		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
 				RelativePath=".\DistanceSmoothingBasicAlgorithm.h"
@@ -239,6 +192,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PositioningBasicAlgorithm.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PositioningBasicAlgorithmManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PositionStructure.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Resource.h"
 				>
 			</File>
@@ -252,9 +217,53 @@
 			</File>
 		</Filter>
 		<Filter
+			Name="Source Files"
+			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
+			>
+			<File
+				RelativePath=".\DistanceSmoothingBasicAlgorithm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DistanceSmoothingBasicAlgorithmManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Matrix.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PositioningAlgorithms.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PositioningBasicAlgorithm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PositioningBasicAlgorithmManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RssiToDistanceBasicAlgorithm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\stdafx.cpp"
+				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+			</File>
+		</Filter>
+		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
-			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
 				RelativePath=".\PositioningAlgorithms.rc"

@@ -16,8 +16,8 @@ public:
 	double Geta() const {return m_a;}
 	double Getb() const {return m_b;}
 
-	double GetEstimatedVelocity() {return m_Vpred;}
-	double GetLastTS() {return m_LastTS;}
+	double GetEstimatedVelocity() const {return m_Vpred;}
+	double GetLastTS() const {return m_LastTS;}
 
 private:
 	double CalcTS(double CurrentTickCount);
