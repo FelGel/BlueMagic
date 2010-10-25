@@ -21,7 +21,6 @@ bool CMeasurementsContainer::AddMeasurement(DWORD TickCount, int RSSI)
 			return false;
 		}
 
-		LogEvent(LE_ERROR, "PLACE BREAKPOINT HERE AND CHECK");
 		LogEvent(LE_INFO, __FUNCTION__ ": Two Measurements received on same time: %d & %d. Taking the higher value.",
 			*RssiInMap, RSSI);
 
