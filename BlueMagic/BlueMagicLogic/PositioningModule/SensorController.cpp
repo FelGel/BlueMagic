@@ -13,13 +13,14 @@
 #include "BlueMagicBTBMessages.h"
 #include "BlueMagicCommon/BlueMagicMessageFactory.h"
 
-#define SENSOR_CONTROLLER_QUEUE_SIZE		10000
-#define SENSOR_CONTROLLER_THREAD_TIMEOUT	100 //milisec
+#define SENSOR_CONTROLLER_QUEUE_SIZE				10000
+#define SENSOR_CONTROLLER_THREAD_TIMEOUT			100	  //milisec
 #define DEFAULT_TIME_BETWEEN_CONNCETION_ATTEMPTS	10000 //milisec
-#define DEFAULT_TIME_BETWEEN_HANDSHAKE_ATTEMPTS		5000 //milisec
+#define DEFAULT_TIME_BETWEEN_HANDSHAKE_ATTEMPTS		10000 //milisec
 #define DEFAULT_TIME_BETWEEN_KEEP_ALIVES			60000 //milisec
 #define DEFAULT_STATUS_UPDATE_RESOLUTION			60000 //milisec
 #define KEEP_ALIVE_RESOLUTION						5000  //milisec
+#define DELAY_BETWEEN_CONNECTION_AND_HANDSHAKE		1000  //milisec
 
 #define TICKS_IN_SECOND(x) ((x) * 1000)
 
@@ -63,7 +64,7 @@ bool CSensorController::Init(ISensorEvents *Handler)
 
 	ConnectToPort();
 
-	SleepEx(100,FALSE);
+	SleepEx(DELAY_BETWEEN_CONNECTION_AND_HANDSHAKE, FALSE);
 
 	DoHandshake();
 
@@ -293,6 +294,17 @@ DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 
 	// Activity should be updated for each message, even if not handshaked !!
 	OnValidMessageArrived(SensorInfo->m_SensorID);
+
+	if (MessageType == BTBGetInfoReturned)
+	{
+		LogEvent(LE_WARNING, __FUNCTION__ ": GetInfo request was returned by Sensor %d. Retrying Handshake.",
+			SensorInfo->m_SensorID);
+
+		DoHandshake();
+
+		delete BlueMagicBTBMessage;
+		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
+	}
 
 	// Verify The Sensor Controller is properly Handshaked
 	if (GetSensorControllerInfo()->m_HandshakeStatus != SensorHandshaked 
