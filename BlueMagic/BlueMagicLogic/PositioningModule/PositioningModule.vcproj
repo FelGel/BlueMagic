@@ -200,11 +200,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DistanceMeasurementsDlg.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\EstablishmentTopology.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\geometry.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MeasurementsContainer.cpp"
 				>
 			</File>
 			<File
@@ -224,6 +232,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ScannedBdAdressesDataBase.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\SensorBufferDeSerializer.cpp"
 				>
 			</File>
@@ -233,6 +245,14 @@
 			</File>
 			<File
 				RelativePath=".\SensorControllersContainer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SensorInformation.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SensorsStatusDlg.cpp"
 				>
 			</File>
 			<File
@@ -290,6 +310,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DistanceMeasurementsDlg.h"
+				>
+			</File>
+			<File
 				RelativePath=".\EstablishmentTopology.h"
 				>
 			</File>
@@ -307,6 +331,10 @@
 			</File>
 			<File
 				RelativePath=".\ISensorEvents.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MeasurementsContainer.h"
 				>
 			</File>
 			<File
@@ -330,6 +358,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ScannedBdAdressesDataBase.h"
+				>
+			</File>
+			<File
 				RelativePath=".\SensorBufferDeSerializer.h"
 				>
 			</File>
@@ -343,6 +375,10 @@
 			</File>
 			<File
 				RelativePath=".\SensorInformation.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SensorsStatusDlg.h"
 				>
 			</File>
 			<File

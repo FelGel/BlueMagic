@@ -19,8 +19,8 @@ static char THIS_FILE[] = __FILE__;
 
 
 
-CPositioningModuleDlg::CPositioningModuleDlg(CWnd* pParent /*=NULL*/)
-	: CTabDlg(CPositioningModuleDlg::IDD, pParent), m_OneEntryPerBDADDRESS(true)/*, m_NextAvailableItemIndex(0)*/
+CPositioningModuleDlg::CPositioningModuleDlg(bool OneEntryPerBDADDRESS, CWnd* pParent /*=NULL*/)
+	: CTabDlg(CPositioningModuleDlg::IDD, pParent), m_OneEntryPerBDADDRESS(OneEntryPerBDADDRESS)/*, m_NextAvailableItemIndex(0)*/
 {
 	//m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 }
@@ -98,7 +98,8 @@ HCURSOR CPositioningModuleDlg::OnQueryDragIcon()
 
 void CPositioningModuleDlg::OnGuiThread(WPARAM wParam)
 {
-	SDialogMessage *Message = (SDialogMessage *)wParam;
+	SDialogDataMessage *Message = (SDialogDataMessage *)wParam;
+	Assert(Message->m_MessageType == DialogDataMessage);
 
 	if (m_OneEntryPerBDADDRESS)
 		RemoveOldScanEntry(Message);
@@ -121,7 +122,7 @@ void CPositioningModuleDlg::InitScanList()
 	ADD_COL(100, "BDADDRESS");
 	ADD_COL(60,	"SensorID");
 	ADD_COL(100, "Time");
-	ADD_COL(60,	"RSSI");
+	ADD_COL(40,	"RSSI");
 #undef ADD_COL
 	m_ScanListCtrl.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
@@ -133,14 +134,14 @@ void CPositioningModuleDlg::InitScanList()
 	*/
 }
 
-void CPositioningModuleDlg::AddNewScanEntry(SDialogMessage *Message)
+void CPositioningModuleDlg::AddNewScanEntry(SDialogDataMessage *Message)
 {
 	LVITEM NewItem;
 	NewItem.mask = LVIF_TEXT;
 
 	NewItem.iItem = 0;
 	NewItem.pszText = (LPSTR)(LPCSTR)Message->m_ScannedData.ScannedBDADDRESS.c_str();
-	m_ScanListCtrl.InsertItem(0, NewItem.pszText);	
+	m_ScanListCtrl.InsertItem(0, NewItem.pszText);
 
 	CString strSensorID;
 	strSensorID.Format("%d", Message->m_SensorId);
@@ -179,10 +180,13 @@ void CPositioningModuleDlg::AddNewScanEntry(SDialogMessage *Message)
 
 }
 
-void CPositioningModuleDlg::RemoveOldScanEntry(SDialogMessage *Message)
+void CPositioningModuleDlg::RemoveOldScanEntry(SDialogDataMessage *Message)
 {
 	#define MAX_CHRSTR_LENGTH 64
 	char ChrStr[MAX_CHRSTR_LENGTH];
+
+	CString strSensorID;
+	strSensorID.Format("%d", Message->m_SensorId);
 
 	for (int i = 0; i < m_ScanListCtrl.GetItemCount(); i++)
 	{
@@ -190,9 +194,6 @@ void CPositioningModuleDlg::RemoveOldScanEntry(SDialogMessage *Message)
 		CString OldItemBDADRESS = ChrStr;
 		m_ScanListCtrl.GetItemText(i, 1, ChrStr, MAX_CHRSTR_LENGTH);
 		CString OldItemSensorID = ChrStr;
-
-		CString strSensorID;
-		strSensorID.Format("%d", Message->m_SensorId);
 
 		if (strSensorID == OldItemSensorID 
 			&& Message->m_ScannedData.ScannedBDADDRESS.c_str() == OldItemBDADRESS)
@@ -206,5 +207,6 @@ void CPositioningModuleDlg::RemoveOldScanEntry(SDialogMessage *Message)
 
 void CPositioningModuleDlg::LoadData()
 {
-	m_OneEntryPerBDADDRESS = GetConfigBool(CONFIG_SECTION, "OneEntryPerBDADDRESS", true);
+	// Determined in CTOR
+	//m_OneEntryPerBDADDRESS = GetConfigBool(CONFIG_SECTION, "OneEntryPerBDADDRESS", true);
 }

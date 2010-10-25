@@ -13,13 +13,18 @@
 #include "BlueMagicBTBMessages.h"
 #include "BlueMagicCommon/BlueMagicMessageFactory.h"
 
-#define SENSOR_CONTROLLER_QUEUE_SIZE		10000
-#define SENSOR_CONTROLLER_THREAD_TIMEOUT	100 //milisec
-#define TIME_BETWEEN_CONNCETION_ATTEMPTS	5000 //milisec
-#define TIME_BETWEEN_HANDSHAKE_ATTEMPTS		5000 //milisec
-#define TIME_BETWEEN_KEEP_ALIVES			60000 //milisec
+#define SENSOR_CONTROLLER_QUEUE_SIZE				10000
+#define SENSOR_CONTROLLER_THREAD_TIMEOUT			100	  //milisec
+#define DEFAULT_TIME_BETWEEN_CONNCETION_ATTEMPTS	10000 //milisec
+#define DEFAULT_TIME_BETWEEN_HANDSHAKE_ATTEMPTS		10000 //milisec
+#define DEFAULT_TIME_BETWEEN_KEEP_ALIVES			60000 //milisec
+#define DEFAULT_STATUS_UPDATE_RESOLUTION			60000 //milisec
+#define KEEP_ALIVE_RESOLUTION						5000  //milisec
+#define DELAY_BETWEEN_CONNECTION_AND_HANDSHAKE		1000  //milisec
 
 #define TICKS_IN_SECOND(x) ((x) * 1000)
+
+static const char* GENERAL_SENSORS_CONFIG_SECTION = "GeneralSensorsConfiguration";
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -30,8 +35,10 @@ static char THIS_FILE[] = __FILE__;
 CSensorController::CSensorController(int SensorID, int ComPort, std::string BDADDRESS, std::vector<int> ChildrenSensorIDs) 
 	: CThreadWithQueue("SensorController", SENSOR_CONTROLLER_QUEUE_SIZE), m_SerialPort(this, ComPort, SensorID),
 		m_SensorID(SensorID), m_ComPort(ComPort), m_BDADDRESS(BDADDRESS), m_EventsHandler(NULL), m_DataBufferOffset(0),
-		m_PhysicalConnectionStatus(SensorNotConnected), m_LastConnectionAttemptTickCount(0), m_LastHandshakeAttemptTickCount(0)
-		
+		m_PhysicalConnectionStatus(SensorNotConnected), m_LastConnectionAttemptTickCount(0), m_LastHandshakeAttemptTickCount(0), m_LastKeepAliveTestingTickCount(0),
+		m_StatusUpdateResolution(DEFAULT_STATUS_UPDATE_RESOLUTION), m_LastStatusUpdateTickCount(0),
+		m_TimeBetweenConnectionAttempts(DEFAULT_TIME_BETWEEN_CONNCETION_ATTEMPTS), m_TimeBetweenHandshakeAttempts(DEFAULT_TIME_BETWEEN_HANDSHAKE_ATTEMPTS), 
+		m_AllowedTimeBetweenKeepAlives(DEFAULT_TIME_BETWEEN_KEEP_ALIVES), m_DebugFlag1(true)
 {
 	InsertValueToMap(m_SensorsDataBuffferMap, SensorID, new SSensorInformation(BDADDRESS, SensorID, ChildrenSensorIDs));
 }
@@ -45,6 +52,8 @@ bool CSensorController::Init(ISensorEvents *Handler)
 {
 	m_EventsHandler = Handler;
 
+	ReadGeneralSensorsConfiguration();
+
 	if (!BuildSensorControllerInfoTree())
 	{
 		LogEvent(LE_FATAL, __FUNCTION__ ": FATAL ERROR! Could not build Info Tree for Sensor Controller %d!!", m_SensorID);
@@ -55,6 +64,10 @@ bool CSensorController::Init(ISensorEvents *Handler)
 
 	ConnectToPort();
 
+	SleepEx(DELAY_BETWEEN_CONNECTION_AND_HANDSHAKE, FALSE);
+
+	DoHandshake();
+
 	// start thread
 	SetTimeout(SENSOR_CONTROLLER_THREAD_TIMEOUT);
 	bool Success = StartThread();
@@ -63,8 +76,6 @@ bool CSensorController::Init(ISensorEvents *Handler)
 		LogEvent(LE_FATAL, __FUNCTION__ ": FATAL ERROR! Could not start working thread !!");
 		return false;
 	}
-
-	DoHandshake();
 
 	return true;
 }
@@ -103,6 +114,7 @@ bool CSensorController::ConnectToPort()
 		m_SensorID, m_ComPort);
 
 	m_PhysicalConnectionStatus = SensorConnected;
+	SendStatusUpdate(GetSensorControllerInfo());
 
 	return true;
 }
@@ -257,6 +269,7 @@ DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 	if (!IsCompleteMessage)
 	{
 		Assert(!CAN_IDENTIFY_COMPLETE_MESSAGES_EXTERNALLY);
+		
 		delete BlueMagicBTBMessage;
 		return 0;
 	}
@@ -275,6 +288,21 @@ DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ ": SensorID %d is not in map!! cannot handle its data", BlueMagicBTBMessage->m_SensorId);
 		
+		delete BlueMagicBTBMessage;
+		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
+	}
+
+	// Activity should be updated for each message, even if not handshaked !!
+	OnValidMessageArrived(SensorInfo->m_SensorID);
+
+	if (MessageType == BTBGetInfoReturned)
+	{
+		LogEvent(LE_WARNING, __FUNCTION__ ": GetInfo request was returned by Sensor %d. Retrying Handshake.",
+			SensorInfo->m_SensorID);
+
+		DoHandshake();
+
+		delete BlueMagicBTBMessage;
 		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
 	}
 
@@ -285,6 +313,7 @@ DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 		LogEvent(LE_ERROR, __FUNCTION__ ": Sensor Controller %d HandShake not performed, refuse processing the message (Type=%s) from SensorID %d", 
 			m_SensorID, CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(MessageType).c_str(), BlueMagicBTBMessage->m_SensorId);
 
+		delete BlueMagicBTBMessage;
 		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
 	}
 
@@ -296,10 +325,11 @@ DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 
 		DoHandshake();
 
+		delete BlueMagicBTBMessage;
 		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
 	}
 
-	OnValidMessageArrived(SensorInfo->m_SensorID);
+	//OnValidMessageArrived(SensorInfo->m_SensorID);
 
 	if (/*m_TraceInterfaceMessages ||*/ GetLogLevel() <= LE_INFOLOW)
 	{
@@ -426,6 +456,7 @@ void CSensorController::DefineTopology(/*......*/)
 
 void CSensorController::HandleGetInfo()
 {
+	LogEvent(LE_INFOLOW, __FUNCTION__ ": Sending the Handshake from Worker Thread. SensorID %d", m_SensorID);
 	CBlueMagicBTBOutgoingMessage *Message = new CBlueMagicBTBGetInfoMessage();
 	SendBlueMagicMessageToSensor(Message, m_SensorID);
 }
@@ -450,12 +481,15 @@ void CSensorController::OnTimeout()
 	CheckHandshakeStatus(TickCount);
 
 	CheckLogicalConnectionStatus(TickCount);
+
+	DoStatusUpdateIfNecessary(TickCount);
 }
 
 void CSensorController::StartConnectionRetiresMechanism()
 {
 	m_PhysicalConnectionStatus = SensorAttemptsAtConnection;
 	m_LastConnectionAttemptTickCount = GetTickCount();
+	SendStatusUpdate(GetSensorControllerInfo());
 }
 
 void CSensorController::DoHandshake()
@@ -471,9 +505,15 @@ void CSensorController::DoHandshake()
 
 void CSensorController::ResetConnection(int SensorID)
 {
+	LogEvent(LE_WARNING, __FUNCTION__ "Resetting Sensor %d", SensorID);
+
 	// ToDo - Implement this !!
 	//Assert(false); // TEMPORARY.
-	LogEvent(LE_ERROR, __FUNCTION__ "RESET NOT IMPLEMENTED YET !!");
+	if (m_DebugFlag1)
+	{
+		m_DebugFlag1 = false;
+		LogEvent(LE_ERROR, __FUNCTION__ "RESET NOT IMPLEMENTED YET !!");
+	}
 
 	// Clean m_SensorsDataBuffferMap:
 }
@@ -538,6 +578,7 @@ void CSensorController::OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessag
 	}
 
 	SensorInfo->m_HandshakeStatus = NewHandshakeStatus;
+	SendStatusUpdate(SensorInfo);
 }
 
 void CSensorController::SetClockForSensor(int Clock, int SensorID)
@@ -634,17 +675,17 @@ void CSensorController::OnConnectionTimedOut(SSensorInformation *SensorInformati
 	{
 		LogEvent(LE_WARNING, __FUNCTION__ ": Connection to Sensor %d (via Sensor Controller %d & COM %d) TimedOut !",
 			SensorInformation->m_SensorID, m_SensorID, m_ComPort);
+
+		SensorInformation->m_LogicalConnectionStatus = SensorNotActive;	
+
+		SendStatusUpdate(SensorInformation);
 	}
 	else
 	{
-		LogEvent(LE_WARNING, __FUNCTION__ ": Connection to Sensor %d (via Sensor Controller %d & COM %d) is still INACTIVE !",
-			SensorInformation->m_SensorID, m_SensorID, m_ComPort);
+		// will be handled by periodic status dumps
+		//LogEvent(LE_WARNING, __FUNCTION__ ": Connection to Sensor %d (via Sensor Controller %d & COM %d) is still INACTIVE !",
+		//	SensorInformation->m_SensorID, m_SensorID, m_ComPort);
 	}
-
-	SensorInformation->m_LogicalConnectionStatus = SensorNotActive;
-
-	LogEvent(LE_WARNING, __FUNCTION__ ": Connection to Sensor %d (via COM %d) TimedOut !",
-		SensorInformation->m_SensorID, m_ComPort);		
 
 	ResetConnection(SensorInformation->m_SensorID);
 }
@@ -665,24 +706,28 @@ void CSensorController::OnValidMessageArrived(int SensorID)
 	}
 
 	if (SensorInformation->m_LogicalConnectionStatus == SensorNotActive)
-		LogEvent(LE_INFO, __FUNCTION__ ": Sensor %d has just became ACTIVE again", SensorID);
-
-	DWORD TickCount = GetTickCount();
+		LogEvent(LE_INFOHIGH, __FUNCTION__ ": Sensor %d has just became ACTIVE again", SensorID);
 
 	// Update Originating Sensor
-	SensorInformation->m_LastPacketRecievedTickCount = TickCount;
-	SensorInformation->m_LogicalConnectionStatus = SensorActive;
+	SensorIsActive(SensorInformation);
 
 	// Update Sensor Controller
-	GetSensorControllerInfo()->m_LastPacketRecievedTickCount = TickCount;
-	GetSensorControllerInfo()->m_LogicalConnectionStatus = SensorActive;
-
+	SensorIsActive(GetSensorControllerInfo());
 
 	// NOTE: in theory, we could have updated all connecting links.
 	// However, since we do have KeepAlives - no need.
 
 	// As for The Sensor Controller - since it is a physical entity, perhaps
 	// it's best to keep it updated.
+}
+
+void CSensorController::SensorIsActive(SSensorInformation *SensorInformation)
+{
+	DWORD TickCount = GetTickCount();
+
+	SensorInformation->m_LastPacketRecievedTickCount = TickCount;
+	SensorInformation->m_LogicalConnectionStatus = SensorActive;
+	SendStatusUpdate(SensorInformation);
 }
 
 SSensorInformation* CSensorController::GetSensorControllerInfo()
@@ -701,7 +746,7 @@ SSensorInformation* CSensorController::GetSensorControllerInfo()
 void CSensorController::CheckHandshakeStatus(DWORD TickCount)
 {
 	if (m_PhysicalConnectionStatus == SensorConnected 
-		&& TickCount - m_LastHandshakeAttemptTickCount > TIME_BETWEEN_HANDSHAKE_ATTEMPTS
+		&& TickCount - m_LastHandshakeAttemptTickCount > m_TimeBetweenHandshakeAttempts
 		&& GetSensorControllerBranchHandshakeStatus() == SensorNotHandshaked)
 	{
 		LogEvent(LE_INFOHIGH, __FUNCTION__ ": Attempting to send handshake to Sensor..");
@@ -714,7 +759,7 @@ void CSensorController::CheckPhysicalConnectionStatus(DWORD TickCount)
 	// Connection Retries Mechanism:
 
 	if (m_PhysicalConnectionStatus == SensorAttemptsAtConnection &&
-		TickCount - m_LastConnectionAttemptTickCount > TIME_BETWEEN_CONNCETION_ATTEMPTS)
+		TickCount - m_LastConnectionAttemptTickCount > m_TimeBetweenConnectionAttempts)
 	{
 		LogEvent(LE_INFOHIGH, __FUNCTION__ ": Attempting to reconnect to Sensor..");
 		ConnectToPort();
@@ -724,6 +769,11 @@ void CSensorController::CheckPhysicalConnectionStatus(DWORD TickCount)
 void CSensorController::CheckLogicalConnectionStatus(DWORD TickCount)
 {
 
+	if (TickCount - m_LastKeepAliveTestingTickCount < KEEP_ALIVE_RESOLUTION)
+		return;
+
+	m_LastKeepAliveTestingTickCount = TickCount;
+
 	std::map<int /*SensorId*/, SSensorInformation*>::iterator Iter = m_SensorsDataBuffferMap.begin();
 	std::map<int /*SensorId*/, SSensorInformation*>::iterator End = m_SensorsDataBuffferMap.end();
 
@@ -731,8 +781,8 @@ void CSensorController::CheckLogicalConnectionStatus(DWORD TickCount)
 	{
 		SSensorInformation *SensorInformation = Iter->second;
 		
-		if (m_PhysicalConnectionStatus == SensorConnected && SensorInformation->m_HandshakeStatus == SensorHandshaked &&
-			TickCount - SensorInformation->m_LastPacketRecievedTickCount > TIME_BETWEEN_KEEP_ALIVES)
+		if (m_PhysicalConnectionStatus == SensorConnected && /*SensorInformation->m_HandshakeStatus == SensorHandshaked &&*/
+			TickCount - SensorInformation->m_LastPacketRecievedTickCount > m_AllowedTimeBetweenKeepAlives)
 		{
 			OnConnectionTimedOut(SensorInformation);
 		}
@@ -871,6 +921,39 @@ void CSensorController::ReportSensorsStatusToPositionManager()
 	{
 		SSensorInformation* SensorInformation = Iter->second;
 		m_EventsHandler->OnSensorInSystem(SensorInformation->m_SensorID, SensorInformation->m_SensorID == m_SensorID, SensorInformation->m_BDADDRESS, SensorInformation->m_ChildrenSensorIDs);
+		SendStatusUpdate(SensorInformation);
 	}
 
+}
+
+void CSensorController::ReadGeneralSensorsConfiguration()
+{
+	m_TimeBetweenConnectionAttempts = GetConfigInt(GENERAL_SENSORS_CONFIG_SECTION, "TimeBetweenConnectionAttempts", DEFAULT_TIME_BETWEEN_CONNCETION_ATTEMPTS);
+	m_TimeBetweenHandshakeAttempts = GetConfigInt(GENERAL_SENSORS_CONFIG_SECTION, "TimeBetweenHandshakeAttempts", DEFAULT_TIME_BETWEEN_HANDSHAKE_ATTEMPTS);
+	m_AllowedTimeBetweenKeepAlives = GetConfigInt(GENERAL_SENSORS_CONFIG_SECTION, "AllowedTimeBetweenKeepAlives", DEFAULT_TIME_BETWEEN_KEEP_ALIVES);
+	m_StatusUpdateResolution = GetConfigInt(GENERAL_SENSORS_CONFIG_SECTION, "StatusUpdateResolution", DEFAULT_STATUS_UPDATE_RESOLUTION);
+}
+
+void CSensorController::DoStatusUpdateIfNecessary(DWORD TickCount)
+{
+	if (TickCount - m_LastStatusUpdateTickCount < m_StatusUpdateResolution)
+		return;
+
+	m_LastStatusUpdateTickCount = TickCount;
+
+	std::map<int /*SensorId*/, SSensorInformation*>::iterator Iter = m_SensorsDataBuffferMap.begin();
+	std::map<int /*SensorId*/, SSensorInformation*>::iterator End = m_SensorsDataBuffferMap.end();
+
+	for(;Iter != End; ++Iter)
+	{
+		SSensorInformation *SensorInformation = Iter->second;
+
+		SendStatusUpdate(SensorInformation);
+	}
+}
+
+void CSensorController::SendStatusUpdate(SSensorInformation *SensorInformation)
+{
+	m_EventsHandler->OnSensorStatusUpdate(SensorInformation->m_SensorID, SensorInformation->m_SensorID == m_SensorID,
+		m_PhysicalConnectionStatus, SensorInformation->m_HandshakeStatus, SensorInformation->m_LogicalConnectionStatus);
 }

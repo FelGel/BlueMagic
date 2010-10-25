@@ -13,15 +13,13 @@ class CPositioningModuleDlg : public CTabDlg
 {
 // Construction
 public:
-	CPositioningModuleDlg(CWnd* pParent = NULL);	// standard constructor
+	CPositioningModuleDlg(bool OneEntryPerBDADDRESS, CWnd* pParent = NULL);	// standard constructor
 	virtual ~CPositioningModuleDlg();
 
 // Dialog Data
 	enum { IDD = IDD_POSITIONINGMODULE_DIALOG };
 
 	void InitScanList();
-	void AddNewScanEntry(SDialogMessage *Message);
-	void RemoveOldScanEntry(SDialogMessage *Message);
 	void SendMessageToGuiThread(WPARAM wParam) {GoToGuiThread(wParam);}
 	
 	virtual void LoadData();
@@ -30,6 +28,9 @@ public:
 	protected:
 	virtual void DoDataExchange(CDataExchange* pDX);	// DDX/DDV support
 
+private:
+	void AddNewScanEntry(SDialogDataMessage *Message);
+	void RemoveOldScanEntry(SDialogDataMessage *Message);
 
 // Implementation
 protected:

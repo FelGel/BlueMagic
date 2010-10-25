@@ -68,17 +68,25 @@ private:
 	void OnBTBKeepAliveMessage(CBlueMagicBTBKeepAliveMessage *BTBKeepAliveMessage);
 	void CheckPhysicalConnectionStatus(DWORD TickCount);
 	void CheckLogicalConnectionStatus(DWORD TickCount);
+	void SensorIsActive(SSensorInformation *SensorInformation);
 
 	// Clocks
 	void SetClockForSensor(int Clock, int SensorID);
 
 	// Sensor Info Service Functions 
-	SSensorInformation* GetSensorControllerInfo();
+	SSensorInformation* GetSensorControllerInfo();	
+	void ReportSensorsStatusToPositionManager();
+
+	// Status Update
+	void DoStatusUpdateIfNecessary(DWORD TickCount);
+	void SendStatusUpdate(SSensorInformation *SensorInformation);
+
+	// Init related
+	void ReadGeneralSensorsConfiguration();
 	bool BuildSensorControllerInfoTree();
 	bool BuildSensorControllerInfoBranch(int SensorID);
 	bool LookupRemoteSensorInConfigurationAndParse(int SensorID);
 	bool ParseRemoteSensorsConfiguration(int ObjectIndex, std::string ConfigSection);
-	void ReportSensorsStatusToPositionManager();
 
 private:
 	ISensorEvents *m_EventsHandler;
@@ -92,8 +100,19 @@ private:
 	DWORD m_LastConnectionAttemptTickCount;
 	DWORD m_LastHandshakeAttemptTickCount; // One counter per SensorController as GetInfo is a broadcast message
 
+	DWORD m_LastKeepAliveTestingTickCount;
+
 	BYTE m_DataBuffer[DATA_BUFFER_SIZE];
 	DWORD m_DataBufferOffset;
 
 	std::map<int /*SensorId*/, SSensorInformation*> m_SensorsDataBuffferMap;
+
+	DWORD m_TimeBetweenConnectionAttempts; 
+	DWORD m_TimeBetweenHandshakeAttempts;
+	DWORD m_AllowedTimeBetweenKeepAlives;
+
+	DWORD m_StatusUpdateResolution;
+	DWORD m_LastStatusUpdateTickCount;
+
+	bool m_DebugFlag1;
 };

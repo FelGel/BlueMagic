@@ -12,7 +12,6 @@
 *.ncb
 *.suo
 *.aps
-*.exe
 *.res
 *.log
 *.manifest
@@ -20,7 +19,8 @@
 *.txt.bak
 *.txt.orig
 *.zip
-
+#*.exe
+#*.dll
 
 # Temporary \ Self-Generated Folders
 # -------------------------------------
@@ -38,6 +38,7 @@
 /ApplicationLogs/
 ScanFiles/
 ScanFiles/*
+
 
 # Specific uniteresting file names:
 # -------------------------------------

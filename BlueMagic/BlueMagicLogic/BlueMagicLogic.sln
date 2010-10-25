@@ -4,6 +4,7 @@ Microsoft Visual Studio Solution File, Format Version 9.00
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PositioningModule", "PositioningModule\PositioningModule.vcproj", "{20737FFB-51F4-4121-BB11-D43422336E12}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E65C0146-9AAD-485E-B4C6-649F88E05C7F} = {E65C0146-9AAD-485E-B4C6-649F88E05C7F}
+		{BE2B2BE8-3109-4AD7-A1D5-950B361CB63F} = {BE2B2BE8-3109-4AD7-A1D5-950B361CB63F}
 		{16DA1A9A-9124-434D-9B7E-8EC57E877F1C} = {16DA1A9A-9124-434D-9B7E-8EC57E877F1C}
 	EndProjectSection
 EndProject
@@ -19,6 +20,11 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcproj", "{16DA1A9A-9124-434D-9B7E-8EC57E877F1C}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BlueMagicCommon", "BlueMagicCommon\BlueMagicCommon.vcproj", "{3956405C-5BCE-4B02-A8EB-A3649F33CD83}"
+	ProjectSection(ProjectDependencies) = postProject
+		{16DA1A9A-9124-434D-9B7E-8EC57E877F1C} = {16DA1A9A-9124-434D-9B7E-8EC57E877F1C}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PositioningAlgorithms", "PositioningAlgorithms\PositioningAlgorithms.vcproj", "{BE2B2BE8-3109-4AD7-A1D5-950B361CB63F}"
 	ProjectSection(ProjectDependencies) = postProject
 		{16DA1A9A-9124-434D-9B7E-8EC57E877F1C} = {16DA1A9A-9124-434D-9B7E-8EC57E877F1C}
 	EndProjectSection
@@ -71,6 +77,12 @@ Global
 		{3956405C-5BCE-4B02-A8EB-A3649F33CD83}.Release|Win32.ActiveCfg = Release|Win32
 		{3956405C-5BCE-4B02-A8EB-A3649F33CD83}.Release|Win32.Build.0 = Release|Win32
 		{3956405C-5BCE-4B02-A8EB-A3649F33CD83}.Release|Windows Mobile 5.0 Smartphone SDK (ARMV4I).ActiveCfg = Release|Win32
+		{BE2B2BE8-3109-4AD7-A1D5-950B361CB63F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BE2B2BE8-3109-4AD7-A1D5-950B361CB63F}.Debug|Win32.Build.0 = Debug|Win32
+		{BE2B2BE8-3109-4AD7-A1D5-950B361CB63F}.Debug|Windows Mobile 5.0 Smartphone SDK (ARMV4I).ActiveCfg = Debug|Win32
+		{BE2B2BE8-3109-4AD7-A1D5-950B361CB63F}.Release|Win32.ActiveCfg = Release|Win32
+		{BE2B2BE8-3109-4AD7-A1D5-950B361CB63F}.Release|Win32.Build.0 = Release|Win32
+		{BE2B2BE8-3109-4AD7-A1D5-950B361CB63F}.Release|Windows Mobile 5.0 Smartphone SDK (ARMV4I).ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

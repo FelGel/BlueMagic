@@ -289,3 +289,33 @@ bool CBlueMagicBTBInfoMessage::Parse(CTokenParser &MessageStringParser)
 }
 #else
 #endif
+
+bool CBlueMagicBTBOutgoingMessage::SerializeCarriageReturn(ISerializer * /*Serializer*/)
+{
+	bool Result = true;
+	//Result = Result && Serializer->AppendChar(TEXTUAL_BTB_PROTOCOL_MESSAGE_TERMINATOR);
+	//Result = Result && Serializer->AppendChar(TEXTUAL_BTB_PROTOCOL_MESSAGE_POST_TERMINATOR);
+	return Result;
+}
+
+
+bool CBlueMagicBTBGetInfoReturnedMessage::DeSerialize(IDeSerializer* /*DeSerializer*/)
+{
+	/*There is only header !! No body to parse !!*/
+	return true;
+}
+
+#if IS_TEXTUAL_BTB_PROTOCOL == 1
+bool CBlueMagicBTBGetInfoReturnedMessage::Parse(CTokenParser &/*MessageStringParser*/)
+{
+	return false; // SHOULD NEVER BE CALLSED, as DeSerialize Override implemented with no body
+}
+#endif
+
+bool CBlueMagicBTBGetInfoReturnedMessage::Serialize(ISerializer* /*Serializer*/) const
+{
+#if (IS_TEXTUAL_BTB_PROTOCOL == 1)
+	return false; // currently BlueMagicLogic never serialize this message
+#else
+#endif
+}

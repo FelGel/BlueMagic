@@ -16,17 +16,6 @@
 
 // Decoder Messages Enum:
 // ----------------------
-enum EBlueMagicBTBIncomingMessageType
-{
-	BTBKeepAlive = BlueMagicBTBIncomingMessageType, 
-	BTBIncomingData,
-	BTBErrorInTopology,
-	BTBInfo,
-	BTBSInfo,
-	EBlueMagicBTBIncomingMessageType_MAX
-};
-// If more than 6, EBlueMagicMessageType should be changed!!!
-
 enum EBlueMagicBTBOutgoingMessageType
 {
 	BTBGetInfo = BlueMagicBTBOutgoingMessageType, 
@@ -35,6 +24,21 @@ enum EBlueMagicBTBOutgoingMessageType
 	EBlueMagicBTBOutgoingMessageType_MAX
 };
 // If more than 4, EBlueMagicMessageType should be changed!!!
+
+
+enum EBlueMagicBTBIncomingMessageType
+{
+	BTBKeepAlive = BlueMagicBTBIncomingMessageType, 
+	BTBIncomingData,
+	BTBErrorInTopology,
+	BTBInfo,
+	BTBSInfo,
+	EBlueMagicBTBIncomingMessageType_MAX,
+
+	BTBGetInfoReturned = BTBGetInfo,
+};
+// If more than 6, EBlueMagicMessageType should be changed!!!
+
 
 
 class CBlueMagicBTBIncomingMessage : public CBlueMagicMessage
@@ -68,6 +72,8 @@ class CBlueMagicBTBOutgoingMessage : public CBlueMagicMessage
 {
 public:
 	static std::string BlueMagicBTBMessageTypeToString(EBlueMagicBTBOutgoingMessageType MessageType);
+
+	static bool SerializeCarriageReturn(ISerializer *Serializer);
 };
 
 
@@ -156,6 +162,29 @@ RegisterBlueMagicBTBMessage(BTBInfo, CBlueMagicBTBInfoMessage)
 
 
 
+class CBlueMagicBTBGetInfoReturnedMessage : public CBlueMagicBTBIncomingMessage
+{
+public:
+	CBlueMagicBTBGetInfoReturnedMessage() {}
+	virtual ~CBlueMagicBTBGetInfoReturnedMessage() {}
+
+	virtual bool				Serialize(ISerializer* Serializer) const;
+
+	virtual bool				DeSerialize(IDeSerializer* /*DeSerializer*/);
+	virtual int					MessageLength() const { return sizeof(BYTE); }
+
+	#if IS_TEXTUAL_BTB_PROTOCOL == 1
+		virtual bool				Parse(CTokenParser &MessageStringParser);
+	#endif
+
+	virtual int                 MessageType() const { return BTBGetInfoReturned; }
+
+	virtual void				CallEventOnMessage(ISensorEvents* /*SensorEvents*/) const
+	{ LogEvent(LE_ERROR, "CBlueMagicBTBGetInfoReturnedMessage should not call on event !!"); }
+};
+RegisterBlueMagicBTBMessage(BTBGetInfoReturned, CBlueMagicBTBGetInfoReturnedMessage)
+
+
 // GetData has ONLY HEADER and EMPTY MESSAGE
 class CBlueMagicBTBGetDataMessage : public CBlueMagicBTBOutgoingMessage
 {
@@ -163,7 +192,7 @@ public:
 	CBlueMagicBTBGetDataMessage() {}
 	virtual ~CBlueMagicBTBGetDataMessage() {}
 
-	virtual bool				Serialize(ISerializer* /*Serializer*/) const {return true;}
+	virtual bool				Serialize(ISerializer* Serializer) const {return CBlueMagicBTBOutgoingMessage::SerializeCarriageReturn(Serializer);}
 	virtual bool				DeSerialize(IDeSerializer* /*DeSerializer*/) {return true;}
 
 	virtual int					MessageLength() const {return 0;}
@@ -177,7 +206,7 @@ public:
 	CBlueMagicBTBGetInfoMessage() {}
 	virtual ~CBlueMagicBTBGetInfoMessage() {}
 
-	virtual bool				Serialize(ISerializer* /*Serializer*/) const {return true;}
+	virtual bool				Serialize(ISerializer* Serializer) const {return CBlueMagicBTBOutgoingMessage::SerializeCarriageReturn(Serializer);}
 	virtual bool				DeSerialize(IDeSerializer* /*DeSerializer*/) {return true;}
 
 	virtual int					MessageLength() const {return 0;}

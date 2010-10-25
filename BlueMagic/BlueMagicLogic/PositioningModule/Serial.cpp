@@ -50,16 +50,16 @@ static char THIS_FILE[] = __FILE__;
 //////////////////////////////////////////////////////////////////////
 // Enable debug memory manager
 
-#ifdef _DEBUG
-
-#ifdef THIS_FILE
-#undef THIS_FILE
-#endif
-
-static const char THIS_FILE[] = __FILE__;
-#define new DEBUG_NEW
-
-#endif
+// #ifdef _DEBUG
+// 
+// #ifdef THIS_FILE
+// #undef THIS_FILE
+// #endif
+// 
+// static const char THIS_FILE[] = __FILE__;
+// #define new DEBUG_NEW
+// 
+// #endif
 
 
 //////////////////////////////////////////////////////////////////////

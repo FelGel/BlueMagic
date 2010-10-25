@@ -10,7 +10,9 @@
 #include "resource.h"		// main symbols
 #include "../ApplicationUtils/ResourcedGuiApplication.h"
 #include "PositioningModuleDlg.h"
+#include "SensorsStatusDlg.h"
 #include "DialogMessages.h"
+#include "DistanceMeasurementsDlg.h"
 
 // CPositioningModuleApp:
 // See PositioningModule.cpp for the implementation of this class
@@ -21,7 +23,8 @@ class CPositioningModuleApp : public CResourcedGuiApplication, public IDialogMes
 public:
 	CPositioningModuleApp();
 
-	virtual void SendMessageToDialog(SDialogMessage *Message);
+	virtual void SendMessageToDialog(SDialogDataMessage *Message);
+	virtual void SendMessageToDialog(SDialogSensorMessage *Message);
 // Overrides
 	//public:
 	//virtual BOOL InitInstance();
@@ -36,7 +39,10 @@ private:
 
 private:
 	CPositioningManager m_PositioningManager;
-	CPositioningModuleDlg m_PositioningModuleDlg;
+	CPositioningModuleDlg m_PositioningModuleRealTimeDlg;
+	CPositioningModuleDlg m_PositioningModuleAggregatedDlg;
+	CSensorsStatusDlg     m_SensorsStatusDlg;
+	CDistanceMeasurementsDlg m_DistancesMeasurementsDlg;
 };
 
 extern CPositioningModuleApp theApp;
