@@ -212,6 +212,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MeasurementsContainer.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\PositioningAlgorithm.cpp"
 				>
 			</File>
@@ -327,6 +331,10 @@
 			</File>
 			<File
 				RelativePath=".\ISensorEvents.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MeasurementsContainer.h"
 				>
 			</File>
 			<File
