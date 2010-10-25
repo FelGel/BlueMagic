@@ -289,3 +289,11 @@ bool CBlueMagicBTBInfoMessage::Parse(CTokenParser &MessageStringParser)
 }
 #else
 #endif
+
+bool CBlueMagicBTBOutgoingMessage::SerializeCarriageReturn(ISerializer *Serializer)
+{
+	bool Result = true;
+	//Result = Result && Serializer->AppendChar(TEXTUAL_BTB_PROTOCOL_MESSAGE_TERMINATOR);
+	//Result = Result && Serializer->AppendChar(TEXTUAL_BTB_PROTOCOL_MESSAGE_POST_TERMINATOR);
+	return Result;
+}

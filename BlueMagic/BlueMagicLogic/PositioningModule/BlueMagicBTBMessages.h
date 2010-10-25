@@ -68,6 +68,8 @@ class CBlueMagicBTBOutgoingMessage : public CBlueMagicMessage
 {
 public:
 	static std::string BlueMagicBTBMessageTypeToString(EBlueMagicBTBOutgoingMessageType MessageType);
+
+	static bool SerializeCarriageReturn(ISerializer *Serializer);
 };
 
 
@@ -163,7 +165,7 @@ public:
 	CBlueMagicBTBGetDataMessage() {}
 	virtual ~CBlueMagicBTBGetDataMessage() {}
 
-	virtual bool				Serialize(ISerializer* /*Serializer*/) const {return true;}
+	virtual bool				Serialize(ISerializer* Serializer) const {return CBlueMagicBTBOutgoingMessage::SerializeCarriageReturn(Serializer);}
 	virtual bool				DeSerialize(IDeSerializer* /*DeSerializer*/) {return true;}
 
 	virtual int					MessageLength() const {return 0;}
@@ -177,7 +179,7 @@ public:
 	CBlueMagicBTBGetInfoMessage() {}
 	virtual ~CBlueMagicBTBGetInfoMessage() {}
 
-	virtual bool				Serialize(ISerializer* /*Serializer*/) const {return true;}
+	virtual bool				Serialize(ISerializer* Serializer) const {return CBlueMagicBTBOutgoingMessage::SerializeCarriageReturn(Serializer);}
 	virtual bool				DeSerialize(IDeSerializer* /*DeSerializer*/) {return true;}
 
 	virtual int					MessageLength() const {return 0;}
