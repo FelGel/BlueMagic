@@ -48,10 +48,10 @@ void CSensorsStatusDlg::InitScanList()
 
 #define ADD_COL(Width, Name) { Column.cx = Width; Column.pszText = (LPSTR)Name; m_SensorsListCtrl.InsertColumn(Ind++, &Column); }
 	ADD_COL(25, "ID");
-	ADD_COL(100, "Connection");
+	ADD_COL(80, "Connection");
 	ADD_COL(100, "Handshake");
-	ADD_COL(60,	"Activity");
-	ADD_COL(100, "Last Detection");
+	ADD_COL(50,	"Activity");
+	ADD_COL(120, "Last Data Rx");
 #undef ADD_COL
 	m_SensorsListCtrl.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 }
