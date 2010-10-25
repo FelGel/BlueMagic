@@ -63,6 +63,10 @@ bool CSensorController::Init(ISensorEvents *Handler)
 
 	ConnectToPort();
 
+	SleepEx(100,FALSE);
+
+	DoHandshake();
+
 	// start thread
 	SetTimeout(SENSOR_CONTROLLER_THREAD_TIMEOUT);
 	bool Success = StartThread();
@@ -71,8 +75,6 @@ bool CSensorController::Init(ISensorEvents *Handler)
 		LogEvent(LE_FATAL, __FUNCTION__ ": FATAL ERROR! Could not start working thread !!");
 		return false;
 	}
-
-	DoHandshake();
 
 	return true;
 }
@@ -289,6 +291,9 @@ DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
 	}
 
+	// Activity should be updated for each message, even if not handshaked !!
+	OnValidMessageArrived(SensorInfo->m_SensorID);
+
 	// Verify The Sensor Controller is properly Handshaked
 	if (GetSensorControllerInfo()->m_HandshakeStatus != SensorHandshaked 
 		&& (MessageType != BTBInfo || GetSensorControllerInfo()->m_SensorID != BlueMagicBTBMessage->m_SensorId))
@@ -312,7 +317,7 @@ DWORD CSensorController::ParseData(BYTE *Data, int DataLength)
 		return ParsedBytes; // After all, PARSING in itself has SUCCEEDED !
 	}
 
-	OnValidMessageArrived(SensorInfo->m_SensorID);
+	//OnValidMessageArrived(SensorInfo->m_SensorID);
 
 	if (/*m_TraceInterfaceMessages ||*/ GetLogLevel() <= LE_INFOLOW)
 	{
@@ -439,6 +444,7 @@ void CSensorController::DefineTopology(/*......*/)
 
 void CSensorController::HandleGetInfo()
 {
+	LogEvent(LE_INFOLOW, __FUNCTION__ ": Sending the Handshake from Worker Thread. SensorID %d", m_SensorID);
 	CBlueMagicBTBOutgoingMessage *Message = new CBlueMagicBTBGetInfoMessage();
 	SendBlueMagicMessageToSensor(Message, m_SensorID);
 }
@@ -763,7 +769,7 @@ void CSensorController::CheckLogicalConnectionStatus(DWORD TickCount)
 	{
 		SSensorInformation *SensorInformation = Iter->second;
 		
-		if (m_PhysicalConnectionStatus == SensorConnected && SensorInformation->m_HandshakeStatus == SensorHandshaked &&
+		if (m_PhysicalConnectionStatus == SensorConnected && /*SensorInformation->m_HandshakeStatus == SensorHandshaked &&*/
 			TickCount - SensorInformation->m_LastPacketRecievedTickCount > m_AllowedTimeBetweenKeepAlives)
 		{
 			OnConnectionTimedOut(SensorInformation);
