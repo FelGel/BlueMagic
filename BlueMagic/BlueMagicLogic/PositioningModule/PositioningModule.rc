@@ -127,13 +127,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "TODO: <Company name>"
-            VALUE "FileDescription", "TODO: <File description>"
+            VALUE "CompanyName", "BluesSpells"
+            VALUE "FileDescription", "BlueMagicLogic's PositioningModule"
             VALUE "FileVersion", "1.0.0.1"
             VALUE "InternalName", "PositioningModule.exe"
-            VALUE "LegalCopyright", "TODO: (c) <Company name>.  All rights reserved."
+            VALUE "LegalCopyright", "(c) BlueSpells.  All rights reserved."
             VALUE "OriginalFilename", "PositioningModule.exe"
-            VALUE "ProductName", "TODO: <Product name>"
+            VALUE "ProductName", "BlueMagicLogic"
             VALUE "ProductVersion", "1.0.0.1"
         END
     END
