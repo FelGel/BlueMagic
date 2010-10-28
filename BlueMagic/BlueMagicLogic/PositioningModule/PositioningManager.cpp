@@ -8,6 +8,7 @@
 #define POSITION_MANAGER_THREAD_TIMEOUT 100 //milisec
 
 const char* SensorControllersConfigurationSection = "SensorControllers";
+const char* ScanFilesDirectory = "..\\ScanFiles";
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -42,6 +43,8 @@ bool CPositioningManager::Init()
 	}
 
 	m_PositioningAlgorithm.Advise(&m_EstablishmentTopology, this);
+
+	CreateScanFilesDirectory();
 
 	CreateCombinedScanFile();
 
@@ -133,6 +136,22 @@ void CPositioningManager::HandleNewSensorInSystem(const int &SensorId, const boo
 	CreateScanFile(SensorId);
 }
 
+
+void CPositioningManager::CreateScanFilesDirectory()
+{
+	CFileStatus status;
+
+	if (CFile::GetStatus(ScanFilesDirectory, status) 
+		&& (status.m_attribute & CFile::directory))
+	{
+		LogEvent(LE_INFOLOW, __FUNCTION__ ": Directory %s already exists", ScanFilesDirectory);
+	} 
+	else if (!CreateDirectory(ScanFilesDirectory, NULL))
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to create directory %s", ScanFilesDirectory);
+	}
+}
+
 void CPositioningManager::CreateCombinedScanFile()
 {
 	/* TEMP -> Write to File*/
@@ -140,8 +159,8 @@ void CPositioningManager::CreateCombinedScanFile()
 	GetLocalTime(&SystemTime);
 
 	CString FileName;
-	FileName.Format("..\\ScanFiles\\Combined ScanFile %02d.%02d.%02d %02d-%02d-%02d.csv", 
-		SystemTime.wDay, SystemTime.wMonth, SystemTime.wYear, 
+	FileName.Format("%s\\Combined ScanFile %02d.%02d.%02d %02d-%02d-%02d.csv", 
+		ScanFilesDirectory, SystemTime.wDay, SystemTime.wMonth, SystemTime.wYear, 
 		SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
 
 	if (!CreateScanFile(FileName, &m_CombinedScanFiles))
@@ -158,8 +177,8 @@ void CPositioningManager::CreateScanFile(const int SensorId)
 	GetLocalTime(&SystemTime);
 
 	CString FileName;
-	FileName.Format("..\\ScanFiles\\ScanFile_Sensor%d %02d.%02d.%02d %02d-%02d-%02d.csv", 
-		SensorId, 
+	FileName.Format("%s\\ScanFile_Sensor%d %02d.%02d.%02d %02d-%02d-%02d.csv", 
+		ScanFilesDirectory, SensorId, 
 		SystemTime.wDay, SystemTime.wMonth, SystemTime.wYear, 
 		SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
 

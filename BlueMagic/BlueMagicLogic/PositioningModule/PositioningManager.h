@@ -32,6 +32,7 @@ public:
 
 	// Debugging & Monitoring
 	void CreateCombinedScanFile();
+	void CreateScanFilesDirectory();
 	void CreateScanFile(const int SensorId);
 	bool CreateScanFile(CString FileName, CStdioFile *ScanFile);
 	void CloseAllScanFiles();
