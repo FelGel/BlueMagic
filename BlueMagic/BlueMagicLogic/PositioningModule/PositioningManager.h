@@ -29,6 +29,7 @@ public:
 	
 	bool Init();
 	virtual void OnThreadClose();
+	virtual void OnTimeout();
 
 	// Debugging & Monitoring
 	void CreateCombinedScanFile();

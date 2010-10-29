@@ -43,4 +43,8 @@ private:
 	DWORD m_DesiredTickCountDifferenceBetweenMeasuremnts;
 	DWORD m_MaxTickCountDifferenceBetweenMeasuremnts;
 	DWORD m_TimeoutForRemovingBdaddress;
+	DWORD m_CleaningTimeoutResolution;
+	DWORD m_UpdateTimeoutResolution;
+	DWORD m_LastCleaningTimeoutTickCount;
+	DWORD m_LastUpdateTimeoutTickCount;
 };

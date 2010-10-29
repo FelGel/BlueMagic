@@ -18,6 +18,8 @@ static char THIS_FILE[] = __FILE__;
 #define DEFAULT_MAX_TICKCOUNT_DIFFERENCE_BETWEEN_MEASUREMNTS_OF_SAME_POSITIONING		10000	//milisec
 #define DEFAULT_DESIRED_TICKCOUNT_DIFFERENCE_BETWEEN_MEASUREMNTS_OF_SAME_POSITIONING	3000	//milisec
 #define DEFAULT_TIMEOUT_FOR_REMOVING_BDADDRESS											(2 * 60000) // 2 minutes
+#define DEFAULT_CLEANING_TIMEOUT_RESOLUTION												10000
+#define DEFAULT_UPDATE_TIMEOUT_RESOLUTION												5000
 
 static const char* CONFIG_SECTION = "PositioningParameters";
 
@@ -27,7 +29,11 @@ CPositioningAlgorithm::CPositioningAlgorithm(void)
 	m_MaxTimeBetweenUpdates(DEFAULT_MAX_TIME_BETWEEN_UPDATES),
 	m_MaxTickCountDifferenceBetweenMeasuremnts(DEFAULT_MAX_TICKCOUNT_DIFFERENCE_BETWEEN_MEASUREMNTS_OF_SAME_POSITIONING),
 	m_DesiredTickCountDifferenceBetweenMeasuremnts(DEFAULT_DESIRED_TICKCOUNT_DIFFERENCE_BETWEEN_MEASUREMNTS_OF_SAME_POSITIONING),
-	m_TimeoutForRemovingBdaddress(DEFAULT_TIMEOUT_FOR_REMOVING_BDADDRESS)
+	m_TimeoutForRemovingBdaddress(DEFAULT_TIMEOUT_FOR_REMOVING_BDADDRESS),
+	m_CleaningTimeoutResolution(DEFAULT_CLEANING_TIMEOUT_RESOLUTION),
+	m_UpdateTimeoutResolution(DEFAULT_UPDATE_TIMEOUT_RESOLUTION),
+	m_LastUpdateTimeoutTickCount(0),
+	m_LastCleaningTimeoutTickCount(0)
 {
 }
 
@@ -45,7 +51,9 @@ void CPositioningAlgorithm::Init()
 		DEFAULT_MAX_TICKCOUNT_DIFFERENCE_BETWEEN_MEASUREMNTS_OF_SAME_POSITIONING);
 	m_DesiredTickCountDifferenceBetweenMeasuremnts = GetConfigInt(CONFIG_SECTION, "DesiredTickCountDifferenceBetweenMeasuremnts", 
 		DEFAULT_DESIRED_TICKCOUNT_DIFFERENCE_BETWEEN_MEASUREMNTS_OF_SAME_POSITIONING);
-
+	m_UpdateTimeoutResolution = GetConfigInt(CONFIG_SECTION, "UpdateTimeoutResolution", DEFAULT_UPDATE_TIMEOUT_RESOLUTION);
+	m_CleaningTimeoutResolution = GetConfigInt(CONFIG_SECTION, "CleaningTimeoutResolution", DEFAULT_CLEANING_TIMEOUT_RESOLUTION);
+	
 	m_Impl = new CPositioningAlgorithmBasicImplementation();
 }
 
@@ -92,9 +100,20 @@ void CPositioningAlgorithm::DoPositioning(std::string BdAddress, DWORD LastDataT
 
 void CPositioningAlgorithm::OnTimeout()
 {
-	m_ScannedBdAdressesDataBase.CleanDataBase(m_TimeoutForRemovingBdaddress);
+	DWORD Now = GetTickCount();
+	
+	if (Now - m_LastCleaningTimeoutTickCount > m_CleaningTimeoutResolution)
+	{
+		m_LastCleaningTimeoutTickCount = Now;
+		m_ScannedBdAdressesDataBase.CleanDataBase(m_TimeoutForRemovingBdaddress);
+	}
+	
 
-	PositionOutOfDateBdAddresses();
+	if (Now - m_LastUpdateTimeoutTickCount > m_UpdateTimeoutResolution)
+	{
+		m_LastUpdateTimeoutTickCount = Now;
+		PositionOutOfDateBdAddresses();
+	}
 }
 
 void CPositioningAlgorithm::PositionOutOfDateBdAddresses()
@@ -110,7 +129,7 @@ void CPositioningAlgorithm::PositionOutOfDateBdAddresses()
 			continue;
 		}
 
-		LogEvent(LE_INFOHIGH, __FUNCTION__ ": Positioning Out of date BDADDRESS %s.", BdAddressesToPosition[i]);
+		LogEvent(LE_INFO, __FUNCTION__ ": Positioning Out of date BDADDRESS %s.", BdAddressesToPosition[i].c_str());
 		DoPositioning(BdAddressesToPosition[i], OldestLastTickCount, m_MinNumberOfParticipatingSensor, m_MaxTickCountDifferenceBetweenMeasuremnts);		
 	}
 }

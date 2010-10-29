@@ -30,8 +30,6 @@ CPositioningAlgorithmBasicImplementation::~CPositioningAlgorithmBasicImplementat
 		PositionDataString += MeasurementString;
 	}
 
-	LogEvent(LE_ERROR, __FUNCTION__ ": Positioning Parameters for BDADDRESS %s. Data: %s", 
-		BDADDRESS.c_str(), PositionDataString.c_str());
 	LogEvent(LE_NOTICE, __FUNCTION__ ": Positioning Parameters for BDADDRESS %s. Data: %s", 
 		BDADDRESS.c_str(), PositionDataString.c_str());
 

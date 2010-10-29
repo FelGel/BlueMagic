@@ -276,3 +276,8 @@ void CPositioningManager::CloseAllScanFiles()
 	m_CombinedScanFiles.Close();
 	///////////////////////
 }
+
+/*virtual*/ void CPositioningManager::OnTimeout()
+{
+	m_PositioningAlgorithm.OnTimeout();
+}
