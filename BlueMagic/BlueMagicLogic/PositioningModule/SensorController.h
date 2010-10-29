@@ -72,6 +72,8 @@ private:
 
 	// Clocks
 	void SetClockForSensor(int Clock, int SensorID);
+	int  GetEstimatedCurrentClock(int LastClock, DWORD LastTickCount);
+	bool IsClockConsistent(int CurrentClock, int LastClock, DWORD LastTickCount);
 
 	// Sensor Info Service Functions 
 	SSensorInformation* GetSensorControllerInfo();	
