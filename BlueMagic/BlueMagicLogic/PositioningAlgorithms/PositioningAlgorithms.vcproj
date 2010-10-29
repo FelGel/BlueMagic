@@ -186,7 +186,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\IPositioningAlgorithmImplementation.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Matrix.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PositioningAlgorithmBasicImplementation.h"
 				>
 			</File>
 			<File
@@ -232,6 +240,10 @@
 			</File>
 			<File
 				RelativePath=".\Matrix.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PositioningAlgorithmBasicImplementation.cpp"
 				>
 			</File>
 			<File

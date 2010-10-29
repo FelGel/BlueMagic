@@ -43,6 +43,7 @@ bool CPositioningManager::Init()
 	}
 
 	m_PositioningAlgorithm.Advise(&m_EstablishmentTopology, this);
+	m_PositioningAlgorithm.Init();
 
 	CreateScanFilesDirectory();
 
@@ -56,6 +57,8 @@ bool CPositioningManager::Init()
 		LogEvent(LE_FATAL, __FUNCTION__ ": FATAL ERROR! Could not start working thread !!");
 		return false;
 	}
+
+	LogEvent(LE_NOTICE, __FUNCTION__ ": Positioning Manager Initialized Successfully");
 
 	return true;
 }
@@ -95,6 +98,8 @@ void CPositioningManager::HandleSensorStatusUpdate(const int &SensorId, const bo
 void CPositioningManager::OnThreadClose()
 {
 	m_SensorControllersContainer.RemoveObjects();
+
+	m_PositioningAlgorithm.Close();
 
 	/* TEMP -> Write to File*/
 	CloseAllScanFiles();

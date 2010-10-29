@@ -54,10 +54,24 @@ bool CMeasurementsContainer::GetClosestMeasurement(DWORD TickCountRefference, SM
 		= m_Measurements.upper_bound(TickCountRefference);
 
 	std::map<DWORD /*Tick Count*/, int /*RSSI*/>::const_iterator LowerIter 
-		= m_Measurements.lower_bound(TickCountRefference);
+		= HigherIter; LowerIter--;
 
+	if (HigherIter == m_Measurements.end() && LowerIter == m_Measurements.end())
+	{
+		LogEvent(LE_INFOLOW,
+			__FUNCTION__ ": No Previous measurement was found.");
+		return false;
+	}
 
-	if (HigherIter == m_Measurements.end() ||
+	if (LowerIter == m_Measurements.end()) // Only Higher
+	{
+		Measurement.m_TickCount = HigherIter->first;
+		Measurement.m_RSSI = HigherIter->second;
+		LogEvent(LE_INFOLOW,
+			__FUNCTION__ ": Higher Measurement (%d) is closest to reference (%d)",
+			Measurement.m_TickCount, TickCountRefference);
+	}
+	else if (HigherIter == m_Measurements.end() || // Either only Lower or Lower is closer
 		abs(LowerIter->first - TickCountRefference) <= abs(HigherIter->first - TickCountRefference))
 	{		
 		Measurement.m_TickCount = LowerIter->first;
@@ -66,7 +80,7 @@ bool CMeasurementsContainer::GetClosestMeasurement(DWORD TickCountRefference, SM
 			__FUNCTION__ ": Lower Measurement (%d) is closest to reference (%d)",
 			Measurement.m_TickCount, TickCountRefference);
 	}
-	else if (LowerIter != m_Measurements.end())
+	else if (LowerIter != m_Measurements.end()) // Higher is closer
 	{
 		Measurement.m_TickCount = HigherIter->first;
 		Measurement.m_RSSI = HigherIter->second;
@@ -74,10 +88,11 @@ bool CMeasurementsContainer::GetClosestMeasurement(DWORD TickCountRefference, SM
 			__FUNCTION__ ": Higher Measurement (%d) is closest to reference (%d)",
 			Measurement.m_TickCount, TickCountRefference);
 	}
-	else
+	else // None exists
 	{
 		LogEvent(LE_INFOLOW,
-			__FUNCTION__ ": No Previous measurement was found.");
+			__FUNCTION__ ": No Previous measurement was found..");
+		return false;
 	}
 
 	if ((DWORD)abs(Measurement.m_TickCount - TickCountRefference) > MaxTickCountDistance)
@@ -111,4 +126,18 @@ void CMeasurementsContainer::ClearMeasurementsOlderThan(DWORD TickCount)
 			LogEvent(LE_ERROR, __FUNCTION__ ": Failed to remove value %d from Measurements map", RemoveList[i]);
 		}
 	}
+}
+
+bool CMeasurementsContainer::GetTickCountOfLastMeasurement(DWORD &LastTickCount)
+{
+	if (m_Measurements.size() == 0) // No last measurement exists
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Should never happen. container always has at least one measurement if it exists!");
+		Assert(false); 
+		return false; 
+	}
+
+	std::map<DWORD /*Tick Count*/, int /*RSSI*/>::iterator End = m_Measurements.end();	
+	LastTickCount = (--End)->first; // return tickcount of last measurement
+	return true;
 }

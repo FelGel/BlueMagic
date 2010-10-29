@@ -4,6 +4,7 @@
 #include "IPositioningInterface.h"
 #include "ISensorEvents.h"
 #include "ScannedBdAdressesDataBase.h"
+#include "PositioningAlgorithms/IPositioningAlgorithmImplementation.h"
 
 // Note: Class is running withing PositioningManager's worker thread
 
@@ -11,12 +12,6 @@ class IPositioningEvents
 {
 public:
 	virtual void OnPositioning(std::string BDADDRESS, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore) = 0;
-};
-
-class IPositioningAlgorithmImplementation
-{
-public:
-	virtual SPosition CalculatePosition(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts) = 0;
 };
 
 class CPositioningAlgorithm
@@ -27,12 +22,13 @@ public:
 
 	void Init();
 	void Advise(CEstablishmentTopology* EstablishmentTopology, IPositioningEvents *PositioningEventsHandler);
+	void Close();
 
 	void OnScannedData(const int &SensorId, const SScannedData& ScannedData);
 	void OnTimeout();
 
 private:
-	void DoPositioning(std::string BdAddress, DWORD NumberOfParticipatingSensor, DWORD TickCountDifferenceBetweenMeasuremnts);
+	void DoPositioning(std::string BdAddress, DWORD LastDataTickCount, DWORD NumberOfParticipatingSensor, DWORD TickCountDifferenceBetweenMeasuremnts);
 	void PositionOutOfDateBdAddresses();
 
 private:
