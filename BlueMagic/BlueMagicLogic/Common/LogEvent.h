@@ -24,6 +24,12 @@ void SetLogLevel(ELogSeverity LogLevel);
 ELogSeverity GetLogLevel();
 const char * GetLogFileName();
 
+// NOTE: USE THIS ONLY IF YOU KNOW WHAT YOU ARE DOING
+class CLogManager;
+CLogManager *GetTheLogManager();
+void SetTheLogManager(CLogManager *OtherTheLogManager);
+void KillLogManager();
+
 #ifdef  NDEBUG
 #define Assert(exp) ((void)0)
 #define Verify(f)   ((void)(f))

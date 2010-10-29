@@ -62,19 +62,57 @@ private:
     ELogSeverity m_Value;
 };
 
+// Changed to Pointer by ROI
+static CLogManager *TheLogManager = NULL; // Global log files manager
 
-static CLogManager TheLogManager; // Global log files manager
+static bool HasLogManagerBeenKilled = false;
 
+// Added by Roi
+// ------------
+void SetTheLogManager(CLogManager *OtherTheLogManager)
+{
+	TheLogManager = OtherTheLogManager;
+}
+
+CLogManager *GetTheLogManager()
+{
+	return TheLogManager;
+}
+
+void KillLogManager()
+{
+	delete TheLogManager;
+	TheLogManager = NULL;
+	HasLogManagerBeenKilled = true;
+}
+// ------------
 
 static void AddToLog(const char* Line, ELogSeverity Severity)
 {
     if (Severity < CConfigLogSeverity::GetTheLogSeverity() || !g_LogMessagesToFile)
         return;
 
+	// Added by Roi
+	// ------------
+	if (HasLogManagerBeenKilled)
+	{
+		static bool IsStuckOnAssert = false;
+		if (!IsStuckOnAssert)
+		{
+			IsStuckOnAssert = true;
+			Assert(false); // should never happen !!
+		}
+		return;
+	}
+
+	if (!TheLogManager)
+		TheLogManager = new CLogManager();
+	// ------------
+
     static bool IsInitialized = false;
     static bool FirstLogRequest = true;
     static int  LineNumber = 0;
-    if( !TheLogManager.IsInitialized() && FirstLogRequest)
+    if( !TheLogManager->IsInitialized() && FirstLogRequest)
     {
         FirstLogRequest = false; // Attempt to initialize the LogManager only once (up to multiple thread access)
         static CCriticalSection Locker;
@@ -83,12 +121,12 @@ static void AddToLog(const char* Line, ELogSeverity Severity)
         {
             IsInitialized = true; // To avoid LogEvent messages from ThreadWithQueue
             std::string BaseName = GetConfigString(LogSection, "LogBaseName", g_LogMessagesBaseName.c_str());
-            TheLogManager.Init(BaseName.c_str());
+            TheLogManager->Init(BaseName.c_str());
         }
         Locker.Unlock();
     }
-    if( TheLogManager.IsInitialized() )
-        TheLogManager.LogLine(Severity, Line);
+    if( TheLogManager->IsInitialized() )
+        TheLogManager->LogLine(Severity, Line);
     else
     {
         // This is a patch to pay the attention of the user to the fact that
@@ -385,7 +423,7 @@ void CLogSeverityPolicy::NotifyLog()
 
 const char * GetLogFileName()
 {
-    return TheLogManager.GetLogFileName();
+    return TheLogManager->GetLogFileName();
 }
 
 //////////////////////////////////////////////////////////////////////////

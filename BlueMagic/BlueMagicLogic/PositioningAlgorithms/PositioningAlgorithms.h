@@ -16,12 +16,22 @@
 #define POSITIONINGALGORITHMS_API __declspec(dllimport)
 #endif
 
+#pragma once
+
+#include "Common/LogEvent.h"
+#include "Common/Config.h"
+#include "Common/ExceptionReport.h"
+
 // This class is exported from the PositioningAlgorithms.dll
-// class POSITIONINGALGORITHMS_API CPositioningAlgorithms {
-// public:
-// 	CPositioningAlgorithms(void);
-// 	// TODO: add your methods here.
-// };
+class POSITIONINGALGORITHMS_API CPositioningAlgorithms {
+public:
+//	CPositioningAlgorithms(void);
+	// TODO: add your methods here.
+	static void SetTheLogManagerDLL(CLogManager *OtherTheLogManager);
+	static void SetLogEventOutputDLL(LogEventOutput TheOutput, bool LogMessagesToFile, GetLogEventOutputSeverity GetSeverity = NULL, const char* LogMessagesBaseName = "");
+	static void SetConfigFileNameDLL(const char* ConfigFileName);
+	static void SetCrashFileNameDLL(const char* ApplicationName);
+};
 // 
 // extern POSITIONINGALGORITHMS_API int nPositioningAlgorithms;
 // 

@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "PositioningAlgorithms.h"
+#include "Common/Utils.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -33,4 +34,29 @@ int _tmain(int /*argc*/, TCHAR* /*argv*/[], TCHAR* /*envp*/[])
 	}
 
 	return nRetCode;
+}
+
+
+/*static*/ void CPositioningAlgorithms::SetTheLogManagerDLL(CLogManager *OtherTheLogManager)
+{
+	SetTheLogManager(OtherTheLogManager);
+}
+
+
+/*static */void CPositioningAlgorithms::SetLogEventOutputDLL(LogEventOutput TheOutput, bool LogMessagesToFile, GetLogEventOutputSeverity GetSeverity, const char* LogMessagesBaseName)
+{
+	SetLogEventOutput(TheOutput, LogMessagesToFile, GetSeverity, LogMessagesBaseName);
+	LogEvent(LE_NOTICE, __FUNCTION__ ": PositioningAlgorithms DLL log initialized");
+}
+
+/*static*/ void CPositioningAlgorithms::SetConfigFileNameDLL(const char* ConfigFileName)
+{
+	SetConfigFileName(ConfigFileName);
+	SetConfigWritebackMode(true);
+}
+
+/*static*/ void CPositioningAlgorithms::SetCrashFileNameDLL(const char* ApplicationName)
+{
+	std::string CrashFileName = std::string(GetProgramPath()) + ApplicationName + ".crash";
+	CExceptionReport::GetTheExceptionReport().Init(CrashFileName.c_str());
 }

@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "PositioningModule.h"
 #include "PositioningModuleDlg.h"
-
+#include "PositioningAlgorithms/PositioningAlgorithms.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -44,6 +44,12 @@ void CPositioningModuleApp::AddDialogs()
 
 bool CPositioningModuleApp::PerformInitalization()
 {
+	// NOTE: ORDER IS IMPORTANT !!
+	CPositioningAlgorithms::SetConfigFileNameDLL(GetConfigFileName().c_str());
+	CPositioningAlgorithms::SetCrashFileNameDLL(GetApplicationName());
+	CPositioningAlgorithms::SetTheLogManagerDLL(GetTheLogManager());
+	CPositioningAlgorithms::SetLogEventOutputDLL(GuiLogOutput, true, GetGuiLogOutputSeverity, GetApplicationName());
+
 	m_PositioningModuleRealTimeDlg.InitScanList();
 	m_PositioningModuleAggregatedDlg.InitScanList();
 	m_SensorsStatusDlg.InitScanList();
