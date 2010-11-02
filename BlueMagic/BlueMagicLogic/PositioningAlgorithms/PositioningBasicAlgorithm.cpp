@@ -84,7 +84,7 @@ SPosition CPositioningBasicAlgorithm::CalcPositionInternal(std::map<int /*Sensor
 	CMatrix ErrorMatrix = Bsquared_inverted * Bt * F;
 
 	double dX = ErrorMatrix[0][0];
-	double dY = ErrorMatrix[0][1];
+	double dY = ErrorMatrix[1][0];
 
 	UpdateLastLocation(dX, dY);
 
@@ -115,15 +115,15 @@ CMatrix CPositioningBasicAlgorithm::BuildMatrixB(std::vector<int> ParticipatingS
 	Assert(ParticipatingSensors.size() <= m_SensorsLocationMap->GetSensorsLocationMap()->size());
 	Assert((int)ParticipatingSensors.size() >= m_SensorsLocationMap->GetMinNumberOfParticipatingSensor());
 
-	CMatrix B((int)2, (int)ParticipatingSensors.size());
+	CMatrix B((int)ParticipatingSensors.size(), (int)2);
 
 	for (unsigned int i = 0; i < ParticipatingSensors.size(); i++)
 	{
 		SPosition SensorPosition;
 		GET_SENSOR_POSITION(ParticipatingSensors[i], SensorPosition);
 
-		B[0][i] = CalcBCellX(SensorPosition);
-		B[1][i] = CalcBCellY(SensorPosition);
+		B[i][0] = CalcBCellX(SensorPosition);
+		B[i][1] = CalcBCellY(SensorPosition);
 	}
 
 	return B;
@@ -167,7 +167,7 @@ CMatrix CPositioningBasicAlgorithm::BuildMatrixF(std::map<int /*SensorID*/, doub
 	std::map<int /*SensorID*/, double>::iterator Iter = Measuremnts.begin();
 	std::map<int /*SensorID*/, double>::iterator End = Measuremnts.end();
 
-	CMatrix F((int)1, (int)Measuremnts.size());
+	CMatrix F((int)Measuremnts.size(), (int)1);
 
 	for(int i = 0;Iter != End; ++Iter, i++)
 	{
@@ -177,7 +177,7 @@ CMatrix CPositioningBasicAlgorithm::BuildMatrixF(std::map<int /*SensorID*/, doub
 		SPosition SensorPosition;
 		GET_SENSOR_POSITION(SensorID, SensorPosition);
 
-		F[0][i] = CalcFCell(SensorPosition, MeasuredDistance);
+		F[i][0] = CalcFCell(SensorPosition, MeasuredDistance);
 	}
 
 	return F;
