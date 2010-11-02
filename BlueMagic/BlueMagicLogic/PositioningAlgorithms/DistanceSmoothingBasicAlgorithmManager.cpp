@@ -4,11 +4,16 @@
 #include "Common/collectionhelper.h"
 #include "Common/LogEvent.h"
 
+#ifdef _DEBUG
+#undef THIS_FILE
+static char THIS_FILE[]=__FILE__;
+#define new DEBUG_NEW
+#endif
+
+
 CDistanceSmoothingBasicAlgorithmManager::CDistanceSmoothingBasicAlgorithmManager(void) : m_a(0), m_b(0){}
 CDistanceSmoothingBasicAlgorithmManager::CDistanceSmoothingBasicAlgorithmManager(double a, double b) : m_a(a), m_b(b){}
 CDistanceSmoothingBasicAlgorithmManager::~CDistanceSmoothingBasicAlgorithmManager(void) {}
-
-#define INVALID_MEASUREMENT -99999999
 
 #define GET_DISTANCE_SMOOTHING_ALGORITHM_FOR_BDADDRESS(algorithm, BDADDRESS, CREATE)\
 CDistanceSmoothingBasicAlgorithm *algorithm;									\

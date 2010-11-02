@@ -2,6 +2,9 @@
 
 #include "PositioningAlgorithms.h"
 
+#define ILLEGAL_a +999999
+#define ILLEGAL_b +999999
+
 class POSITIONINGALGORITHMS_API CDistanceSmoothingBasicAlgorithm
 {
 public:

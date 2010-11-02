@@ -4,6 +4,13 @@
 
 #define FIRST_MEASUREMENT -1
 
+#ifdef _DEBUG
+#undef THIS_FILE
+static char THIS_FILE[]=__FILE__;
+#define new DEBUG_NEW
+#endif
+
+
 CDistanceSmoothingBasicAlgorithm::CDistanceSmoothingBasicAlgorithm(void) : m_a(0), m_b(0), m_Rpred(FIRST_MEASUREMENT), m_Vpred(0), m_Tpred(0), m_LastTS(0) {}
 CDistanceSmoothingBasicAlgorithm::CDistanceSmoothingBasicAlgorithm(double a, double b) : m_a(a), m_b(b), m_Rpred(FIRST_MEASUREMENT), m_Vpred(0), m_Tpred(0), m_LastTS(0) {}
 CDistanceSmoothingBasicAlgorithm::~CDistanceSmoothingBasicAlgorithm(void) {}

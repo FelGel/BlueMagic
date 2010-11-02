@@ -24,4 +24,7 @@ struct POSITIONINGALGORITHMS_API SMeasurement
 };
 
 #define INVALID_MEASUREMENT -99999999
-const SPosition InvalidPosition = SPosition(INVALID_MEASUREMENT, INVALID_MEASUREMENT);
+
+#define ILLEGAL_x INVALID_MEASUREMENT
+#define ILLEGAL_y INVALID_MEASUREMENT
+const SPosition InvalidPosition = SPosition(ILLEGAL_x, ILLEGAL_y);

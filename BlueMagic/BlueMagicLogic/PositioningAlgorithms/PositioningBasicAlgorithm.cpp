@@ -6,6 +6,13 @@
 #include "Common/LogEvent.h"
 #include "Common/collectionhelper.h"
 
+#ifdef _DEBUG
+#undef THIS_FILE
+static char THIS_FILE[]=__FILE__;
+#define new DEBUG_NEW
+#endif
+
+
 CPositioningBasicAlgorithm::CPositioningBasicAlgorithm(void) : m_SensorsLocationMap(NULL) {}
 CPositioningBasicAlgorithm::CPositioningBasicAlgorithm(ISensorsLocationMapInterface *SensorsLocationMap, SPosition InitialPosition) : m_SensorsLocationMap(SensorsLocationMap), m_LastPosition(InitialPosition) {}
 CPositioningBasicAlgorithm::~CPositioningBasicAlgorithm(void) {}

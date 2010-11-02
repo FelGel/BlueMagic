@@ -3,7 +3,7 @@
 #include <map>
 #include "PositioningBasicAlgorithm.h"
 #include "PositioningAlgorithms.h"
-
+#include "PositioningBasicAlgorithmManager.h"
 
 class ISensorsLocationMapInterface
 {
@@ -23,7 +23,7 @@ public:
 	void Init(std::map<int /*SensorID*/, SPosition> TheSensorsLocationMap, 
 		SPosition InitialPosition, 
 		double MaxAcceptablePositioningError, 
-		double MaxNumberOfIterations,
+		int MaxNumberOfIterations,
 		int MinNumberOfParticipatingSensor);
 
 	SPosition CalcPosition(std::string BDADDRESS, std::map<int /*SensorID*/, double /*Distance*/> Measuremnts);
@@ -40,6 +40,6 @@ private:
 	SPosition m_InitialPosition;
 
 	double m_MaxAcceptablePositioningError;
-	double m_MaxNumberOfIterations;
+	int m_MaxNumberOfIterations;
 	int m_MinNumberOfParticipatingSensor;
 };

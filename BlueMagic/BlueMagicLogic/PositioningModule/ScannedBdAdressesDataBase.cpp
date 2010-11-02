@@ -3,6 +3,12 @@
 #include "Common/collectionhelper.h"
 #include "Common/LogEvent.h"
 
+#ifdef _DEBUG
+#undef THIS_FILE
+static char THIS_FILE[]=__FILE__;
+#define new DEBUG_NEW
+#endif
+
 
 #define GET_ScannedBdAdressData(ScannedBDADDRESS, ScannedBdAdressData)\
 if (!GetValueInMap(m_ScannedDataBase, ScannedBDADDRESS, ScannedBdAdressData, false))								\

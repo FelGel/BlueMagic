@@ -3,6 +3,13 @@
 #include "Common/collectionhelper.h"
 #include "Common/LogEvent.h"
 
+#ifdef _DEBUG
+#undef THIS_FILE
+static char THIS_FILE[]=__FILE__;
+#define new DEBUG_NEW
+#endif
+
+
 #define DEFAULT_MIN_NUMBER_OF_PARTICIPATING_SENSORS 3
 #define DEFAULT_MAX_ACCEPTABLE_ERROR				1.0 //meters
 #define DEFAULT_MAX_NUMBER_OF_ITERATIONS			100
@@ -27,7 +34,7 @@ if (!GetValueInMap(m_DetectedBDaddresses, BDADDRESS, algorithm, CREATE))	\
 void CPositioningBasicAlgorithmManager::Init(
 	std::map<int /*SensorID*/, SPosition> TheSensorsLocationMap, 
 	SPosition InitialPosition, 
-	double MaxAcceptablePositioningError, double MaxNumberOfIterations,
+	double MaxAcceptablePositioningError, int MaxNumberOfIterations,
 	int MinNumberOfParticipatingSensor)
 {
 	m_TheSensorsLocationMap = TheSensorsLocationMap;

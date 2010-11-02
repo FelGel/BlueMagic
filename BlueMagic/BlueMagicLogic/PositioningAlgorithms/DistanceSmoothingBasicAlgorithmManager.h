@@ -3,6 +3,10 @@
 #include <map>
 #include "DistanceSmoothingBasicAlgorithm.h"
 #include "PositioningAlgorithms.h"
+#include "PositionStructure.h"
+
+// Responsible for all BdAddresses of same SensorID
+// The General Manager is responsible for all BdAddresses and all SensorIDs
 
 class POSITIONINGALGORITHMS_API CDistanceSmoothingBasicAlgorithmManager
 {
