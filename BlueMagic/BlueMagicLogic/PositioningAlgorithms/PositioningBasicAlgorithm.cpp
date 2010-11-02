@@ -201,5 +201,5 @@ bool CPositioningBasicAlgorithm::IsPositionWellEstimated(double dX, double dY, i
 {
 	double MaxError = m_SensorsLocationMap->GetMaxAcceptablePositioningError();
 	double MaxIterations = m_SensorsLocationMap->GetMaxNumberOfIterations();
-	return ((dX <= MaxError && dY <= MaxError) || NumOfIterations >= MaxIterations);
+	return ((abs(dX) <= MaxError && abs(dY) <= MaxError) || NumOfIterations >= MaxIterations);
 }

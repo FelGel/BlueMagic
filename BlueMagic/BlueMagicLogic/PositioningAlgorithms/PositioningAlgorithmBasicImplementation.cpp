@@ -84,6 +84,9 @@ CPositioningAlgorithmBasicImplementation::~CPositioningAlgorithmBasicImplementat
 	int MaxNumberOfIterations = GetConfigInt(GeneralConfigSection, "MaxNumberOfIterations ", DEAFULT_MAX_NUMBER_OF_ITERATIONS);
 	int MinNumberOfParticipatingSensor = GetConfigInt(GeneralConfigSection, "MinNumberOfParticipatingSensor ", DEFAULT_MIN_NUMBER_OF_SENSORS);
 
+	if (!VerifyParameters(MaxAcceptablePositioningError, MaxNumberOfIterations, MinNumberOfParticipatingSensor))
+		return false; // No need for log. VerifyParameters takes care of that.
+
 	m_PositioningAlgorithm.Init(SensorsLocationParams, InitialPosition, MaxAcceptablePositioningError, MaxNumberOfIterations, MinNumberOfParticipatingSensor);
 
 	LogEvent(LE_INFOHIGH, __FUNCTION__ ": Positioning Algorithm Initialized successfully! InitialPosition=[%f,%f], MaxAcceptablePositioningError=%f, MaxNumberOfIterations=%d, MinNumberOfParticipatingSensor=%d",
@@ -214,4 +217,40 @@ bool CPositioningAlgorithmBasicImplementation::ReadSensorsConfiguration(
 
 	LogEvent(LE_INFOHIGH, __FUNCTION__ ": Positioning Algorithm Parameters were read for %d sensors", SensorsDistanceParams.size());
 	return true;
+}
+
+// ToDo: check params also for "reasonable" values
+#define MAX_EXPECTED_POSITION_ERROR			10.0
+#define MIN_EXPECTED_POSITION_ERROR			0.1
+#define MIN_EXPECTED_NUMBER_OF_ITERATIONS	100
+#define MAX_EXPECTED_NUMBER_OF_ITERATIONS	1000000
+#define MIN_EXPECTED_NUMBER_OF_SENSORS		3
+#define MAX_EXPECTED_NUMBER_OF_SENSORS		10
+
+bool CPositioningAlgorithmBasicImplementation::VerifyParameters(double MaxAcceptablePositioningError, int MaxNumberOfIterations, int MinNumberOfParticipatingSensor) const
+{
+	Assert(MaxAcceptablePositioningError > 0);
+	Assert(MaxNumberOfIterations > 0);
+	Assert(MinNumberOfParticipatingSensor > 0);
+
+	if (MaxAcceptablePositioningError <= 0)
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": MaxAcceptablePositioningError = %f smaller than 0 !!", 
+			MaxAcceptablePositioningError);
+		return false;
+	}
+
+	if (MaxNumberOfIterations <= 0)
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": MaxNumberOfIterations = %d smaller than 0 !!", 
+			MaxNumberOfIterations);
+		return false;
+	}
+
+	if (MinNumberOfParticipatingSensor <= 0)
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": MinNumberOfParticipatingSensor = %d smaller than 0 !!", 
+			MinNumberOfParticipatingSensor);
+		return false;
+	}
 }

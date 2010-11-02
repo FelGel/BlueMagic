@@ -28,6 +28,8 @@ private:
 		std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts,
 		std::map<int /*SensorID*/, double /*Distance*/> &DistanceEstimations);
 
+	bool VerifyParameters(double MaxAcceptablePositioningError, int MaxNumberOfIterations, int MinNumberOfParticipatingSensor) const;
+
 private:
 	CRssiToDistanceBasicAlgorithmManager			m_DistanceAlgorithm;
 	CDistanceSmoothingBasicAlgorithmGeneralManager	m_SmoothingAlgorithm;
