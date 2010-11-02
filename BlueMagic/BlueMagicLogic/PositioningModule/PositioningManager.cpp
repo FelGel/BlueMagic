@@ -43,7 +43,12 @@ bool CPositioningManager::Init()
 	}
 
 	m_PositioningAlgorithm.Advise(&m_EstablishmentTopology, this);
-	m_PositioningAlgorithm.Init();
+	
+	if (!m_PositioningAlgorithm.Init())
+	{
+		LogEvent(LE_FATAL, __FUNCTION__ ": FATAL ERROR! Could not Initialize Positioning Algorithm!!");
+		return false;
+	}
 
 	CreateScanFilesDirectory();
 

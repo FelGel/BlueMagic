@@ -14,12 +14,12 @@ static char THIS_FILE[] = __FILE__;
 
 #define DEFAULT_MIN_NUMBER_OF_SENSORS													3		//sensors
 #define DEFAULT_DESIRED_NUMBER_OF_SENSORS												3		//sensors // Todo - in the future set to 4? more?
-#define DEFAULT_MAX_TIME_BETWEEN_UPDATES												9000	//milisec
+#define DEFAULT_MAX_TIME_BETWEEN_UPDATES												45000	//milisec A scanning cycle is about 32 sec
+#define DEFAULT_TIMEOUT_FOR_REMOVING_BDADDRESS											(2 * 60000) // 2 minutes
 #define DEFAULT_MAX_TICKCOUNT_DIFFERENCE_BETWEEN_MEASUREMNTS_OF_SAME_POSITIONING		10000	//milisec
 #define DEFAULT_DESIRED_TICKCOUNT_DIFFERENCE_BETWEEN_MEASUREMNTS_OF_SAME_POSITIONING	3000	//milisec
-#define DEFAULT_TIMEOUT_FOR_REMOVING_BDADDRESS											(2 * 60000) // 2 minutes
 #define DEFAULT_CLEANING_TIMEOUT_RESOLUTION												10000
-#define DEFAULT_UPDATE_TIMEOUT_RESOLUTION												5000
+#define DEFAULT_UPDATE_TIMEOUT_RESOLUTION												10000
 
 static const char* CONFIG_SECTION = "PositioningParameters";
 
@@ -41,7 +41,7 @@ CPositioningAlgorithm::~CPositioningAlgorithm(void)
 {
 }
 
-void CPositioningAlgorithm::Init()
+bool CPositioningAlgorithm::Init()
 {
 	m_MinNumberOfParticipatingSensor = GetConfigInt(CONFIG_SECTION, "MinimumNumberOfSensorsForPositioning", DEFAULT_MIN_NUMBER_OF_SENSORS);
 	m_DesiredNumberOfParticipatingSensor = GetConfigInt(CONFIG_SECTION, "DesiredNumberOfParticipatingSensor", DEFAULT_DESIRED_NUMBER_OF_SENSORS);
@@ -55,6 +55,8 @@ void CPositioningAlgorithm::Init()
 	m_CleaningTimeoutResolution = GetConfigInt(CONFIG_SECTION, "CleaningTimeoutResolution", DEFAULT_CLEANING_TIMEOUT_RESOLUTION);
 	
 	m_Impl = new CPositioningAlgorithmBasicImplementation();
+
+	return m_Impl->Init();
 }
 
 void CPositioningAlgorithm::Close()

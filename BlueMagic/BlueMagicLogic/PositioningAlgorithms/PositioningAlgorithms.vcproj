@@ -182,6 +182,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DistanceSmoothingBasicAlgorithmGeneralManager.h"
+				>
+			</File>
+			<File
 				RelativePath=".\DistanceSmoothingBasicAlgorithmManager.h"
 				>
 			</File>
@@ -222,6 +226,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\RssiToDistanceBasicAlgorithmManager.h"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.h"
 				>
 			</File>
@@ -232,6 +240,10 @@
 			>
 			<File
 				RelativePath=".\DistanceSmoothingBasicAlgorithm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DistanceSmoothingBasicAlgorithmGeneralManager.cpp"
 				>
 			</File>
 			<File
@@ -260,6 +272,10 @@
 			</File>
 			<File
 				RelativePath=".\RssiToDistanceBasicAlgorithm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RssiToDistanceBasicAlgorithmManager.cpp"
 				>
 			</File>
 			<File

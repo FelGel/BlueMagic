@@ -20,7 +20,7 @@ public:
 	CPositioningAlgorithm(void);
 	~CPositioningAlgorithm(void);
 
-	void Init();
+	bool Init();
 	void Advise(CEstablishmentTopology* EstablishmentTopology, IPositioningEvents *PositioningEventsHandler);
 	void Close();
 
