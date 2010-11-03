@@ -26,7 +26,8 @@ public:
 		int MaxNumberOfIterations,
 		int MinNumberOfParticipatingSensor);
 
-	SPosition CalcPosition(std::string BDADDRESS, std::map<int /*SensorID*/, double /*Distance*/> Measuremnts);
+	SPosition CalcPosition(std::string BDADDRESS, std::map<int /*SensorID*/, double /*Distance*/> Measuremnts, 
+		SPosition &Accuracy, int &NumOfIterations);
 
 	virtual std::map<int /*SensorID*/, SPosition> *GetSensorsLocationMap();
 	virtual double GetMaxAcceptablePositioningError() const;

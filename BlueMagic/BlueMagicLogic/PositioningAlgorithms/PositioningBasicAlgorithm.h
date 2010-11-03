@@ -17,11 +17,11 @@ public:
 	~CPositioningBasicAlgorithm(void);
 
 	void Init(ISensorsLocationMapInterface *TheSensorsLocationMap, SPosition InitialPosition);
-	SPosition CalcPosition(std::map<int /*SensorID*/, double /*Distance*/> Measuremnts);
+	SPosition CalcPosition(std::map<int /*SensorID*/, double /*Distance*/> Measuremnts, SPosition &Accuracy, int &NumOfIterations);
 
 private:
 	std::vector<int> GetListOfSensorsInMeasurements(std::map<int /*SensorID*/, double /*Distance*/> Measuremnts) const;
-	SPosition CalcPositionInternal(std::map<int /*SensorID*/, double /*Distance*/> Measuremnts, int &NumOfIterations);
+	SPosition CalcPositionInternal(std::map<int /*SensorID*/, double /*Distance*/> Measuremnts, SPosition &Accuracy, int &NumOfIterations);
 	CMatrix BuildMatrixB(std::vector<int> ParticipatingSensors) const;
 	CMatrix BuildMatrixF(std::map<int /*SensorID*/, double /*Distance*/> Measuremnts) const;
 	double CalcBCellX(SPosition SensorPosition) const;

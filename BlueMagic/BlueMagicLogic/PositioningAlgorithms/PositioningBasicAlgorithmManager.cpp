@@ -65,7 +65,9 @@ void CPositioningBasicAlgorithmManager::Init(
 	return m_MinNumberOfParticipatingSensor;
 }
 
-SPosition CPositioningBasicAlgorithmManager::CalcPosition(std::string BDADDRESS, std::map<int /*SensorID*/, double /*Distance*/> Measuremnts)
+SPosition CPositioningBasicAlgorithmManager::CalcPosition(
+	std::string BDADDRESS, std::map<int /*SensorID*/, double /*Distance*/> Measuremnts, 
+	SPosition &Accuracy, int &NumOfIterations)
 {
 	// This must be done, and auto creation via GET_DISTANCE_SMOOTHING_ALGORITHM_FOR_BDADDRESS 
 	// cannot be used for first creation as Initiating CTOR must be used (or Init called right after)
@@ -81,5 +83,5 @@ SPosition CPositioningBasicAlgorithmManager::CalcPosition(std::string BDADDRESS,
 
 	GET_POSITIONING_ALGORITHM_FOR_BDADDRESS(algorithm, BDADDRESS, false);
 
-	return algorithm->CalcPosition(Measuremnts);
+	return algorithm->CalcPosition(Measuremnts, Accuracy, NumOfIterations);
 }

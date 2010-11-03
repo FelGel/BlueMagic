@@ -17,7 +17,7 @@ static char THIS_FILE[]=__FILE__;
 
 
 #define DEAFULT_MAX_ACCEPTABLE_POSITIONING_ERROR	1.0		// meters
-#define DEAFULT_MAX_NUMBER_OF_ITERATIONS			1000	// iterations
+#define DEAFULT_MAX_NUMBER_OF_ITERATIONS			100	// iterations
 #define DEFAULT_MIN_NUMBER_OF_SENSORS				3		// sensors
 
 #define VALIDATE_PARAMETER(p)\
@@ -38,6 +38,7 @@ if (!InsertValueToMap(Map, SensorID, Param))	\
 
 
 CPositioningAlgorithmBasicImplementation::CPositioningAlgorithmBasicImplementation(void)
+	: m_DebugReportHandler(NULL)
 {
 }
 
@@ -95,15 +96,22 @@ CPositioningAlgorithmBasicImplementation::~CPositioningAlgorithmBasicImplementat
 	return true;
 }
 
-/*virtual*/ SPosition CPositioningAlgorithmBasicImplementation::CalculatePosition(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts)
+/*virtual*/ SPosition CPositioningAlgorithmBasicImplementation::CalculatePosition(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts, SPosition &Accuracy)
 {
-	DumpPositioningParamsToLog(BDADDRESS, Measuremnts);
+	// Rssi Measurements
+	DumpRssiMeasurementsToLog(BDADDRESS, Measuremnts);
 
+	// Distance Estimations
 	std::map<int /*SensorID*/, double /*Distance*/> DistanceEstimations;
 	EstimateDistances(BDADDRESS, Measuremnts, DistanceEstimations);
+	DumpDistanceEstimationsToLog(BDADDRESS, DistanceEstimations);
 
-	SPosition EstimatedPosition = m_PositioningAlgorithm.CalcPosition(BDADDRESS, DistanceEstimations);
+	// Position Estimation
+	int NumOfIterations;
+	SPosition EstimatedPosition = m_PositioningAlgorithm.CalcPosition(BDADDRESS, DistanceEstimations, Accuracy, NumOfIterations);
+	DumpEstimatedPositionToLog(BDADDRESS, EstimatedPosition);
 
+	SendDebugReport(BDADDRESS, Measuremnts, DistanceEstimations, EstimatedPosition, Accuracy, NumOfIterations);
 	return EstimatedPosition;
 }
 
@@ -130,7 +138,7 @@ void CPositioningAlgorithmBasicImplementation::EstimateDistances(
 	}
 }
 
-void CPositioningAlgorithmBasicImplementation::DumpPositioningParamsToLog(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts)
+void CPositioningAlgorithmBasicImplementation::DumpRssiMeasurementsToLog(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts)
 {
 	std::string PositionDataString;
 
@@ -148,7 +156,35 @@ void CPositioningAlgorithmBasicImplementation::DumpPositioningParamsToLog(std::s
 		PositionDataString += MeasurementString;
 	}
 
-	LogEvent(LE_NOTICE, __FUNCTION__ ": Positioning Parameters for BDADDRESS %s. Data: %s", 
+	LogEvent(LE_NOTICE, __FUNCTION__ ": RSSI Measurements for BDADDRESS %s. Data: %s", 
+		BDADDRESS.c_str(), PositionDataString.c_str());
+}
+
+void CPositioningAlgorithmBasicImplementation::DumpEstimatedPositionToLog(std::string BDADDRESS, SPosition EstimatedPosition)
+{
+	LogEvent(LE_NOTICE, __FUNCTION__ ": Estimated Position for BDADDRESS %s: [%f,%f]", 
+		BDADDRESS.c_str(), EstimatedPosition.x, EstimatedPosition.y);
+}
+
+void CPositioningAlgorithmBasicImplementation::DumpDistanceEstimationsToLog(std::string BDADDRESS, std::map<int /*SensorID*/, double /*Distance*/> DistanceEstimations)
+{
+	std::string PositionDataString;
+
+	std::map<int /*SensorID*/, double /*Distance*/>::iterator Iter = DistanceEstimations.begin();
+	std::map<int /*SensorID*/, double /*Distance*/>::iterator End = DistanceEstimations.end();
+
+	for(;Iter != End; ++Iter)
+	{
+		int SensorID = Iter->first;
+		double &Distance = Iter->second;
+
+		CString MeasurementString;
+		MeasurementString.Format("ID: %d, Distance: %f. ", SensorID, Distance);
+
+		PositionDataString += MeasurementString;
+	}
+
+	LogEvent(LE_NOTICE, __FUNCTION__ ": Distance Estimations for BDADDRESS %s. Data: %s", 
 		BDADDRESS.c_str(), PositionDataString.c_str());
 }
 
@@ -252,5 +288,32 @@ bool CPositioningAlgorithmBasicImplementation::VerifyParameters(double MaxAccept
 		LogEvent(LE_ERROR, __FUNCTION__ ": MinNumberOfParticipatingSensor = %d smaller than 0 !!", 
 			MinNumberOfParticipatingSensor);
 		return false;
+	}
+
+	return true;
+}
+
+/*virtual */void CPositioningAlgorithmBasicImplementation::AdviseDebugReport(IPositioningDebugReport *DebugReportHandler)
+{
+	m_DebugReportHandler = DebugReportHandler;
+}
+
+void CPositioningAlgorithmBasicImplementation::SendDebugReport(
+	std::string BDADDRESS, 
+	std::map<int /*SensorID*/, SMeasurement> Measurements,
+	std::map<int /*SensorID*/, double /*SmoothedDistance*/> DistanceEstimations,
+	SPosition EstimatedPosition,
+	SPosition EstimatedPositionError,
+	int NumOfIterations)
+{
+	if (m_DebugReportHandler)
+	{
+		m_DebugReportHandler->OnPositioningDebugReport(
+			BDADDRESS, 
+			Measurements, 
+			DistanceEstimations, 
+			EstimatedPosition, 
+			EstimatedPositionError, 
+			NumOfIterations);
 	}
 }
