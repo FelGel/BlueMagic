@@ -38,14 +38,29 @@ double CDistanceSmoothingBasicAlgorithm::SmoothDistance(double Rcurrent, double 
 	else
 	{
 		Assert(m_Tpred != 0);
+		// R.C.
+		m_Rpred += m_Vpred*Ts; // completing prediction based on actual TS
+		// ----
 
 		Rest = m_Rpred + m_a*(Rcurrent - m_Rpred); // Smoothing location
-		Vest = m_Vpred + (m_b/Ts)*(Rcurrent - m_Rpred);
+		
+		if (Ts != 0)
+			Vest = m_Vpred + (m_b/Ts)*(Rcurrent - m_Rpred);
+		else 
+			LogEvent(LE_WARNING, __FUNCTION__ ": TS = 0");
 	}
 
 	// Calculating Prediction values for next round
-	m_Rpred = Rest + Vest*Ts;
-	m_Vpred = Vest;
+
+	// R.C.
+	// m_Rpred = Rest + Vest*Ts; - cannot predict in advance as TS changes !!
+	m_Rpred = Rest; // Vest*Ts will be added with next measurement
+	// ----
+
+	// R.C.: if TS == 0, Vest was not calculated!
+	if (Ts != 0)
+		m_Vpred = Vest;
+
 	m_Tpred = Tcurrent;
 
 	return Rest;
