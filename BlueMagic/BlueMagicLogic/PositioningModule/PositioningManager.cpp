@@ -41,14 +41,15 @@ bool CPositioningManager::Init()
 		LogEvent(LE_FATAL, __FUNCTION__ ": FATAL ERROR! Could not Initialize Establishment Topology!!");
 		return false;
 	}
-
-	m_PositioningAlgorithm.Advise(&m_EstablishmentTopology, this);
 	
 	if (!m_PositioningAlgorithm.Init())
 	{
 		LogEvent(LE_FATAL, __FUNCTION__ ": FATAL ERROR! Could not Initialize Positioning Algorithm!!");
 		return false;
 	}
+
+	// advise must come after init !!
+	m_PositioningAlgorithm.Advise(&m_EstablishmentTopology, this, this);
 
 	CreateScanFilesDirectory();
 
@@ -285,4 +286,20 @@ void CPositioningManager::CloseAllScanFiles()
 /*virtual*/ void CPositioningManager::OnTimeout()
 {
 	m_PositioningAlgorithm.OnTimeout();
+}
+
+/*virtual*/ void CPositioningManager::OnPositioningDebugReport(
+	std::string BDADDRESS, 
+	std::map<int /*SensorID*/, SMeasurement> Measurements,
+	std::map<int /*SensorID*/, double /*SmoothedDistance*/> DistanceEstimations,
+	SPosition EstimatedPosition,
+	SPosition EstimatedPositionError,
+	int NumOfIterations)
+{
+	SDialogPositioingMessage *DialogPositioningMessage 
+		= new SDialogPositioingMessage(BDADDRESS, Measurements,
+			DistanceEstimations, EstimatedPosition, EstimatedPositionError,
+			NumOfIterations);
+
+	m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogPositioningMessage);
 }

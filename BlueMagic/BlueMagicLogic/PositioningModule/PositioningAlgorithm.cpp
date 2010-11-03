@@ -64,10 +64,14 @@ void CPositioningAlgorithm::Close()
 	delete m_Impl;
 }
 
-void CPositioningAlgorithm::Advise(CEstablishmentTopology* EstablishmentTopology, IPositioningEvents *PositioningEventsHandler)
+void CPositioningAlgorithm::Advise(
+   CEstablishmentTopology* EstablishmentTopology, 
+   IPositioningEvents *PositioningEventsHandler,
+   IPositioningDebugReport *PositioningDebugReportHandler)
 {
 	m_EstablishmentTopology = EstablishmentTopology;
 	m_PositioningEventsHandler = PositioningEventsHandler;
+	m_Impl->AdviseDebugReport(PositioningDebugReportHandler);
 }
 
 void CPositioningAlgorithm::OnScannedData(const int &SensorId, const SScannedData& ScannedData)
@@ -90,7 +94,8 @@ void CPositioningAlgorithm::DoPositioning(std::string BdAddress, DWORD LastDataT
 
 	m_ScannedBdAdressesDataBase.BdAdressPositionUpdated(BdAddress);
 
-	SPosition EstimatedPosition = m_Impl->CalculatePosition(BdAddress, Measurements);
+	SPosition Accuracy;
+	SPosition EstimatedPosition = m_Impl->CalculatePosition(BdAddress, Measurements, Accuracy);
 
 	// ToDo:
 	// 1. calculate the TickCount of the positioning (average of all measurements)

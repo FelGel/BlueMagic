@@ -21,7 +21,10 @@ public:
 	~CPositioningAlgorithm(void);
 
 	bool Init();
-	void Advise(CEstablishmentTopology* EstablishmentTopology, IPositioningEvents *PositioningEventsHandler);
+	void Advise(
+		CEstablishmentTopology* EstablishmentTopology, 
+		IPositioningEvents *PositioningEventsHandler,
+		IPositioningDebugReport *PositioningDebugReportHandler);
 	void Close();
 
 	void OnScannedData(const int &SensorId, const SScannedData& ScannedData);

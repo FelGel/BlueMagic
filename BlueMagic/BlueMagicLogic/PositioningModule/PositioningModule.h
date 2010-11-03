@@ -13,6 +13,7 @@
 #include "SensorsStatusDlg.h"
 #include "DialogMessages.h"
 #include "DistanceMeasurementsDlg.h"
+#include "PositioningEstimationDlg.h"
 
 // CPositioningModuleApp:
 // See PositioningModule.cpp for the implementation of this class
@@ -25,6 +26,7 @@ public:
 
 	virtual void SendMessageToDialog(SDialogDataMessage *Message);
 	virtual void SendMessageToDialog(SDialogSensorMessage *Message);
+	virtual void SendMessageToDialog(SDialogPositioingMessage *Message);
 // Overrides
 	//public:
 	//virtual BOOL InitInstance();
@@ -43,6 +45,7 @@ private:
 	CPositioningModuleDlg m_PositioningModuleAggregatedDlg;
 	CSensorsStatusDlg     m_SensorsStatusDlg;
 	CDistanceMeasurementsDlg m_DistancesMeasurementsDlg;
+	CPositioningEstimationDlg m_PositioningEstimationDlg;
 };
 
 extern CPositioningModuleApp theApp;

@@ -38,7 +38,7 @@ void CPositioningModuleApp::AddDialogs()
 	CResourcedGuiApplication::AddDialog(m_PositioningModuleAggregatedDlg, CPositioningModuleDlg::IDD, "Scan Log");
 	CResourcedGuiApplication::AddDialog(m_SensorsStatusDlg, CSensorsStatusDlg::IDD, "Sensors Status");
 	CResourcedGuiApplication::AddDialog(m_DistancesMeasurementsDlg, CDistanceMeasurementsDlg::IDD, "Distances Measurements");
-
+	CResourcedGuiApplication::AddDialog(m_PositioningEstimationDlg, CPositioningEstimationDlg::IDD, "Positioning Estimations");
 	return;
 }
 
@@ -54,6 +54,7 @@ bool CPositioningModuleApp::PerformInitalization()
 	m_PositioningModuleAggregatedDlg.InitScanList();
 	m_SensorsStatusDlg.InitScanList();
 	m_DistancesMeasurementsDlg.InitScanList();
+	m_PositioningEstimationDlg.InitScanList();
 
 	m_PositioningManager.Advise(this);
 	return m_PositioningManager.Init();
@@ -83,4 +84,9 @@ void CPositioningModuleApp::SendMessageToDialog(SDialogDataMessage *Message)
 void CPositioningModuleApp::SendMessageToDialog(SDialogSensorMessage *Message)
 {
 	m_SensorsStatusDlg.SendMessageToGuiThread((WPARAM)Message);
+}
+
+void CPositioningModuleApp::SendMessageToDialog(SDialogPositioingMessage *Message)
+{
+	m_PositioningEstimationDlg.SendMessageToGuiThread((WPARAM)Message);
 }

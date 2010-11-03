@@ -7,7 +7,8 @@
 #include "PositioningAlgorithm.h"
 #include "DialogMessages.h"
 
-class CPositioningManager :	public CThreadWithQueue, public ISensorEvents, public IPositioningEvents
+class CPositioningManager :	public CThreadWithQueue, 
+	public ISensorEvents, public IPositioningEvents, public IPositioningDebugReport
 {
 public:
 	CPositioningManager(void);
@@ -22,6 +23,15 @@ public:
 
 	// Positioning Algorithm Events
 	virtual void OnPositioning(std::string BDADDRESS, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore);
+
+	// Positioning Algorithm Debug Events
+	virtual void OnPositioningDebugReport(
+		std::string BDADDRESS, 
+		std::map<int /*SensorID*/, SMeasurement> Measurements,
+		std::map<int /*SensorID*/, double /*SmoothedDistance*/> DistanceEstimations,
+		SPosition EstimatedPosition,
+		SPosition EstimatedPositionError,
+		int NumOfIterations);
 
 	// General Public functions
 	void Advise(IPositioningInterface *PositioningInterfaceHandler) {m_PositioningInterfaceHandler = PositioningInterfaceHandler;}
