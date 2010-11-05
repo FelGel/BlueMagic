@@ -27,6 +27,7 @@ public:
 	virtual void SendMessageToDialog(SDialogDataMessage *Message);
 	virtual void SendMessageToDialog(SDialogSensorMessage *Message);
 	virtual void SendMessageToDialog(SDialogPositioingMessage *Message);
+	virtual void SendMessageToDialog(SDialogEstablishmentContourMessage *Message);
 // Overrides
 	//public:
 	//virtual BOOL InitInstance();

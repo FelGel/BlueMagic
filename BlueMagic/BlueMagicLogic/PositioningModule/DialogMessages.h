@@ -6,7 +6,8 @@ enum EDialogMessageType
 {
 	DialogDataMessage,
 	DialogSensorMessage,
-	DialogPositioningMessage
+	DialogPositioningMessage,
+	DialogEstablishmentContourMessage
 };
 
 struct SDialogMessage
@@ -65,11 +66,24 @@ struct SDialogPositioingMessage : public SDialogMessage
 };
 
 
+struct SDialogEstablishmentContourMessage : public SDialogMessage
+{
+	SDialogEstablishmentContourMessage(
+		std::vector<SPosition> EstablishmentCoordinates) : SDialogMessage(DialogEstablishmentContourMessage, 0),
+		m_EstablishmentCoordinates(EstablishmentCoordinates) {}
+	virtual ~SDialogEstablishmentContourMessage() {}
+
+	std::vector<SPosition> m_EstablishmentCoordinates;
+};
+
+
+
 class IDialogMessagesInterface
 {
 public:
 	virtual void SendMessageToDialog(SDialogDataMessage *Message) = 0;
 	virtual void SendMessageToDialog(SDialogSensorMessage *Message) = 0;
 	virtual void SendMessageToDialog(SDialogPositioingMessage *Message) = 0;
+	virtual void SendMessageToDialog(SDialogEstablishmentContourMessage *Message) = 0;
 };
 

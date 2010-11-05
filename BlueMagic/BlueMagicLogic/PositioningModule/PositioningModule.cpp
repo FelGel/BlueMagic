@@ -90,3 +90,8 @@ void CPositioningModuleApp::SendMessageToDialog(SDialogPositioingMessage *Messag
 {
 	m_PositioningEstimationDlg.SendMessageToGuiThread((WPARAM)Message);
 }
+
+void CPositioningModuleApp::SendMessageToDialog(SDialogEstablishmentContourMessage *Message)
+{
+	m_PositioningEstimationDlg.SendMessageToGuiThread((WPARAM)Message);
+}

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "geometry.h"
+#include "PositioningAlgorithms/PositionStructure.h"
+#include <vector>
 
 class CEstablishmentTopology
 {
@@ -11,6 +13,7 @@ public:
 	bool Init();
 
 	int GetEstablishmentID() {return m_EstablishmentID;}
+	std::vector<SPosition> GetEstablishmentCoordinates();
 
 private:
 	//members:

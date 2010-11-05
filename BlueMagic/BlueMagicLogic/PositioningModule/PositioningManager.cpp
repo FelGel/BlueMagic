@@ -41,6 +41,7 @@ bool CPositioningManager::Init()
 		LogEvent(LE_FATAL, __FUNCTION__ ": FATAL ERROR! Could not Initialize Establishment Topology!!");
 		return false;
 	}
+	SendEstablishmentContourToDialog(m_EstablishmentTopology.GetEstablishmentCoordinates());
 	
 	if (!m_PositioningAlgorithm.Init())
 	{
@@ -302,4 +303,12 @@ void CPositioningManager::CloseAllScanFiles()
 			NumOfIterations);
 
 	m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogPositioningMessage);
+}
+
+void CPositioningManager::SendEstablishmentContourToDialog(std::vector<SPosition> EstablishmentCoordinates)
+{
+	SDialogEstablishmentContourMessage *DialogMessage 
+		= new SDialogEstablishmentContourMessage(EstablishmentCoordinates);
+
+	m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogMessage);
 }

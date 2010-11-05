@@ -237,6 +237,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\RectReal.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ScannedBdAdressesDataBase.cpp"
 				>
 			</File>
@@ -360,6 +364,10 @@
 			</File>
 			<File
 				RelativePath=".\PositioningModuleDlg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RectReal.h"
 				>
 			</File>
 			<File

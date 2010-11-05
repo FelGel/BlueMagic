@@ -41,6 +41,7 @@ public:
 	virtual void OnThreadClose();
 	virtual void OnTimeout();
 
+private:
 	// Debugging & Monitoring
 	void CreateCombinedScanFile();
 	void CreateScanFilesDirectory();
@@ -49,8 +50,8 @@ public:
 	void CloseAllScanFiles();
 	void UpdateScanFile(const int &SensorId, const SScannedData& ScannedData);
 	void UpdateDialog(const int &SensorId, const SScannedData& ScannedData);
+	void SendEstablishmentContourToDialog(std::vector<SPosition> EstablishmentCoordinates);
 
-private:
 	void HandleDataReceived(const int &SensorId, const SScannedData& ScannedData);
 	void HandleNewSensorInSystem(const int &SensorId, const bool &IsController, const std::string &BDADDRESS, const std::vector<int> &ChildrenSensorIDs);
 	void HandleSensorStatusUpdate(const int &SensorId, const bool &IsController, const ESensorConnectionStatus &SensorConnectionStatus, const ESensorHandshakeStatus &SensorHandshakeStatus, const ESensorActivityStatus &SensorActivityStatus);

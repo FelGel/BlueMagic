@@ -66,3 +66,13 @@ bool CEstablishmentTopology::Init()
 
 	return true;
 }
+
+std::vector<SPosition> CEstablishmentTopology::GetEstablishmentCoordinates()
+{
+	std::vector<SPosition> EstablishmentCoordinates;
+
+	for (int i = 0; i < m_EstablishmentContour.GetSize(); i++)
+		EstablishmentCoordinates.push_back(SPosition(m_EstablishmentContour[i].x, m_EstablishmentContour[i].y));
+
+	return EstablishmentCoordinates;
+}
