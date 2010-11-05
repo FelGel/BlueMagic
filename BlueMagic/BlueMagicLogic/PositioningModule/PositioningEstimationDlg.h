@@ -28,6 +28,7 @@ public:
 private:
 	void HandleEstablishmentContourMessage(SDialogEstablishmentContourMessage *Message);
 	void HandlePositioningMessage(SDialogPositioingMessage *Message);
+	void HandleSensorsLocationMessage(SDialogSensorsLocationMessage *Message);
 
 	void AddNewEntry(SDialogPositioingMessage *Message);
 	void UpdateEntry(int index, SDialogPositioingMessage *Message);
@@ -37,6 +38,8 @@ private:
 
 	void DrawBackground(CPaintDC &dc);
 	void DrawEstablishment(CPaintDC &dc);
+	void DrawSensors(CPaintDC &dc);
+	void DrawSensor(CPaintDC &dc, int SensorID, SPosition Position);
 	void DrawUserPositions(CPaintDC &dc);
 	void DrawUserPosition(CPaintDC &dc, std::string BDADDRESS, SPosition Position);
 	POINT ConvertPhysicalCoordinateToCanvas(SPosition Coordinate);
@@ -54,4 +57,5 @@ public:
 	CRect m_CanvasRect;
 
 	std::map<std::string /*BDADDRESS*/, SPosition /*Position*/> m_UserPositions;
+	std::map<int /*SensorID*/, SPosition> m_SensorsLocation;
 };

@@ -14,6 +14,9 @@ public:
 		SPosition EstimatedPosition,
 		SPosition EstimatedPositionError,
 		int NumOfIterations) = 0;
+
+	virtual void OnSensorsLocationReport(
+		std::map<int /*SensorID*/, SPosition> SensorsLocation) = 0;
 };
 
 

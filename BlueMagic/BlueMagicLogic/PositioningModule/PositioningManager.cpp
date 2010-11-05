@@ -312,3 +312,12 @@ void CPositioningManager::SendEstablishmentContourToDialog(std::vector<SPosition
 
 	m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogMessage);
 }
+
+void CPositioningManager::OnSensorsLocationReport(
+	std::map<int /*SensorID*/, SPosition> SensorsLocation)
+{
+	SDialogSensorsLocationMessage *DialogMessage 
+		= new SDialogSensorsLocationMessage(SensorsLocation);
+
+	m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogMessage);
+}

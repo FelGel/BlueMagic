@@ -32,6 +32,8 @@ public:
 		SPosition EstimatedPosition,
 		SPosition EstimatedPositionError,
 		int NumOfIterations);
+	virtual void OnSensorsLocationReport(
+		std::map<int /*SensorID*/, SPosition> SensorsLocation);
 
 	// General Public functions
 	void Advise(IPositioningInterface *PositioningInterfaceHandler) {m_PositioningInterfaceHandler = PositioningInterfaceHandler;}

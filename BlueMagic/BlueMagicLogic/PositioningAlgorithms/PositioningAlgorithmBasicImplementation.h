@@ -40,6 +40,8 @@ private:
 		SPosition EstimatedPositionError,
 		int NumOfIterations);
 
+	void SendSensorsLocationReport(std::map<int /*SensorID*/, SPosition> SensorsLocation);
+
 private:
 	CRssiToDistanceBasicAlgorithmManager			m_DistanceAlgorithm;
 	CDistanceSmoothingBasicAlgorithmGeneralManager	m_SmoothingAlgorithm;

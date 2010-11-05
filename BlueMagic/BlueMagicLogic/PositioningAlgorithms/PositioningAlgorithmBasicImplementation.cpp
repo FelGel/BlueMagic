@@ -57,6 +57,7 @@ CPositioningAlgorithmBasicImplementation::~CPositioningAlgorithmBasicImplementat
 		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to Read Sensors Positioning Parameters Configuration");
 		return false;
 	}
+	SendSensorsLocationReport(SensorsLocationParams);
 
 	if (!m_DistanceAlgorithm.Init(SensorsDistanceParams))
 	{
@@ -296,6 +297,7 @@ bool CPositioningAlgorithmBasicImplementation::VerifyParameters(double MaxAccept
 /*virtual */void CPositioningAlgorithmBasicImplementation::AdviseDebugReport(IPositioningDebugReport *DebugReportHandler)
 {
 	m_DebugReportHandler = DebugReportHandler;
+	m_DebugReportHandler->OnSensorsLocationReport(*m_PositioningAlgorithm.GetSensorsLocationMap());
 }
 
 void CPositioningAlgorithmBasicImplementation::SendDebugReport(
@@ -316,4 +318,11 @@ void CPositioningAlgorithmBasicImplementation::SendDebugReport(
 			EstimatedPositionError, 
 			NumOfIterations);
 	}
+}
+
+
+void CPositioningAlgorithmBasicImplementation::SendSensorsLocationReport(std::map<int /*SensorID*/, SPosition> SensorsLocation)
+{
+	if (m_DebugReportHandler)
+		m_DebugReportHandler->OnSensorsLocationReport(SensorsLocation);
 }

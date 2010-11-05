@@ -95,3 +95,8 @@ void CPositioningModuleApp::SendMessageToDialog(SDialogEstablishmentContourMessa
 {
 	m_PositioningEstimationDlg.SendMessageToGuiThread((WPARAM)Message);
 }
+
+void CPositioningModuleApp::SendMessageToDialog(SDialogSensorsLocationMessage *Message)
+{
+	m_PositioningEstimationDlg.SendMessageToGuiThread((WPARAM)Message);
+}

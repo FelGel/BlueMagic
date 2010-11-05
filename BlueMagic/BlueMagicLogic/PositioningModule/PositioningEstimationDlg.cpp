@@ -94,6 +94,10 @@ void CPositioningEstimationDlg::OnGuiThread(WPARAM wParam)
 			HandleEstablishmentContourMessage((SDialogEstablishmentContourMessage *)wParam);
 			break;
 
+		case DialogSensorsLocationMessage:
+			HandleSensorsLocationMessage((SDialogSensorsLocationMessage *)wParam);
+			break;
+
 		default:
 			LogEvent(LE_ERROR, __FUNCTION__ ": Unexpected DialogMessage arrived!");
 	}
@@ -266,6 +270,7 @@ void CPositioningEstimationDlg::OnPaint()
 
 	DrawBackground(dc);
  	DrawEstablishment(dc);
+	DrawSensors(dc);
 	DrawUserPositions(dc);
 
 	CTabDlg::OnPaint();
@@ -359,7 +364,6 @@ void CPositioningEstimationDlg::DrawUserPosition(CPaintDC &dc, std::string BDADD
 	dc.SetBkMode( TRANSPARENT );
 	dc.DrawText(BDADDRESS.c_str(), &TextRect, DT_SINGLELINE);
 
-	#undef USER_HALF_RECT_LEN 5
 }
 
 void CPositioningEstimationDlg::UpdateUserLocation(std::string BDADDRESS, SPosition NewPosition)
@@ -373,4 +377,53 @@ void CPositioningEstimationDlg::UpdateUserLocation(std::string BDADDRESS, SPosit
 
 	UserPosition->x = NewPosition.x;
 	UserPosition->y = NewPosition.y;
+}
+
+void CPositioningEstimationDlg::HandleSensorsLocationMessage(SDialogSensorsLocationMessage *Message)
+{
+	m_SensorsLocation = Message->m_SensorsLocation;
+}
+
+void CPositioningEstimationDlg::DrawSensors(CPaintDC &dc)
+{
+	std::map<int /*SensorID*/, SPosition>::iterator Iter = m_SensorsLocation.begin();
+	std::map<int /*SensorID*/, SPosition>::iterator End = m_SensorsLocation.end();
+
+	for(;Iter != End; ++Iter)
+	{
+		int SensorID = Iter->first;
+		SPosition Position = Iter->second;
+
+		DrawSensor(dc, SensorID, Position);
+	}
+}
+
+void CPositioningEstimationDlg::DrawSensor(CPaintDC &dc, int SensorID, SPosition Position)
+{
+	POINT UserPositionOnCanvas = ConvertPhysicalCoordinateToCanvas(Position);
+
+	#define HALF_SENSORID_TEXT_WIDTH	5
+
+	CRect UserRect(
+		UserPositionOnCanvas.x - USER_HALF_RECT_LEN, 
+		UserPositionOnCanvas.y - USER_HALF_RECT_LEN, 
+		UserPositionOnCanvas.x + USER_HALF_RECT_LEN,
+		UserPositionOnCanvas.y + USER_HALF_RECT_LEN);
+
+	CBrush brush(RGB(255,255,255));
+	dc.FillRect(UserRect, &brush);
+	brush.DeleteObject();
+
+	CString StrSensorID;
+	StrSensorID.Format("%d", SensorID);
+
+	CRect TextRect(
+		UserPositionOnCanvas.x - HALF_SENSORID_TEXT_WIDTH,
+		UserPositionOnCanvas.y + TEXT_DIST_FROM_USER,
+		UserPositionOnCanvas.x + HALF_SENSORID_TEXT_WIDTH,
+		UserPositionOnCanvas.y + TEXT_DIST_FROM_USER + TEXT_HEIGHT);
+	dc.SetTextColor(RGB(255,255,255));
+	dc.SetBkMode( TRANSPARENT );
+	dc.DrawText(StrSensorID, &TextRect, DT_SINGLELINE);
+	
 }
