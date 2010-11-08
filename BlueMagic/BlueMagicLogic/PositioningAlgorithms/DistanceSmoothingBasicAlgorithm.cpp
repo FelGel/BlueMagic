@@ -13,16 +13,26 @@ static char THIS_FILE[]=__FILE__;
 
 CDistanceSmoothingBasicAlgorithm::CDistanceSmoothingBasicAlgorithm(void) 
 	: m_a(0), m_b(0), m_Rpred(FIRST_MEASUREMENT), m_Vpred(0), m_Tpred(0), m_LastTS(0), 
-	m_RpredOLD(FIRST_MEASUREMENT), m_VpredOLD(0), m_TpredOLD(0) {}
+	m_RpredOLD(FIRST_MEASUREMENT), m_VpredOLD(0), m_TpredOLD(0), m_RcurrentOLD(0) {}
 CDistanceSmoothingBasicAlgorithm::CDistanceSmoothingBasicAlgorithm(double a, double b) 
 	: m_a(a), m_b(b), m_Rpred(FIRST_MEASUREMENT), m_Vpred(0), m_Tpred(0), m_LastTS(0), 
-	m_RpredOLD(FIRST_MEASUREMENT), m_VpredOLD(0), m_TpredOLD(0) {}
+	m_RpredOLD(FIRST_MEASUREMENT), m_VpredOLD(0), m_TpredOLD(0), m_RcurrentOLD(0) {}
 CDistanceSmoothingBasicAlgorithm::~CDistanceSmoothingBasicAlgorithm(void) {}
 
 void CDistanceSmoothingBasicAlgorithm::Init(double a, double b)
 {
 	m_a = a;
 	m_b = b;
+
+	m_Rpred = FIRST_MEASUREMENT;
+	m_Vpred = 0;
+	m_Tpred = 0;
+	m_LastTS = 0;
+
+	m_RpredOLD = FIRST_MEASUREMENT;
+	m_VpredOLD = 0;
+	m_TpredOLD = 0;
+	m_RcurrentOLD = 0;
 }
 
 double CDistanceSmoothingBasicAlgorithm::SmoothDistance(double Rcurrent, double Tcurrent)
