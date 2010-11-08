@@ -100,3 +100,8 @@ void CPositioningModuleApp::SendMessageToDialog(SDialogSensorsLocationMessage *M
 {
 	m_PositioningEstimationDlg.SendMessageToGuiThread((WPARAM)Message);
 }
+
+void CPositioningModuleApp::OnTimeoutCalledFromPositioningManager()
+{
+	m_PositioningEstimationDlg.OnTimeoutCalledFromPositioningModule();
+}

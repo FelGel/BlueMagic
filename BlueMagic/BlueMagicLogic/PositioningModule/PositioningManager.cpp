@@ -287,6 +287,7 @@ void CPositioningManager::CloseAllScanFiles()
 /*virtual*/ void CPositioningManager::OnTimeout()
 {
 	m_PositioningAlgorithm.OnTimeout();
+	m_DialogMessagesInterfaceHandler->OnTimeoutCalledFromPositioningManager();
 }
 
 /*virtual*/ void CPositioningManager::OnPositioningDebugReport(

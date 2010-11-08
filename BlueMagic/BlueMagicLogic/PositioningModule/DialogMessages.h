@@ -96,5 +96,7 @@ public:
 	virtual void SendMessageToDialog(SDialogPositioingMessage *Message) = 0;
 	virtual void SendMessageToDialog(SDialogEstablishmentContourMessage *Message) = 0;
 	virtual void SendMessageToDialog(SDialogSensorsLocationMessage *Message) = 0;
+
+	virtual void OnTimeoutCalledFromPositioningManager() = 0;
 };
 

@@ -19,7 +19,7 @@ static char THIS_FILE[] = __FILE__;
 IMPLEMENT_DYNAMIC(CPositioningEstimationDlg, CTabDlg)
 
 CPositioningEstimationDlg::CPositioningEstimationDlg(CWnd* pParent /*=NULL*/)
-	: CTabDlg(CPositioningEstimationDlg::IDD, pParent)
+	: CTabDlg(CPositioningEstimationDlg::IDD, pParent), m_LastCleanTickCount(0)
 {
 
 }
@@ -82,6 +82,12 @@ void CPositioningEstimationDlg::InitScanList()
 
 void CPositioningEstimationDlg::OnGuiThread(WPARAM wParam)
 {
+	if (wParam == NULL)
+	{ // It's TimeOut !
+		HandleTimeOut();
+		return;
+	}
+
 	SDialogMessage *Message = (SDialogMessage *)wParam;
 
 	switch (Message->m_MessageType)
@@ -324,59 +330,84 @@ POINT CPositioningEstimationDlg::ConvertPhysicalCoordinateToCanvas(SPosition Coo
 
 void CPositioningEstimationDlg::DrawUserPositions(CPaintDC &dc)
 {
-	std::map<std::string /*BDADDRESS*/, SPosition /*Position*/>::iterator Iter = m_UserPositions.begin();
-	std::map<std::string /*BDADDRESS*/, SPosition /*Position*/>::iterator End = m_UserPositions.end();
+	std::map<std::string /*BDADDRESS*/, SUserPosition>::iterator Iter = m_UserPositions.begin();
+	std::map<std::string /*BDADDRESS*/, SUserPosition>::iterator End = m_UserPositions.end();
 
 	for(;Iter != End; ++Iter)
 	{
 		std::string BDADDRESS = Iter->first;
-		SPosition Position = Iter->second;
+		SUserPosition UserPosition = Iter->second;
 
-		DrawUserPosition(dc, BDADDRESS, Position);
+		DrawUserPosition(dc, BDADDRESS, UserPosition);
 	}
 
 }
 
-void CPositioningEstimationDlg::DrawUserPosition(CPaintDC &dc, std::string BDADDRESS, SPosition Position)
+void CPositioningEstimationDlg::DrawUserPosition(CPaintDC &dc, std::string BDADDRESS, SUserPosition UserPosition)
 {
-	POINT UserPositionOnCanvas = ConvertPhysicalCoordinateToCanvas(Position);
-	#define USER_HALF_RECT_LEN	5
-	#define HALF_TEXT_WIDTH		50
-	#define TEXT_HEIGHT			20
-	#define TEXT_DIST_FROM_USER USER_HALF_RECT_LEN + 5
+	POINT UserPositionOnCanvas = ConvertPhysicalCoordinateToCanvas(UserPosition.Position);
+	#define USER_HALF_RECT_LEN			5
+	#define HALF_TEXT_WIDTH				50
+	#define HALF_TIMESTAMP_TEXT_WIDTH	30
+	#define TEXT_HEIGHT					15
+	#define NAME_TEXT_DIST_FROM_USER USER_HALF_RECT_LEN + 3
+	#define TIMESTAMP_TEXT_DIST_FROM_USER NAME_TEXT_DIST_FROM_USER + TEXT_HEIGHT
 	
-	CRect UserRect(
+	DrawSquare(dc, RGB(0,0,255), 
 		UserPositionOnCanvas.x - USER_HALF_RECT_LEN, 
 		UserPositionOnCanvas.y - USER_HALF_RECT_LEN, 
 		UserPositionOnCanvas.x + USER_HALF_RECT_LEN,
 		UserPositionOnCanvas.y + USER_HALF_RECT_LEN);
+	
+	DrawText(dc, BDADDRESS.c_str(), RGB(0,0,200),
+		UserPositionOnCanvas.x - HALF_TEXT_WIDTH,
+		UserPositionOnCanvas.y + NAME_TEXT_DIST_FROM_USER,
+		UserPositionOnCanvas.x + HALF_TEXT_WIDTH,
+		UserPositionOnCanvas.y + NAME_TEXT_DIST_FROM_USER + TEXT_HEIGHT);
 
-	CBrush brush(RGB(0,0,255));
+	DrawText(dc, UserPosition.TimeString, RGB(0,0,200),
+		UserPositionOnCanvas.x - HALF_TIMESTAMP_TEXT_WIDTH,
+		UserPositionOnCanvas.y + TIMESTAMP_TEXT_DIST_FROM_USER,
+		UserPositionOnCanvas.x + HALF_TIMESTAMP_TEXT_WIDTH,
+		UserPositionOnCanvas.y + TIMESTAMP_TEXT_DIST_FROM_USER + TEXT_HEIGHT);
+
+}
+
+void CPositioningEstimationDlg::DrawSquare(CPaintDC &dc, COLORREF Color, int l, int t, int r, int b)
+{
+	CRect UserRect(l, t, r, b);
+
+	CBrush brush(Color);
 	dc.FillRect(UserRect, &brush);
 	brush.DeleteObject();
-	
-	CRect TextRect(
-		UserPositionOnCanvas.x - HALF_TEXT_WIDTH,
-		UserPositionOnCanvas.y + TEXT_DIST_FROM_USER,
-		UserPositionOnCanvas.x + HALF_TEXT_WIDTH,
-		UserPositionOnCanvas.y + TEXT_DIST_FROM_USER + TEXT_HEIGHT);
-	dc.SetTextColor(RGB(0,0,200));
+}
+
+void CPositioningEstimationDlg::DrawText(CPaintDC &dc, CString Text, COLORREF Color, int l, int t, int r, int b)
+{
+	CRect TextRect(l, t, r, b);
+
+	dc.SetTextColor(Color);
 	dc.SetBkMode( TRANSPARENT );
-	dc.DrawText(BDADDRESS.c_str(), &TextRect, DT_SINGLELINE);
+	dc.DrawText(Text, &TextRect, DT_SINGLELINE);
 
 }
 
 void CPositioningEstimationDlg::UpdateUserLocation(std::string BDADDRESS, SPosition NewPosition)
 {
-	SPosition *UserPosition;
+	SUserPosition *UserPosition;
 	if (!GetValueInMap(m_UserPositions, BDADDRESS, UserPosition, true))
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ ": failed to UpdateUserLocation !");
 		return;
 	}
 
-	UserPosition->x = NewPosition.x;
-	UserPosition->y = NewPosition.y;
+	UserPosition->Position.x = NewPosition.x;
+	UserPosition->Position.y = NewPosition.y;
+	UserPosition->TickCount = GetTickCount();
+	
+	SYSTEMTIME SystemTime;
+	GetLocalTime(&SystemTime);
+	UserPosition->TimeString.Format("%02d:%02d:%02d", SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
 }
 
 void CPositioningEstimationDlg::HandleSensorsLocationMessage(SDialogSensorsLocationMessage *Message)
@@ -404,26 +435,66 @@ void CPositioningEstimationDlg::DrawSensor(CPaintDC &dc, int SensorID, SPosition
 
 	#define HALF_SENSORID_TEXT_WIDTH	5
 
-	CRect UserRect(
+	DrawSquare(dc, RGB(255,255,255), 
 		UserPositionOnCanvas.x - USER_HALF_RECT_LEN, 
 		UserPositionOnCanvas.y - USER_HALF_RECT_LEN, 
 		UserPositionOnCanvas.x + USER_HALF_RECT_LEN,
 		UserPositionOnCanvas.y + USER_HALF_RECT_LEN);
 
-	CBrush brush(RGB(255,255,255));
-	dc.FillRect(UserRect, &brush);
-	brush.DeleteObject();
-
 	CString StrSensorID;
 	StrSensorID.Format("%d", SensorID);
 
-	CRect TextRect(
+	DrawText(dc, StrSensorID, RGB(255,255,255),
 		UserPositionOnCanvas.x - HALF_SENSORID_TEXT_WIDTH,
-		UserPositionOnCanvas.y + TEXT_DIST_FROM_USER,
+		UserPositionOnCanvas.y + NAME_TEXT_DIST_FROM_USER,
 		UserPositionOnCanvas.x + HALF_SENSORID_TEXT_WIDTH,
-		UserPositionOnCanvas.y + TEXT_DIST_FROM_USER + TEXT_HEIGHT);
-	dc.SetTextColor(RGB(255,255,255));
-	dc.SetBkMode( TRANSPARENT );
-	dc.DrawText(StrSensorID, &TextRect, DT_SINGLELINE);
-	
+		UserPositionOnCanvas.y + NAME_TEXT_DIST_FROM_USER + TEXT_HEIGHT);
+}
+
+CString CPositioningEstimationDlg::GetLocalTimeForTickCount(DWORD TickCount)
+{
+	unsigned long uptime = TickCount;
+	//unsigned int days = uptime / (24 * 60 * 60 * 1000);
+	uptime %= (24 * 60 * 60 * 1000);
+	unsigned int hours = uptime / (60 * 60 * 1000);
+	uptime %= (60 * 60 * 1000);
+	unsigned int minutes = uptime / (60 * 1000);
+	uptime %= (60 * 1000);
+	unsigned int seconds = uptime / (1000);
+
+	CString LocalTime;
+	LocalTime.Format("%02d:%02d:%02d", hours, minutes, seconds);
+
+	return LocalTime;
+}
+
+#define CLEAN_TIMEOUT		60000 // remove after x mili of inactivity
+#define CLEAN_REFRESH_TIME	10000 // check every X mili
+
+void CPositioningEstimationDlg::HandleTimeOut()
+{
+	DWORD Now = GetTickCount();
+
+	if (Now - m_LastCleanTickCount > CLEAN_REFRESH_TIME)
+	{
+		m_LastCleanTickCount = Now;
+
+		std::map<std::string /*BDADDRESS*/, SUserPosition>::iterator Iter = m_UserPositions.begin();
+		std::map<std::string /*BDADDRESS*/, SUserPosition>::iterator End = m_UserPositions.end();
+
+		std::vector<std::string> RemoveList;
+		for(;Iter != End; ++Iter)
+		{
+			std::string BDADDRESS = Iter->first;
+			SUserPosition UserPosition = Iter->second;
+
+			if (Now - UserPosition.TickCount > CLEAN_TIMEOUT)
+				RemoveList.push_back(BDADDRESS);
+		}
+
+		for (unsigned int i = 0; i < RemoveList.size(); i++)
+		{
+			RemoveValueFromMap(m_UserPositions, RemoveList[i]);
+		}
+	}
 }
