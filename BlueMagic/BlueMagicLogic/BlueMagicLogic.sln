@@ -91,7 +91,6 @@ Global
 		{D52AD554-D31E-4BB5-A491-42762D53B926}.Debug|Win32.ActiveCfg = Debug
 		{D52AD554-D31E-4BB5-A491-42762D53B926}.Debug|Windows Mobile 5.0 Smartphone SDK (ARMV4I).ActiveCfg = Debug
 		{D52AD554-D31E-4BB5-A491-42762D53B926}.Release|Win32.ActiveCfg = Release
-		{D52AD554-D31E-4BB5-A491-42762D53B926}.Release|Win32.Build.0 = Release
 		{D52AD554-D31E-4BB5-A491-42762D53B926}.Release|Windows Mobile 5.0 Smartphone SDK (ARMV4I).ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
