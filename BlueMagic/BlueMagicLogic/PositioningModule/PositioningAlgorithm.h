@@ -1,9 +1,9 @@
 #pragma once
 
-#include "EstablishmentTopology.h"
 #include "IPositioningInterface.h"
 #include "ISensorEvents.h"
 #include "ScannedBdAdressesDataBase.h"
+#include "PositioningAlgorithms/EstablishmentTopology.h"
 #include "PositioningAlgorithms/IPositioningAlgorithmImplementation.h"
 
 // Note: Class is running withing PositioningManager's worker thread

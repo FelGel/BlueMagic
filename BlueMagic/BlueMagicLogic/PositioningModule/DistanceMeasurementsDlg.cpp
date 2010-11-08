@@ -240,7 +240,8 @@ void CDistanceMeasurementsDlg::UpdateEntry(int index, SDialogDataMessage *Messag
 
 	CString strSensorID;
 	strSensorID.Format("%d", Message->m_SensorId);
-	WriteToFile(strSensorID, Message->m_ScannedData.ScannedBDADDRESS.c_str(), Message->m_TimeStamp, 
+	WriteToFile(strSensorID, Message->m_ScannedData.ScannedBDADDRESS.c_str(), 
+		Message->m_TimeStamp, strRSSI.Left(strDistance.GetLength() - 2),
 		strDistance.Left(strDistance.GetLength() - 1), 
 		strSmoothDistance.Left(strSmoothDistance.GetLength() - 1), 
 		strVelocity.Left(strVelocity.GetLength() - 3), 
@@ -355,7 +356,7 @@ void CDistanceMeasurementsDlg::CreateDistanceFile()
 	if (!CreateFile(FileName, &m_DistanceFile))
 		return;
 
-	WriteToFile("SensorID", "BDADDRESS", "TimeStamp", "Distance", 
+	WriteToFile("SensorID", "BDADDRESS", "TimeStamp", "RSSI", "Distance", 
 		"SmoothDistance", "Velocity", "TS (Time Space)");
 
 	LogEvent(LE_INFO, __FUNCTION__ ": File %s created successfully", FileName);
@@ -383,14 +384,19 @@ void CDistanceMeasurementsDlg::CloseDistanceFile()
 
 void CDistanceMeasurementsDlg::WriteToFile(
 				 CString strSensorID, CString strBDADDRESS, 
-				 CString strTimeStamp, 
+				 CString strTimeStamp, CString strRSSI, 
 				 CString strDistance, CString strSmoothDistance, 
 				 CString strVelocity, CString strTS)
 {
 	CString DataString;
 	DataString.Format("%s, %s, %s, %s, %s, %s, %s\n",
-		strSensorID, strBDADDRESS, strTimeStamp, strDistance, strSmoothDistance, 
+		strSensorID, strBDADDRESS, strTimeStamp, strRSSI, strDistance, strSmoothDistance, 
 		strVelocity, strTS);
 
 	m_DistanceFile.WriteString(DataString);
+}
+
+void CDistanceMeasurementsDlg::Close()
+{
+	CloseDistanceFile();
 }

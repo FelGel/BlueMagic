@@ -205,14 +205,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\EstablishmentTopology.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\geometry.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\MeasurementsContainer.cpp"
 				>
 			</File>
@@ -296,10 +288,6 @@
 					/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath=".\Utils.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -320,14 +308,6 @@
 			</File>
 			<File
 				RelativePath=".\DistanceMeasurementsDlg.h"
-				>
-			</File>
-			<File
-				RelativePath=".\EstablishmentTopology.h"
-				>
-			</File>
-			<File
-				RelativePath=".\geometry.h"
 				>
 			</File>
 			<File
@@ -412,10 +392,6 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
-				RelativePath=".\utils.h"
 				>
 			</File>
 		</Filter>

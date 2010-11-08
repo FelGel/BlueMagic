@@ -33,7 +33,8 @@ CPositioningAlgorithm::CPositioningAlgorithm(void)
 	m_CleaningTimeoutResolution(DEFAULT_CLEANING_TIMEOUT_RESOLUTION),
 	m_UpdateTimeoutResolution(DEFAULT_UPDATE_TIMEOUT_RESOLUTION),
 	m_LastUpdateTimeoutTickCount(0),
-	m_LastCleaningTimeoutTickCount(0)
+	m_LastCleaningTimeoutTickCount(0),
+	m_EstablishmentTopology(NULL)
 {
 }
 
@@ -69,8 +70,9 @@ void CPositioningAlgorithm::Advise(
    IPositioningEvents *PositioningEventsHandler,
    IPositioningDebugReport *PositioningDebugReportHandler)
 {
-	m_EstablishmentTopology = EstablishmentTopology;
 	m_PositioningEventsHandler = PositioningEventsHandler;
+	m_EstablishmentTopology = EstablishmentTopology;
+	m_Impl->AdviseEstablishmentTopology(EstablishmentTopology);
 	m_Impl->AdviseDebugReport(PositioningDebugReportHandler);
 }
 
@@ -95,14 +97,15 @@ void CPositioningAlgorithm::DoPositioning(std::string BdAddress, DWORD LastDataT
 	m_ScannedBdAdressesDataBase.BdAdressPositionUpdated(BdAddress);
 
 	SPosition Accuracy;
-	SPosition EstimatedPosition = m_Impl->CalculatePosition(BdAddress, Measurements, Accuracy);
+	bool IsInEstablishment;
+	SPosition EstimatedPosition = m_Impl->CalculatePosition(BdAddress, Measurements, Accuracy, IsInEstablishment);
 
 	// ToDo:
 	// 1. calculate the TickCount of the positioning (average of all measurements)
 	// 2. Use another algorithm IsInEstablishment
 	// 3. Accuracy - should be calculated  (HOW??) !!
 
-	m_PositioningEventsHandler->OnPositioning(BdAddress, EstimatedPosition, -1 /*?*/, 0, m_EstablishmentTopology->GetEstablishmentID(), false /*UseAnotherAlgorithm*/);
+	m_PositioningEventsHandler->OnPositioning(BdAddress, EstimatedPosition, -1 /*?*/, 0, m_EstablishmentTopology->GetEstablishmentID(), IsInEstablishment);
 }
 
 void CPositioningAlgorithm::OnTimeout()

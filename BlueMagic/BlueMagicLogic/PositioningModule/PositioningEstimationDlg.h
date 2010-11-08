@@ -26,6 +26,7 @@ public:
 
 	void InitScanList();
 	void SendMessageToGuiThread(WPARAM wParam) {GoToGuiThread(wParam);}
+	void Close();
 
 	virtual void OnGuiThread(WPARAM /*wParam*/);
 

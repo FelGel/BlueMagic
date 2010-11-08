@@ -64,6 +64,8 @@ bool CPositioningModuleApp::PerformCleanup()
 {
 	//m_PositioningModuleDlg
 	m_PositioningManager.CloseThread(true);
+	m_DistancesMeasurementsDlg.Close();
+	m_PositioningEstimationDlg.Close();
 	return true;
 }
 

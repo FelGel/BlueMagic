@@ -38,7 +38,7 @@ if (!InsertValueToMap(Map, SensorID, Param))	\
 
 
 CPositioningAlgorithmBasicImplementation::CPositioningAlgorithmBasicImplementation(void)
-	: m_DebugReportHandler(NULL)
+	: m_DebugReportHandler(NULL), m_EstablishmentTopology(NULL)
 {
 }
 
@@ -97,7 +97,12 @@ CPositioningAlgorithmBasicImplementation::~CPositioningAlgorithmBasicImplementat
 	return true;
 }
 
-/*virtual*/ SPosition CPositioningAlgorithmBasicImplementation::CalculatePosition(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts, SPosition &Accuracy)
+/*virtual*/ void CPositioningAlgorithmBasicImplementation::AdviseEstablishmentTopology(CEstablishmentTopology *EstablishmentTopology)
+{
+	m_EstablishmentTopology = EstablishmentTopology;
+}
+
+/*virtual*/ SPosition CPositioningAlgorithmBasicImplementation::CalculatePosition(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts, SPosition &Accuracy, bool &IsInEstablishment)
 {
 	// Rssi Measurements
 	DumpRssiMeasurementsToLog(BDADDRESS, Measuremnts);
@@ -112,7 +117,9 @@ CPositioningAlgorithmBasicImplementation::~CPositioningAlgorithmBasicImplementat
 	SPosition EstimatedPosition = m_PositioningAlgorithm.CalcPosition(BDADDRESS, DistanceEstimations, Accuracy, NumOfIterations);
 	DumpEstimatedPositionToLog(BDADDRESS, EstimatedPosition);
 
-	SendDebugReport(BDADDRESS, Measuremnts, DistanceEstimations, EstimatedPosition, Accuracy, NumOfIterations);
+	IsInEstablishment = m_EstablishmentTopology->IsMeasurementInEstablishemnt(EstimatedPosition);
+
+	SendDebugReport(BDADDRESS, Measuremnts, DistanceEstimations, EstimatedPosition, Accuracy, NumOfIterations, IsInEstablishment);
 	return EstimatedPosition;
 }
 
@@ -306,7 +313,8 @@ void CPositioningAlgorithmBasicImplementation::SendDebugReport(
 	std::map<int /*SensorID*/, double /*SmoothedDistance*/> DistanceEstimations,
 	SPosition EstimatedPosition,
 	SPosition EstimatedPositionError,
-	int NumOfIterations)
+	int NumOfIterations, 
+	bool IsInEstablishment)
 {
 	if (m_DebugReportHandler)
 	{
@@ -316,7 +324,8 @@ void CPositioningAlgorithmBasicImplementation::SendDebugReport(
 			DistanceEstimations, 
 			EstimatedPosition, 
 			EstimatedPositionError, 
-			NumOfIterations);
+			NumOfIterations, 
+			IsInEstablishment);
 	}
 }
 

@@ -8,6 +8,7 @@
 #include "DistanceSmoothingBasicAlgorithmGeneralManager.h"
 #include "PositioningBasicAlgorithmManager.h"
 
+#include "EstablishmentTopology.h"
 
 class POSITIONINGALGORITHMS_API CPositioningAlgorithmBasicImplementation :
 	public IPositioningAlgorithmImplementation
@@ -17,8 +18,9 @@ public:
 	~CPositioningAlgorithmBasicImplementation(void);
 
 	virtual bool Init();
-	virtual SPosition CalculatePosition(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts, SPosition &Accuracy);
+	virtual SPosition CalculatePosition(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts, SPosition &Accuracy, bool &IsInEstablishment);
 	virtual void AdviseDebugReport(IPositioningDebugReport *DebugReportHandler);
+	virtual void AdviseEstablishmentTopology(CEstablishmentTopology *EstablishmentTopology);
 
 private:
 	void DumpRssiMeasurementsToLog(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts);
@@ -38,7 +40,8 @@ private:
 		std::map<int /*SensorID*/, double /*SmoothedDistance*/> DistanceEstimations,
 		SPosition EstimatedPosition,
 		SPosition EstimatedPositionError,
-		int NumOfIterations);
+		int NumOfIterations,
+		bool IsInEstablishment);
 
 	void SendSensorsLocationReport(std::map<int /*SensorID*/, SPosition> SensorsLocation);
 
@@ -48,4 +51,5 @@ private:
 	CPositioningBasicAlgorithmManager				m_PositioningAlgorithm;
 
 	IPositioningDebugReport *m_DebugReportHandler;
+	CEstablishmentTopology *m_EstablishmentTopology;
 };

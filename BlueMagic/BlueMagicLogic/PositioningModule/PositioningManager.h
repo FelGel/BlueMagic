@@ -3,7 +3,7 @@
 #include "..\common\threadwithqueue.h"
 #include "ISensorEvents.h"
 #include "SensorControllersContainer.h"
-#include "EstablishmentTopology.h"
+#include "PositioningAlgorithms/EstablishmentTopology.h"
 #include "PositioningAlgorithm.h"
 #include "DialogMessages.h"
 
@@ -31,7 +31,8 @@ public:
 		std::map<int /*SensorID*/, double /*SmoothedDistance*/> DistanceEstimations,
 		SPosition EstimatedPosition,
 		SPosition EstimatedPositionError,
-		int NumOfIterations);
+		int NumOfIterations,
+		bool IsInEstablishment);
 	virtual void OnSensorsLocationReport(
 		std::map<int /*SensorID*/, SPosition> SensorsLocation);
 

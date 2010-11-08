@@ -16,6 +16,7 @@ public:
 
 	void InitScanList();
 	void SendMessageToGuiThread(WPARAM wParam) {GoToGuiThread(wParam);}
+	void Close();
 
 	virtual void OnGuiThread(WPARAM /*wParam*/);
 	virtual void LoadData();
@@ -44,7 +45,7 @@ private:
 	bool CreateFile(CString FileName, CStdioFile *ScanFile);
 	void WriteToFile(
 		CString strSensorID, CString strBDADDRESS, 
-		CString strTimeStamp, 
+		CString strTimeStamp, CString strRSSI,
 		CString strDistance, CString strSmoothDistance, 
 		CString strVelocity, CString strTS);
 	

@@ -52,10 +52,11 @@ struct SDialogPositioingMessage : public SDialogMessage
 		std::map<int /*SensorID*/, double /*SmoothedDistance*/> DistanceEstimations,
 		SPosition EstimatedPosition,
 		SPosition EstimatedPositionError,
-		int NumOfIterations) : SDialogMessage(DialogPositioningMessage, 0), 
+		int NumOfIterations, bool IsInEstablishment) : SDialogMessage(DialogPositioningMessage, 0), 
 		m_BDADDRESS(BDADDRESS), m_Measurements(Measurements),
 		m_DistanceEstimations(DistanceEstimations), m_EstimatedPosition(EstimatedPosition),
-		m_EstimatedPositionError(EstimatedPositionError), m_NumOfIterations(NumOfIterations) {}
+		m_EstimatedPositionError(EstimatedPositionError), m_NumOfIterations(NumOfIterations),
+		m_IsInEstablishment (IsInEstablishment) {}
 	virtual ~SDialogPositioingMessage() {}
 
 	std::string m_BDADDRESS; 
@@ -64,6 +65,7 @@ struct SDialogPositioingMessage : public SDialogMessage
 	SPosition m_EstimatedPosition;
 	SPosition m_EstimatedPositionError;
 	int m_NumOfIterations;
+	bool m_IsInEstablishment;
 };
 
 

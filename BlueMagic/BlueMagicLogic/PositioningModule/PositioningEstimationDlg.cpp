@@ -60,6 +60,7 @@ void CPositioningEstimationDlg::InitScanList()
 	ADD_COL(70, "Position");
 	ADD_COL(75, "Error");
 	ADD_COL(40, "#Iter");
+	ADD_COL(30, "In?");
 #undef ADD_COL
 	m_PositionEstimationsList.SetExtendedStyle(LVS_EX_FULLROWSELECT | LVS_EX_GRIDLINES);
 
@@ -244,6 +245,10 @@ void CPositioningEstimationDlg::UpdateEntry(int index, SDialogPositioingMessage 
 	CString strIterations;
 	strIterations.Format("%d", Message->m_NumOfIterations);
 	ADD_ITEM(strIterations);
+
+	CString strIsInEstablishment;
+	strIsInEstablishment = (Message->m_IsInEstablishment) ? "In" : "Out";
+	ADD_ITEM(strIsInEstablishment);
 
 #undef ADD_ITEM	
 
@@ -507,9 +512,14 @@ void CPositioningEstimationDlg::HandleTimeOut()
 				RemoveList.push_back(BDADDRESS);
 		}
 
-		for (unsigned int i = 0; i < RemoveList.size(); i++)
+		if (RemoveList.size() > 0)
 		{
-			RemoveValueFromMap(m_UserPositions, RemoveList[i]);
+			for (unsigned int i = 0; i < RemoveList.size(); i++)
+			{
+				RemoveValueFromMap(m_UserPositions, RemoveList[i]);
+			}
+
+			RedrawWindow();
 		}
 	}
 }
@@ -581,4 +591,9 @@ void CPositioningEstimationDlg::WriteToFile(
 		strIterations);
 
 	m_PositioningFile.WriteString(DataString);
+}
+
+void CPositioningEstimationDlg::Close()
+{
+	ClosePositioningFile();
 }

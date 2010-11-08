@@ -304,12 +304,13 @@ void CPositioningManager::CloseAllScanFiles()
 	std::map<int /*SensorID*/, double /*SmoothedDistance*/> DistanceEstimations,
 	SPosition EstimatedPosition,
 	SPosition EstimatedPositionError,
-	int NumOfIterations)
+	int NumOfIterations,
+	bool IsInEstablishment)
 {
 	SDialogPositioingMessage *DialogPositioningMessage 
 		= new SDialogPositioingMessage(BDADDRESS, Measurements,
 			DistanceEstimations, EstimatedPosition, EstimatedPositionError,
-			NumOfIterations);
+			NumOfIterations, IsInEstablishment);
 
 	m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogPositioningMessage);
 }

@@ -190,6 +190,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\EstablishmentTopology.h"
+				>
+			</File>
+			<File
+				RelativePath=".\geometry.h"
+				>
+			</File>
+			<File
 				RelativePath=".\IPositioningAlgorithmImplementation.h"
 				>
 			</File>
@@ -233,6 +241,10 @@
 				RelativePath=".\stdafx.h"
 				>
 			</File>
+			<File
+				RelativePath=".\utils.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Source Files"
@@ -248,6 +260,14 @@
 			</File>
 			<File
 				RelativePath=".\DistanceSmoothingBasicAlgorithmManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\EstablishmentTopology.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\geometry.cpp"
 				>
 			</File>
 			<File
@@ -297,6 +317,10 @@
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Utils.cpp"
+				>
 			</File>
 		</Filter>
 		<Filter
