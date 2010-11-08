@@ -100,12 +100,19 @@ void CPositioningAlgorithm::DoPositioning(std::string BdAddress, DWORD LastDataT
 	bool IsInEstablishment;
 	SPosition EstimatedPosition = m_Impl->CalculatePosition(BdAddress, Measurements, Accuracy, IsInEstablishment);
 
-	// ToDo:
-	// 1. calculate the TickCount of the positioning (average of all measurements)
-	// 2. Use another algorithm IsInEstablishment
-	// 3. Accuracy - should be calculated  (HOW??) !!
+		
+	// Calc Geometric Average for Error \ Accuracy:
+	double AccuracyRadii = sqrt(pow(Accuracy.x, 2) + pow(Accuracy.y, 2));
 
-	m_PositioningEventsHandler->OnPositioning(BdAddress, EstimatedPosition, -1 /*?*/, 0, m_EstablishmentTopology->GetEstablishmentID(), IsInEstablishment);
+	// Calc Average Measurements Time for Positioning TimeStamp
+	double PositioningTime = 0;
+	for (unsigned int i = 0; i < Measurements.size(); i++)
+		PositioningTime += Measurements[i].m_TickCount;
+
+	PositioningTime /= Measurements.size();
+
+	// Send Positioning Event
+	m_PositioningEventsHandler->OnPositioning(BdAddress, EstimatedPosition, AccuracyRadii, PositioningTime, m_EstablishmentTopology->GetEstablishmentID(), IsInEstablishment);
 }
 
 void CPositioningAlgorithm::OnTimeout()
