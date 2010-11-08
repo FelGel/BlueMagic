@@ -7,6 +7,8 @@
 
 #include "Common/collectionhelper.h"
 
+const char* PositioningFilesDirectory = "..\\ScanFiles";
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
@@ -75,6 +77,9 @@ void CPositioningEstimationDlg::InitScanList()
 		GraphFrameRect.right - LenFromEdge, 
 		GraphFrameRect.bottom - LenFromEdge);
 #undef LenFromEdge
+
+	CreatePositioningFilesDirectory();
+	CreatePositioningFile();
 }
 
 // CPositioningEstimationDlg message handlers
@@ -200,6 +205,7 @@ void CPositioningEstimationDlg::UpdateEntry(int index, SDialogPositioingMessage 
 	Assert(Message->m_DistanceEstimations.size() == 3);
 
 #define ADD_ITEM(Str) { NewItem.iSubItem = Ind++; NewItem.pszText = (LPSTR)(LPCSTR)Str; m_PositionEstimationsList.SetItem(&NewItem); }
+	std::string strAllRSSIs;
 	{
 		std::map<int , SMeasurement>::iterator Iter = Message->m_Measurements.begin();
 		std::map<int , SMeasurement>::iterator End = Message->m_Measurements.end();
@@ -209,9 +215,11 @@ void CPositioningEstimationDlg::UpdateEntry(int index, SDialogPositioingMessage 
 			//strRSSI.Format("%dDb", Iter->second.m_RSSI);
 			strRSSI.Format("%d", Iter->second.m_RSSI);
 			ADD_ITEM(strRSSI);
+			strAllRSSIs += strRSSI + ", ";
 		}
 	}
 	
+	std::string strAllDistances;
 	{
 		std::map<int , double>::iterator Iter = Message->m_DistanceEstimations.begin();
 		std::map<int , double>::iterator End = Message->m_DistanceEstimations.end();
@@ -221,6 +229,7 @@ void CPositioningEstimationDlg::UpdateEntry(int index, SDialogPositioingMessage 
 			//strDistance.Format("%.02fm", Iter->second);
 			strDistance.Format("%.02f", Iter->second);
 			ADD_ITEM(strDistance);
+			strAllDistances += strDistance + ", ";
 		}
 	}
 
@@ -237,6 +246,12 @@ void CPositioningEstimationDlg::UpdateEntry(int index, SDialogPositioingMessage 
 	ADD_ITEM(strIterations);
 
 #undef ADD_ITEM	
+
+
+	CString strSensorID;
+	strSensorID.Format("%d", Message->m_SensorId);
+	WriteToFile(strSensorID, strAllRSSIs.c_str(), strAllDistances.c_str(), 
+		strPosition, strError, strIterations);
 }
 
 
@@ -497,4 +512,73 @@ void CPositioningEstimationDlg::HandleTimeOut()
 			RemoveValueFromMap(m_UserPositions, RemoveList[i]);
 		}
 	}
+}
+
+
+void CPositioningEstimationDlg::CreatePositioningFilesDirectory()
+{
+	CFileStatus status;
+
+	if (CFile::GetStatus(PositioningFilesDirectory, status) 
+		&& (status.m_attribute & CFile::directory))
+	{
+		LogEvent(LE_INFOLOW, __FUNCTION__ ": Directory %s already exists", PositioningFilesDirectory);
+	} 
+	else if (!CreateDirectory(PositioningFilesDirectory, NULL))
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to create directory %s", PositioningFilesDirectory);
+	}
+}
+
+void CPositioningEstimationDlg::CreatePositioningFile()
+{
+	/* TEMP -> Write to File*/
+	SYSTEMTIME SystemTime;
+	GetLocalTime(&SystemTime);
+
+	CString FileName;
+	FileName.Format("%s\\POSITIONING TABLE %02d.%02d.%02d %02d-%02d-%02d.csv", 
+		PositioningFilesDirectory,
+		SystemTime.wDay, SystemTime.wMonth, SystemTime.wYear, 
+		SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
+
+	if (!CreateFile(FileName, &m_PositioningFile))
+		return;
+
+	WriteToFile("SensorID", "RSSI1, RSSI2, RSS3, ", 
+		"Distance1, Distance2, Distance3, ", "X, Y, ", "dX, dY, ", "Iterations");
+
+	LogEvent(LE_INFO, __FUNCTION__ ": File %s created successfully", FileName);
+	/////////////////////////
+}
+
+
+bool CPositioningEstimationDlg::CreateFile(CString FileName, CStdioFile *ScanFile)
+{
+	if (!ScanFile->Open(FileName, CFile::modeCreate | CFile::modeWrite | CFile::typeText /*| CFile::shareDenyWrite*/))
+	{
+		DWORD err = GetLastError();
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to open %s!! ErrorCode = %d", FileName, err);
+		return false;
+	}
+
+	return true;
+}
+
+
+void CPositioningEstimationDlg::ClosePositioningFile()
+{
+	m_PositioningFile.Close();
+}
+
+void CPositioningEstimationDlg::WriteToFile(
+	CString strSensorID, CString strAllRSSIs, CString strAllDistances, 
+	CString strPosition, CString strError, CString strIterations)
+{
+	CString DataString;
+	DataString.Format("%s, %s%s%s%s%s\n",
+		strSensorID, strAllRSSIs, strAllDistances, strPosition, strError, 
+		strIterations);
+
+	m_PositioningFile.WriteString(DataString);
 }

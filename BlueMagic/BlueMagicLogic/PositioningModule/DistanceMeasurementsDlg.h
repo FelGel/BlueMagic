@@ -37,6 +37,16 @@ private:
 
 	double CalcDistance(int SensorID, int RSSI);
 	double SmoothDistance(int SensorID, double Distance, std::string BDADDRESS, DWORD Time, double &Velocity, double &TS);
+
+	void CreateDistanceFilesDirectory();
+	void CreateDistanceFile();
+	void CloseDistanceFile();
+	bool CreateFile(CString FileName, CStdioFile *ScanFile);
+	void WriteToFile(
+		CString strSensorID, CString strBDADDRESS, 
+		CString strTimeStamp, 
+		CString strDistance, CString strSmoothDistance, 
+		CString strVelocity, CString strTS);
 	
 private:
 	std::map<int /*SensorID*/, CRssiToDistanceBasicAlgorithm> m_DistanceAlgorithms;
@@ -46,6 +56,7 @@ private:
 	CListCtrl m_DistanceMesaurementsList;
 	double m_SmoothingParamA;
 	double m_SmoothingParamB;
+	CStdioFile m_DistanceFile;
 public:
 	afx_msg void OnBnClickedButton1();
 };

@@ -178,6 +178,10 @@ void CPositioningManager::CreateCombinedScanFile()
 	if (!CreateScanFile(FileName, &m_CombinedScanFiles))
 		return;
 
+	CString DataString;
+	DataString.Format("%s, %s, %s, %s\n", "SensorID", "BDADDRESS", "RSSI", "TimeStamp");
+	m_CombinedScanFiles.WriteString(DataString);
+
 	LogEvent(LE_INFO, __FUNCTION__ ": File %s created successfully", FileName);
 	/////////////////////////
 }
@@ -203,6 +207,10 @@ void CPositioningManager::CreateScanFile(const int SensorId)
 		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to add File %s to Map ! Do you have error in configuration?", FileName);
 		return;
 	}
+
+	CString DataString;
+	DataString.Format("%s, %s, %s\n", "BDADDRESS", "RSSI", "TimeStamp");
+	ScanFile->WriteString(DataString);
 
 	LogEvent(LE_INFO, __FUNCTION__ ": File %s created successfully", FileName);
 	/////////////////////////

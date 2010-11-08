@@ -59,6 +59,15 @@ private:
 
 	CString GetLocalTimeForTickCount(DWORD TickCount);
 
+	void CreatePositioningFilesDirectory();
+	void CreatePositioningFile();
+	void ClosePositioningFile();
+	bool CreateFile(CString FileName, CStdioFile *ScanFile);
+	void WriteToFile(
+		CString strSensorID, CString strAllRSSIs, CString strAllDistances, 
+		CString strPosition, CString strError, CString strIterations);
+
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
@@ -75,4 +84,6 @@ public:
 	std::map<int /*SensorID*/, SPosition> m_SensorsLocation;
 
 	DWORD m_LastCleanTickCount;
+
+	CStdioFile m_PositioningFile;
 };
