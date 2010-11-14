@@ -43,6 +43,7 @@ private:
 	bool IsMessageComplete(BYTE *Data, int DataLength);
 	CBlueMagicBTBIncomingMessage* CreateBlueMagicBTBMessage(EBlueMagicBTBIncomingMessageType MessageType);
 	void CallEventOnMessage(const CBlueMagicBTBIncomingMessage* Message, UINT /*MessageSize*/);
+	bool IsMessageAllowedWithoutHandshake(EBlueMagicBTBIncomingMessageType MessageType);
 
 	// Handle Outgoing Message to BTB
 	void HandleGetInfo();
@@ -53,10 +54,12 @@ private:
 	// Connection setup
 	bool ConnectToPort();
 	void StartConnectionRetiresMechanism();
+	void OnBTBConnectedMessage(SSensorInformation* SensorInfo);
 	
 	// handshake setup
 	void DoHandshake();
 	void OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessage, SSensorInformation* SensorInfo);
+	void OnBTBGetInfoMessageReturned(SSensorInformation* SensorInfo);
 	void CheckHandshakeStatus(DWORD TickCount);
 	ESensorHandshakeStatus GetSensorBranchHandshakeStatus(int SensorID);
 	ESensorHandshakeStatus GetSensorControllerBranchHandshakeStatus();
@@ -74,10 +77,13 @@ private:
 	void SetClockForSensor(int Clock, int SensorID);
 	int  GetEstimatedCurrentClock(int LastClock, DWORD LastTickCount);
 	bool IsClockConsistent(int CurrentClock, int LastClock, DWORD LastTickCount);
+	void ResetClock(SSensorInformation *SensorInformation);
 
 	// Sensor Info Service Functions 
 	SSensorInformation* GetSensorControllerInfo();	
 	void ReportSensorsStatusToPositionManager();
+	SSensorInformation* GetSensorInfoForIncomingMessage(CBlueMagicBTBIncomingMessage* BlueMagicBTBMessage);
+	SSensorInformation* GetSensorInfoByBdAddress(std::string BdAddress);
 
 	// Status Update
 	void DoStatusUpdateIfNecessary(DWORD TickCount);

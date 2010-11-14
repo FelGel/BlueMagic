@@ -41,8 +41,9 @@ std::string CBlueMagicBTBIncomingMessage::BlueMagicBTBMessageTypeToString(EBlueM
 	{
 		RETURN_TYPE_STR(BTBKeepAlive);
 		RETURN_TYPE_STR(BTBIncomingData);
-		RETURN_TYPE_STR(BTBErrorInTopology);
+		RETURN_TYPE_STR(BTBConnected);
 		RETURN_TYPE_STR(BTBInfo);
+		RETURN_TYPE_STR(BTBErrorInTopology);
 		RETURN_TYPE_STR(BTBSInfo);
 	default:
 		char TmpStr[64];
@@ -289,6 +290,30 @@ bool CBlueMagicBTBInfoMessage::Parse(CTokenParser &MessageStringParser)
 }
 #else
 #endif
+
+bool CBlueMagicBTBConnectedMessage::Serialize(ISerializer* /*Serializer*/) const
+{
+#if (IS_TEXTUAL_BTB_PROTOCOL == 1)
+	return false; // currently BlueMagicLogic never serialize this message
+#else
+#endif
+}
+
+#if (IS_TEXTUAL_BTB_PROTOCOL == 1)
+bool CBlueMagicBTBConnectedMessage::Parse(CTokenParser &MessageStringParser)
+{
+	DefineAndGetStringParam(SensorBDADDRESS);
+
+	m_SensorBDADDRESS = SensorBDADDRESS;
+
+	LogEvent(LE_INFO, __FUNCTION__ ": BTB CONNECTED message Parsed: SensorBDADDRESS=%s", 
+		m_SensorBDADDRESS.c_str());
+
+	return true;
+}
+#else
+#endif
+
 
 bool CBlueMagicBTBOutgoingMessage::SerializeCarriageReturn(ISerializer * /*Serializer*/)
 {

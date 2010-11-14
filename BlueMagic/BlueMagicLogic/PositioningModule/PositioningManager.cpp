@@ -114,7 +114,15 @@ void CPositioningManager::OnThreadClose()
 
 void CPositioningManager::HandleDataReceived(const int &SensorId, const SScannedData& ScannedData)
 {
-	m_PositioningAlgorithm.OnScannedData(SensorId, ScannedData);
+	if (ScannedData.Time != 0)
+	{
+		m_PositioningAlgorithm.OnScannedData(SensorId, ScannedData);
+	}
+	else
+	{
+		LogEvent(LE_WARNING, __FUNCTION__ ": Data with illegal TimeStamp arrived! Ignoring Data!");
+	}
+
 
 	/* TEMP -> Write to File*/
 	UpdateScanFile(SensorId, ScannedData);

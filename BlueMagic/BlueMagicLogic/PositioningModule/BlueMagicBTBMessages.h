@@ -30,8 +30,9 @@ enum EBlueMagicBTBIncomingMessageType
 {
 	BTBKeepAlive = BlueMagicBTBIncomingMessageType, 
 	BTBIncomingData,
-	BTBErrorInTopology,
+	BTBConnected,
 	BTBInfo,
+	BTBErrorInTopology,
 	BTBSInfo,
 	EBlueMagicBTBIncomingMessageType_MAX,
 
@@ -60,8 +61,8 @@ public:
 	IDeSerializer *m_DeSerializer;
 #endif
 
-private:
-	bool ParseHeader(CTokenParser &MessageStringParser);
+protected:
+	virtual bool ParseHeader(CTokenParser &MessageStringParser);
 
 public:
 	/*BYTE*/int m_SensorId; /*Originator*/
@@ -183,6 +184,35 @@ public:
 	{ LogEvent(LE_ERROR, "CBlueMagicBTBGetInfoReturnedMessage should not call on event !!"); }
 };
 RegisterBlueMagicBTBMessage(BTBGetInfoReturned, CBlueMagicBTBGetInfoReturnedMessage)
+
+
+class CBlueMagicBTBConnectedMessage : public CBlueMagicBTBIncomingMessage
+{
+public:
+	CBlueMagicBTBConnectedMessage() {}
+	virtual ~CBlueMagicBTBConnectedMessage() {}
+
+	virtual bool				Serialize(ISerializer* Serializer) const;
+#if IS_TEXTUAL_BTB_PROTOCOL == 1
+	virtual bool				Parse(CTokenParser &MessageStringParser);
+#else
+	virtual bool				DeSerialize(IDeSerializer* DeSerializer);
+	virtual int					MessageLength() const { return sizeof(m_SensorId)+sizeof(m_Clock); }
+#endif	
+
+	virtual int                 MessageType() const { return BTBConnected; }
+
+	virtual void				CallEventOnMessage(ISensorEvents* /*SensorEvents*/) const
+	{ LogEvent(LE_ERROR, "CBlueMagicBTBConnectedMessage should not call on event !!"); }
+
+protected:
+	virtual bool ParseHeader(CTokenParser &/*MessageStringParser*/) {return true;} /*without parsing !!*/
+
+	//Members:
+public:
+	std::string m_SensorBDADDRESS;
+};
+RegisterBlueMagicBTBMessage(BTBConnected, CBlueMagicBTBConnectedMessage)
 
 
 // GetData has ONLY HEADER and EMPTY MESSAGE
