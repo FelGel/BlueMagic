@@ -2,6 +2,9 @@
 
 #include "PositioningAlgorithms.h"
 
+#define ILLEGAL_a +999999
+#define ILLEGAL_b +999999
+
 class POSITIONINGALGORITHMS_API CDistanceSmoothingBasicAlgorithm
 {
 public:
@@ -21,6 +24,7 @@ public:
 
 private:
 	double CalcTS(double CurrentTickCount);
+	void CorrectTS0Algorithm(double &Rcurrent, double Tcurrent); // function may change Rcurrent !!
 
 private:
 	double m_a;
@@ -31,4 +35,10 @@ private:
 	double m_Tpred;
 
 	double m_LastTS;
+
+	// TS = 0 Correction mechanism
+	double m_RpredOLD;
+	double m_VpredOLD;
+	double m_TpredOLD;
+	double m_RcurrentOLD;
 };

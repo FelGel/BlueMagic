@@ -13,5 +13,18 @@ struct POSITIONINGALGORITHMS_API SPosition
 	double y;
 };
 
+#define IRRELEVANT_RSSI -1000
+
+struct POSITIONINGALGORITHMS_API SMeasurement
+{
+	SMeasurement() : m_RSSI(IRRELEVANT_RSSI), m_TickCount(0) {}
+
+	int		m_RSSI;
+	DWORD	m_TickCount;
+};
+
 #define INVALID_MEASUREMENT -99999999
-const SPosition InvalidPosition = SPosition(INVALID_MEASUREMENT, INVALID_MEASUREMENT);
+
+#define ILLEGAL_x INVALID_MEASUREMENT
+#define ILLEGAL_y INVALID_MEASUREMENT
+const SPosition InvalidPosition = SPosition(ILLEGAL_x, ILLEGAL_y);

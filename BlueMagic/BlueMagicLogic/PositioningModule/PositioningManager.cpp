@@ -8,6 +8,7 @@
 #define POSITION_MANAGER_THREAD_TIMEOUT 100 //milisec
 
 const char* SensorControllersConfigurationSection = "SensorControllers";
+const char* ScanFilesDirectory = "..\\ScanFiles";
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -40,8 +41,18 @@ bool CPositioningManager::Init()
 		LogEvent(LE_FATAL, __FUNCTION__ ": FATAL ERROR! Could not Initialize Establishment Topology!!");
 		return false;
 	}
+	SendEstablishmentContourToDialog(m_EstablishmentTopology.GetEstablishmentCoordinates());
+	
+	if (!m_PositioningAlgorithm.Init())
+	{
+		LogEvent(LE_FATAL, __FUNCTION__ ": FATAL ERROR! Could not Initialize Positioning Algorithm!!");
+		return false;
+	}
 
-	m_PositioningAlgorithm.Advise(&m_EstablishmentTopology, this);
+	// advise must come after init !!
+	m_PositioningAlgorithm.Advise(&m_EstablishmentTopology, this, this);
+
+	CreateScanFilesDirectory();
 
 	CreateCombinedScanFile();
 
@@ -53,6 +64,8 @@ bool CPositioningManager::Init()
 		LogEvent(LE_FATAL, __FUNCTION__ ": FATAL ERROR! Could not start working thread !!");
 		return false;
 	}
+
+	LogEvent(LE_NOTICE, __FUNCTION__ ": Positioning Manager Initialized Successfully");
 
 	return true;
 }
@@ -92,6 +105,8 @@ void CPositioningManager::HandleSensorStatusUpdate(const int &SensorId, const bo
 void CPositioningManager::OnThreadClose()
 {
 	m_SensorControllersContainer.RemoveObjects();
+
+	m_PositioningAlgorithm.Close();
 
 	/* TEMP -> Write to File*/
 	CloseAllScanFiles();
@@ -133,6 +148,22 @@ void CPositioningManager::HandleNewSensorInSystem(const int &SensorId, const boo
 	CreateScanFile(SensorId);
 }
 
+
+void CPositioningManager::CreateScanFilesDirectory()
+{
+	CFileStatus status;
+
+	if (CFile::GetStatus(ScanFilesDirectory, status) 
+		&& (status.m_attribute & CFile::directory))
+	{
+		LogEvent(LE_INFOLOW, __FUNCTION__ ": Directory %s already exists", ScanFilesDirectory);
+	} 
+	else if (!CreateDirectory(ScanFilesDirectory, NULL))
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to create directory %s", ScanFilesDirectory);
+	}
+}
+
 void CPositioningManager::CreateCombinedScanFile()
 {
 	/* TEMP -> Write to File*/
@@ -140,12 +171,16 @@ void CPositioningManager::CreateCombinedScanFile()
 	GetLocalTime(&SystemTime);
 
 	CString FileName;
-	FileName.Format("..\\ScanFiles\\Combined ScanFile %02d.%02d.%02d %02d-%02d-%02d.csv", 
-		SystemTime.wDay, SystemTime.wMonth, SystemTime.wYear, 
+	FileName.Format("%s\\Combined ScanFile %02d.%02d.%02d %02d-%02d-%02d.csv", 
+		ScanFilesDirectory, SystemTime.wDay, SystemTime.wMonth, SystemTime.wYear, 
 		SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
 
 	if (!CreateScanFile(FileName, &m_CombinedScanFiles))
 		return;
+
+	CString DataString;
+	DataString.Format("%s, %s, %s, %s\n", "SensorID", "BDADDRESS", "RSSI", "TimeStamp");
+	m_CombinedScanFiles.WriteString(DataString);
 
 	LogEvent(LE_INFO, __FUNCTION__ ": File %s created successfully", FileName);
 	/////////////////////////
@@ -158,8 +193,8 @@ void CPositioningManager::CreateScanFile(const int SensorId)
 	GetLocalTime(&SystemTime);
 
 	CString FileName;
-	FileName.Format("..\\ScanFiles\\ScanFile_Sensor%d %02d.%02d.%02d %02d-%02d-%02d.csv", 
-		SensorId, 
+	FileName.Format("%s\\ScanFile_Sensor%d %02d.%02d.%02d %02d-%02d-%02d.csv", 
+		ScanFilesDirectory, SensorId, 
 		SystemTime.wDay, SystemTime.wMonth, SystemTime.wYear, 
 		SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
 
@@ -172,6 +207,10 @@ void CPositioningManager::CreateScanFile(const int SensorId)
 		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to add File %s to Map ! Do you have error in configuration?", FileName);
 		return;
 	}
+
+	CString DataString;
+	DataString.Format("%s, %s, %s\n", "BDADDRESS", "RSSI", "TimeStamp");
+	ScanFile->WriteString(DataString);
 
 	LogEvent(LE_INFO, __FUNCTION__ ": File %s created successfully", FileName);
 	/////////////////////////
@@ -251,4 +290,44 @@ void CPositioningManager::CloseAllScanFiles()
 
 	m_CombinedScanFiles.Close();
 	///////////////////////
+}
+
+/*virtual*/ void CPositioningManager::OnTimeout()
+{
+	m_PositioningAlgorithm.OnTimeout();
+	m_DialogMessagesInterfaceHandler->OnTimeoutCalledFromPositioningManager();
+}
+
+/*virtual*/ void CPositioningManager::OnPositioningDebugReport(
+	std::string BDADDRESS, 
+	std::map<int /*SensorID*/, SMeasurement> Measurements,
+	std::map<int /*SensorID*/, double /*SmoothedDistance*/> DistanceEstimations,
+	SPosition EstimatedPosition,
+	SPosition EstimatedPositionError,
+	int NumOfIterations,
+	bool IsInEstablishment)
+{
+	SDialogPositioingMessage *DialogPositioningMessage 
+		= new SDialogPositioingMessage(BDADDRESS, Measurements,
+			DistanceEstimations, EstimatedPosition, EstimatedPositionError,
+			NumOfIterations, IsInEstablishment);
+
+	m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogPositioningMessage);
+}
+
+void CPositioningManager::SendEstablishmentContourToDialog(std::vector<SPosition> EstablishmentCoordinates)
+{
+	SDialogEstablishmentContourMessage *DialogMessage 
+		= new SDialogEstablishmentContourMessage(EstablishmentCoordinates);
+
+	m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogMessage);
+}
+
+void CPositioningManager::OnSensorsLocationReport(
+	std::map<int /*SensorID*/, SPosition> SensorsLocation)
+{
+	SDialogSensorsLocationMessage *DialogMessage 
+		= new SDialogSensorsLocationMessage(SensorsLocation);
+
+	m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogMessage);
 }

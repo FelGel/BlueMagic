@@ -21,8 +21,13 @@
 #define DEFAULT_STATUS_UPDATE_RESOLUTION			60000 //milisec
 #define KEEP_ALIVE_RESOLUTION						5000  //milisec
 #define DELAY_BETWEEN_CONNECTION_AND_HANDSHAKE		1000  //milisec
+// MAX_CLOCK_WINDOW_SIZE - max diff time between KeepAlive clock update and Sample Clock
+#define MAX_CLOCK_WINDOW_SIZE						300  // 300sec = 5min (total counter is 64Ksec = ~1000min)
+// MAX_CLOCK_JUMP - max diff time between clock update and expected clock based on last measurement
+#define MAX_CLOCK_JUMP								3	  // 3 sec
 
 #define TICKS_IN_SECOND(x) ((x) * 1000)
+#define TICKS_TO_SECOND(x) ((int)((x) / 1000))
 
 static const char* GENERAL_SENSORS_CONFIG_SECTION = "GeneralSensorsConfiguration";
 
@@ -581,6 +586,28 @@ void CSensorController::OnBTBInfoMessage(CBlueMagicBTBInfoMessage *BTBInfoMessag
 	SendStatusUpdate(SensorInfo);
 }
 
+int CSensorController::GetEstimatedCurrentClock(int LastClock, DWORD LastTickCount)
+{
+	DWORD NOW = GetTickCount();
+	Assert(NOW >= LastTickCount);
+	int EstimatedCurrentClock = LastClock + TICKS_TO_SECOND(NOW - LastTickCount);
+	if (EstimatedCurrentClock > MAX_SENSOR_CLOCK_VALUE)
+		EstimatedCurrentClock = MIN_SENSOR_CLOCK_VALUE + (EstimatedCurrentClock - MAX_SENSOR_CLOCK_VALUE);
+
+	return EstimatedCurrentClock;
+}
+
+bool CSensorController::IsClockConsistent(int CurrentClock, int LastClock, DWORD LastTickCount)
+{
+	int EstimatedCurrentClock = GetEstimatedCurrentClock(LastClock, LastTickCount);
+	if ( (CurrentClock - EstimatedCurrentClock < MAX_CLOCK_JUMP) 
+		|| (	((MAX_SENSOR_CLOCK_VALUE - EstimatedCurrentClock) < MAX_CLOCK_JUMP)
+				&& (CurrentClock - MIN_SENSOR_CLOCK_VALUE) < (MAX_SENSOR_CLOCK_VALUE - EstimatedCurrentClock)) )
+		return true;
+
+	return false;	
+}
+
 void CSensorController::SetClockForSensor(int Clock, int SensorID)
 {
 	SSensorInformation* SensorInformation;
@@ -591,6 +618,21 @@ void CSensorController::SetClockForSensor(int Clock, int SensorID)
 	}
 
 	DWORD TickCount = GetTickCount();
+
+	if (!IsClockConsistent(Clock, SensorInformation->m_ClockCorrelationData.SensorClock, 
+		SensorInformation->m_ClockCorrelationData.MatchingTickCount))
+	{
+		// UNEXPECTED JUMP OCCURED!!
+		// ToDo: Should reset? Redo Handshake? ...
+		LogEvent(LE_ERROR, __FUNCTION__ ": INCONSISTENT CLOCK JUMP!! from %d (expected) to %d (actual)",
+			GetEstimatedCurrentClock(SensorInformation->m_ClockCorrelationData.SensorClock, 
+			SensorInformation->m_ClockCorrelationData.MatchingTickCount), Clock);
+	} else if (SensorInformation->m_ClockCorrelationData.SensorClock > Clock)
+	{
+		LogEvent(LE_NOTICE, __FUNCTION__ ": Round-robing of clock occurred. from %d to %d",
+			SensorInformation->m_ClockCorrelationData.SensorClock, Clock);
+	}
+
 	SensorInformation->m_ClockCorrelationData.MatchingTickCount = TickCount;
 	SensorInformation->m_ClockCorrelationData.SensorClock = Clock;
 
@@ -614,18 +656,61 @@ DWORD CSensorController::GetTimeForSensorClock(int SensorID, int Clock)
 		return 0;
 	}
 
-	// Assumptions:
-	// 1. SensorClock was update BEFORE current Clock!
-	// 2. A full int16 loop HAS NOT ELAPSED since last Clock Update!
-
 	DWORD Time = 0;
-	if (Clock >= SensorInformation->m_ClockCorrelationData.SensorClock)
+
+	// New Code
+	// Assumptions:
+	// 1. There is a maximum gap  between a clock update and incoming data timestamp (MAX_CLOCK_WINDOW_SIZE).
+	// 2. Also, there is maximum "jump" between two consecutive clock updates (checked at SetClockForSensor)
+	
+	if (abs(Clock - SensorInformation->m_ClockCorrelationData.SensorClock) < MAX_CLOCK_WINDOW_SIZE)
+	{
 		Time = SensorInformation->m_ClockCorrelationData.MatchingTickCount 
 			+ TICKS_IN_SECOND(Clock - SensorInformation->m_ClockCorrelationData.SensorClock);
-	else
+			// note, correction factor may be NEGATIVE !
+	}
+	else if (((MAX_SENSOR_CLOCK_VALUE - SensorInformation->m_ClockCorrelationData.SensorClock) < MAX_CLOCK_WINDOW_SIZE) 
+		&& (Clock - MIN_SENSOR_CLOCK_VALUE) < MAX_CLOCK_WINDOW_SIZE)
+	{
+		LogEvent(LE_WARNING, __FUNCTION__ ": VERIFY ROUND ROBBING (LE_NOTICE)");
+		LogEvent(LE_NOTICE, __FUNCTION__ ": Clocks Round-robbing. Sample clock has looped (%d). KeepAlive clock hasn't (%d)",
+			Clock, SensorInformation->m_ClockCorrelationData.SensorClock);
+
 		Time = SensorInformation->m_ClockCorrelationData.MatchingTickCount 
-		+ TICKS_IN_SECOND(MAX_SENSOR_CLOCK_VALUE - SensorInformation->m_ClockCorrelationData.SensorClock)
-		+ TICKS_IN_SECOND(Clock - MIN_SENSOR_CLOCK_VALUE );
+			+ TICKS_IN_SECOND(MAX_SENSOR_CLOCK_VALUE - SensorInformation->m_ClockCorrelationData.SensorClock)
+			+ TICKS_IN_SECOND(Clock - MIN_SENSOR_CLOCK_VALUE);
+	}
+	else if (((MAX_SENSOR_CLOCK_VALUE - Clock) < MAX_CLOCK_WINDOW_SIZE) 
+		&& (SensorInformation->m_ClockCorrelationData.SensorClock - MIN_SENSOR_CLOCK_VALUE) < MAX_CLOCK_WINDOW_SIZE)
+	{
+		LogEvent(LE_WARNING, __FUNCTION__ ": VERIFY ROUND ROBBING (LE_NOTICE)");
+		LogEvent(LE_NOTICE, __FUNCTION__ ": Clocks Round-robbing. KeepAlive has looped (%d). Sample clock  clock hasn't (%d)",
+			SensorInformation->m_ClockCorrelationData.SensorClock, Clock);
+
+		Time = SensorInformation->m_ClockCorrelationData.MatchingTickCount 
+			+ TICKS_IN_SECOND(MAX_SENSOR_CLOCK_VALUE - Clock)
+			+ TICKS_IN_SECOND(SensorInformation->m_ClockCorrelationData.SensorClock - MIN_SENSOR_CLOCK_VALUE);
+	}
+	else
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": KeepAlive Clock (%d) and Sample Clock (%d) are too far apart with no explainable reason !",
+			SensorInformation->m_ClockCorrelationData.SensorClock, Clock);
+	}
+
+// OLD CODE (OBSELETE)
+// --------------------
+// Assumptions:
+// 1. SensorClock was update BEFORE current Clock!
+// 2. A full int16 loop HAS NOT ELAPSED since last Clock Update!
+
+// 	if (Clock >= SensorInformation->m_ClockCorrelationData.SensorClock)
+// 		Time = SensorInformation->m_ClockCorrelationData.MatchingTickCount 
+// 			+ TICKS_IN_SECOND(Clock - SensorInformation->m_ClockCorrelationData.SensorClock);
+// 	else
+// 		Time = SensorInformation->m_ClockCorrelationData.MatchingTickCount 
+// 		+ TICKS_IN_SECOND(MAX_SENSOR_CLOCK_VALUE - SensorInformation->m_ClockCorrelationData.SensorClock)
+// 		+ TICKS_IN_SECOND(Clock - MIN_SENSOR_CLOCK_VALUE );
+// ---------------------
 
 	LogEvent(LE_INFOLOW, __FUNCTION__ ": SensorID = %d, Clock =%d, LastSyncClock = %d, LastTickCount = %d, CalculatedTime = %d",
 		SensorID, Clock, SensorInformation->m_ClockCorrelationData.SensorClock, 

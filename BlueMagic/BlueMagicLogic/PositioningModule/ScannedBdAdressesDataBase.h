@@ -25,11 +25,14 @@ public:
 	bool BdAdressPositionUpdated(std::string ScannedBDADDRESS);
 	void CleanDataBase(DWORD MaxTicksWithoutData);
 	std::vector<std::string> GetBdAddressesToUpdate(DWORD MaxTicksWithoutPositioningUpdate);	
-	std::map<int /*SensorID*/, SMeasurement> GetScannedData(std::string ScannedBDADDRESS);
-	std::map<int /*SensorID*/, SMeasurement> GetScannedData(std::string ScannedBDADDRESS, DWORD MaxTickCountDistance);
+	DWORD GetOldestLastTickCount(std::string ScannedBDADDRESS, DWORD MaxTickCountDistanceFromNewest);
+	std::map<int /*SensorID*/, SMeasurement> GetScannedData(std::string ScannedBDADDRESS, DWORD LastDataTickCount, DWORD MaxTickCountDistance);
+	//std::map<int /*SensorID*/, SMeasurement> GetScannedData(std::string ScannedBDADDRESS);
 	//std::map<int /*SensorID*/, SMeasurement> GetScannedData(std::string ScannedBDADDRESS, DWORD MaxTickCountDistance, DWORD MinNumberOfParticipatingSensor);
 	//bool HasEnoughNewDataGatheredSinceLastUpdate(std::string ScannedBDADDRESS, DWORD MinNumberOfParticipatingSensor);
-	
+
+private:
+	std::vector<DWORD> GetLastTickCountForAllSensors(std::string ScannedBDADDRESS);
 
 private:
 	std::map<std::string /*ScannedBDADDRESS*/, SScannedBdAdressData> m_ScannedDataBase;

@@ -1,17 +1,7 @@
 #pragma once
 
 #include <map>
-
-#define IRRELEVANT_RSSI -1000
-
-struct SMeasurement
-{
-	SMeasurement() : m_RSSI(IRRELEVANT_RSSI), m_TickCount(0) {}
-
-	int		m_RSSI;
-	DWORD	m_TickCount;
-};
-
+#include "PositioningAlgorithms/PositionStructure.h"
 
 class CMeasurementsContainer
 {
@@ -22,6 +12,7 @@ public:
 	bool AddMeasurement(DWORD TickCount, int RSSI);
 	bool GetClosestMeasurement(const DWORD TickCountRefference, SMeasurement &Measurement, DWORD MaxTickCountDistance) const;
 	void ClearMeasurementsOlderThan(DWORD TickCount);
+	bool GetTickCountOfLastMeasurement(DWORD &LastTickCount);
 
 private:
 	std::map<DWORD /*Tick Count*/, int /*RSSI*/> m_Measurements;

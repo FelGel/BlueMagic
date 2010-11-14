@@ -94,10 +94,11 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="..\..\$(ConfigurationName)"
+			IntermediateDirectory="..\..\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="2"
-			CharacterSet="1"
+			UseOfMFC="2"
+			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -117,11 +118,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories=".."
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;POSITIONINGALGORITHMS_EXPORTS"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				WarningLevel="4"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -180,11 +182,31 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DistanceSmoothingBasicAlgorithmGeneralManager.h"
+				>
+			</File>
+			<File
 				RelativePath=".\DistanceSmoothingBasicAlgorithmManager.h"
 				>
 			</File>
 			<File
+				RelativePath=".\EstablishmentTopology.h"
+				>
+			</File>
+			<File
+				RelativePath=".\geometry.h"
+				>
+			</File>
+			<File
+				RelativePath=".\IPositioningAlgorithmImplementation.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Matrix.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PositioningAlgorithmBasicImplementation.h"
 				>
 			</File>
 			<File
@@ -212,7 +234,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\RssiToDistanceBasicAlgorithmManager.h"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\utils.h"
 				>
 			</File>
 		</Filter>
@@ -225,11 +255,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DistanceSmoothingBasicAlgorithmGeneralManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\DistanceSmoothingBasicAlgorithmManager.cpp"
 				>
 			</File>
 			<File
+				RelativePath=".\EstablishmentTopology.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\geometry.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Matrix.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PositioningAlgorithmBasicImplementation.cpp"
 				>
 			</File>
 			<File
@@ -249,6 +295,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\RssiToDistanceBasicAlgorithmManager.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
@@ -259,6 +309,18 @@
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\Utils.cpp"
+				>
 			</File>
 		</Filter>
 		<Filter

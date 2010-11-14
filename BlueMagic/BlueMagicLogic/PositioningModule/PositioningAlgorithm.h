@@ -1,9 +1,10 @@
 #pragma once
 
-#include "EstablishmentTopology.h"
 #include "IPositioningInterface.h"
 #include "ISensorEvents.h"
 #include "ScannedBdAdressesDataBase.h"
+#include "PositioningAlgorithms/EstablishmentTopology.h"
+#include "PositioningAlgorithms/IPositioningAlgorithmImplementation.h"
 
 // Note: Class is running withing PositioningManager's worker thread
 
@@ -13,26 +14,24 @@ public:
 	virtual void OnPositioning(std::string BDADDRESS, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore) = 0;
 };
 
-class IPositioningAlgorithmImplementation
-{
-public:
-	virtual SPosition CalculatePosition(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts) = 0;
-};
-
 class CPositioningAlgorithm
 {
 public:
 	CPositioningAlgorithm(void);
 	~CPositioningAlgorithm(void);
 
-	void Init();
-	void Advise(CEstablishmentTopology* EstablishmentTopology, IPositioningEvents *PositioningEventsHandler);
+	bool Init();
+	void Advise(
+		CEstablishmentTopology* EstablishmentTopology, 
+		IPositioningEvents *PositioningEventsHandler,
+		IPositioningDebugReport *PositioningDebugReportHandler);
+	void Close();
 
 	void OnScannedData(const int &SensorId, const SScannedData& ScannedData);
 	void OnTimeout();
 
 private:
-	void DoPositioning(std::string BdAddress, DWORD NumberOfParticipatingSensor, DWORD TickCountDifferenceBetweenMeasuremnts);
+	void DoPositioning(std::string BdAddress, DWORD LastDataTickCount, DWORD NumberOfParticipatingSensor, DWORD TickCountDifferenceBetweenMeasuremnts);
 	void PositionOutOfDateBdAddresses();
 
 private:
@@ -47,4 +46,8 @@ private:
 	DWORD m_DesiredTickCountDifferenceBetweenMeasuremnts;
 	DWORD m_MaxTickCountDifferenceBetweenMeasuremnts;
 	DWORD m_TimeoutForRemovingBdaddress;
+	DWORD m_CleaningTimeoutResolution;
+	DWORD m_UpdateTimeoutResolution;
+	DWORD m_LastCleaningTimeoutTickCount;
+	DWORD m_LastUpdateTimeoutTickCount;
 };

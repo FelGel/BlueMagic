@@ -332,12 +332,14 @@ CString CTraceListBox::Severity2String(ELogSeverity Severity)
         return "2";
     case LE_INFOHIGH:
         return "3";
+	case LE_NOTICE:
+		return "4";
     case LE_WARNING:
-        return "4";
-    case LE_ERROR:
         return "5";
-    case LE_FATAL:
+    case LE_ERROR:
         return "6";
+    case LE_FATAL:
+        return "7";
     }
 }
 
@@ -353,10 +355,12 @@ ELogSeverity CTraceListBox::String2Severity(const CString& Text)
     case '3': 
         return LE_INFOHIGH;
     case '4': 
-        return LE_WARNING;
-    case '5': 
-        return LE_ERROR;
+        return LE_NOTICE;
+	case '5': 
+		return LE_WARNING;
     case '6': 
+        return LE_ERROR;
+    case '7': 
         return LE_FATAL;
     }
 }
@@ -373,7 +377,7 @@ COLORREF CTraceListBox::GetColor(ELogSeverity Severity)
     case LE_INFOHIGH:
         return RGB(0, 0, 255);      // Blue
     case LE_NOTICE:
-		return RGB(0, 100, 0);      // Dark Green
+		return RGB(0, 200, 0);      // Green
     case LE_WARNING:
         return RGB(200, 100, 0);    // Orange
     case LE_ERROR:

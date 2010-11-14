@@ -6,6 +6,13 @@
 #include "Common/LogEvent.h"
 #include "Common/collectionhelper.h"
 
+#ifdef _DEBUG
+#undef THIS_FILE
+static char THIS_FILE[]=__FILE__;
+#define new DEBUG_NEW
+#endif
+
+
 CPositioningBasicAlgorithm::CPositioningBasicAlgorithm(void) : m_SensorsLocationMap(NULL) {}
 CPositioningBasicAlgorithm::CPositioningBasicAlgorithm(ISensorsLocationMapInterface *SensorsLocationMap, SPosition InitialPosition) : m_SensorsLocationMap(SensorsLocationMap), m_LastPosition(InitialPosition) {}
 CPositioningBasicAlgorithm::~CPositioningBasicAlgorithm(void) {}
@@ -33,24 +40,27 @@ void CPositioningBasicAlgorithm::Init(ISensorsLocationMapInterface *TheSensorsLo
 	m_LastPosition = InitialPosition;
 }
 
-SPosition CPositioningBasicAlgorithm::CalcPosition(std::map<int /*SensorID*/, double /*Distance*/> Measuremnts)
+SPosition CPositioningBasicAlgorithm::CalcPosition(std::map<int /*SensorID*/, double /*Distance*/> Measuremnts, SPosition &Accuracy, int &NumOfIterations)
 {
-	int NumOfIterations = 0;
-	SPosition EstimatedPosition = CalcPositionInternal(Measuremnts, NumOfIterations);
+	NumOfIterations = 0;
+	DWORD StartTime = GetTickCount();
+	SPosition EstimatedPosition = CalcPositionInternal(Measuremnts, Accuracy, NumOfIterations);
+	double TotalTime = GetTickCount() - StartTime;
 	
 	if (EstimatedPosition == InvalidPosition)
-		LogEvent(LE_ERROR, __FUNCTION__ "Failed to calculate Position. Iterations: %d", NumOfIterations);
+		LogEvent(LE_ERROR, __FUNCTION__ "Failed to calculate Position. Iterations: %d, Time(seconds): %.02f", 
+		NumOfIterations, TotalTime / 1000);
 	else if (NumOfIterations >= m_SensorsLocationMap->GetMaxNumberOfIterations())
-		LogEvent(LE_WARNING, __FUNCTION__ "Position Calculated: [%.02f,%.02f] with less accuracy. Used Maximum allowed Iterations: %d", 
-			EstimatedPosition.x, EstimatedPosition.y, NumOfIterations);
+		LogEvent(LE_WARNING, __FUNCTION__ "Position Calculated: [%.02f,%.02f] with less accuracy. Used Maximum allowed Iterations: %d, Time(seconds): %.02f", 
+			EstimatedPosition.x, EstimatedPosition.y, NumOfIterations, TotalTime / 1000);
 	else
-		LogEvent(LE_INFOHIGH, __FUNCTION__ "Position Calculated: [%.02f,%.02f] Iterations: %d", 
-			EstimatedPosition.x, EstimatedPosition.y, NumOfIterations);
+		LogEvent(LE_NOTICE, __FUNCTION__ "Position Calculated: [%.02f,%.02f] Iterations: %d, Time(seconds): %.02f", 
+			EstimatedPosition.x, EstimatedPosition.y, NumOfIterations, TotalTime / 1000);
 
 	return EstimatedPosition;
 }
 
-SPosition CPositioningBasicAlgorithm::CalcPositionInternal(std::map<int /*SensorID*/, double /*Distance*/> Measuremnts, int &NumOfIterations)
+SPosition CPositioningBasicAlgorithm::CalcPositionInternal(std::map<int /*SensorID*/, double /*Distance*/> Measuremnts, SPosition &Accuracy, int &NumOfIterations)
 {
 	NumOfIterations++;
 
@@ -77,14 +87,18 @@ SPosition CPositioningBasicAlgorithm::CalcPositionInternal(std::map<int /*Sensor
 	CMatrix ErrorMatrix = Bsquared_inverted * Bt * F;
 
 	double dX = ErrorMatrix[0][0];
-	double dY = ErrorMatrix[0][1];
+	double dY = ErrorMatrix[1][0];
 
 	UpdateLastLocation(dX, dY);
 
 	if (IsPositionWellEstimated(dX, dY, NumOfIterations))
+	{
+		Accuracy.x = dX;
+		Accuracy.y = dY;
 		return m_LastPosition;
+	}
 	else
-		return CalcPositionInternal(Measuremnts, NumOfIterations); /*Note: m_LastPosition has changed in this iteration !!*/
+		return CalcPositionInternal(Measuremnts, Accuracy, NumOfIterations); /*Note: m_LastPosition has changed in this iteration !!*/
 }
 
 // Not every measurement must have data from all sensors. a Partial data (from some of the sensors)
@@ -108,15 +122,15 @@ CMatrix CPositioningBasicAlgorithm::BuildMatrixB(std::vector<int> ParticipatingS
 	Assert(ParticipatingSensors.size() <= m_SensorsLocationMap->GetSensorsLocationMap()->size());
 	Assert((int)ParticipatingSensors.size() >= m_SensorsLocationMap->GetMinNumberOfParticipatingSensor());
 
-	CMatrix B((int)2, (int)ParticipatingSensors.size());
+	CMatrix B((int)ParticipatingSensors.size(), (int)2);
 
 	for (unsigned int i = 0; i < ParticipatingSensors.size(); i++)
 	{
 		SPosition SensorPosition;
 		GET_SENSOR_POSITION(ParticipatingSensors[i], SensorPosition);
 
-		B[0][i] = CalcBCellX(SensorPosition);
-		B[1][i] = CalcBCellY(SensorPosition);
+		B[i][0] = CalcBCellX(SensorPosition);
+		B[i][1] = CalcBCellY(SensorPosition);
 	}
 
 	return B;
@@ -160,7 +174,7 @@ CMatrix CPositioningBasicAlgorithm::BuildMatrixF(std::map<int /*SensorID*/, doub
 	std::map<int /*SensorID*/, double>::iterator Iter = Measuremnts.begin();
 	std::map<int /*SensorID*/, double>::iterator End = Measuremnts.end();
 
-	CMatrix F((int)1, (int)Measuremnts.size());
+	CMatrix F((int)Measuremnts.size(), (int)1);
 
 	for(int i = 0;Iter != End; ++Iter, i++)
 	{
@@ -170,7 +184,7 @@ CMatrix CPositioningBasicAlgorithm::BuildMatrixF(std::map<int /*SensorID*/, doub
 		SPosition SensorPosition;
 		GET_SENSOR_POSITION(SensorID, SensorPosition);
 
-		F[0][i] = CalcFCell(SensorPosition, MeasuredDistance);
+		F[i][0] = CalcFCell(SensorPosition, MeasuredDistance);
 	}
 
 	return F;
@@ -194,5 +208,5 @@ bool CPositioningBasicAlgorithm::IsPositionWellEstimated(double dX, double dY, i
 {
 	double MaxError = m_SensorsLocationMap->GetMaxAcceptablePositioningError();
 	double MaxIterations = m_SensorsLocationMap->GetMaxNumberOfIterations();
-	return ((dX <= MaxError && dY <= MaxError) || NumOfIterations >= MaxIterations);
+	return ((abs(dX) <= MaxError && abs(dY) <= MaxError) || NumOfIterations >= MaxIterations);
 }

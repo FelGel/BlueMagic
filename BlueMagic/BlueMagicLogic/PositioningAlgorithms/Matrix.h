@@ -9,6 +9,14 @@
 #pragma once
 #endif // _MSC_VER > 1000
 
+
+// ===================
+// | IMPORTANT NOTE: |
+// ============================================================================
+// | Due to bug in Matrix class, ROWs are COLUMNSs and COLUMNSs are ROWs !!!  |
+// ============================================================================
+//																	R.C.
+
 // 
 // Class : CMatrix
 // Written by : R.I.Allen

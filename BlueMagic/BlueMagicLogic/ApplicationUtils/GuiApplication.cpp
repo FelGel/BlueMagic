@@ -160,6 +160,8 @@ int CGuiApplication::ExitInstance()
     
 	SetLogEventOutput(NULL, false);
 
+	KillLogManager();
+
     if(m_AppMutex != NULL)
     {
         m_AppMutex->Unlock();

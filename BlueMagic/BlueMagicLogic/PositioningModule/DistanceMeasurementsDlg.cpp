@@ -9,6 +9,7 @@
 
 const char* ConfigSection	= "DistanceMeasurementsParams";
 const char* Prefix			= "Sensor";
+const char* DistanceFilesDirectory = "..\\ScanFiles";
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -158,6 +159,9 @@ void CDistanceMeasurementsDlg::LoadData()
 	}
 
 	LogEvent(LE_INFOHIGH, __FUNCTION__ ": Created DistanceMeasurementsConstants were read for %d sensors", m_DistanceAlgorithms.size());
+
+	CreateDistanceFilesDirectory();
+	CreateDistanceFile();
 }
 
 
@@ -233,6 +237,15 @@ void CDistanceMeasurementsDlg::UpdateEntry(int index, SDialogDataMessage *Messag
 	ADD_ITEM(strVelocity);
 	ADD_ITEM(strTS);
 #undef ADD_ITEM	
+
+	CString strSensorID;
+	strSensorID.Format("%d", Message->m_SensorId);
+	WriteToFile(strSensorID, Message->m_ScannedData.ScannedBDADDRESS.c_str(), 
+		Message->m_TimeStamp, strRSSI.Left(strDistance.GetLength() - 2),
+		strDistance.Left(strDistance.GetLength() - 1), 
+		strSmoothDistance.Left(strSmoothDistance.GetLength() - 1), 
+		strVelocity.Left(strVelocity.GetLength() - 3), 
+		strTS.Left(strTS.GetLength() - 1));
 }
 
 
@@ -306,4 +319,84 @@ void CDistanceMeasurementsDlg::OnBnClickedButton1()
 		CDistanceSmoothingBasicAlgorithmManager &Algorithm = Iter->second;
 		Algorithm.Init(m_SmoothingParamA, m_SmoothingParamB);
 	}
+
+	// Close current Distance File, and open new one for new parameters
+	CloseDistanceFile();
+	CreateDistanceFile();
+}
+
+
+void CDistanceMeasurementsDlg::CreateDistanceFilesDirectory()
+{
+	CFileStatus status;
+
+	if (CFile::GetStatus(DistanceFilesDirectory, status) 
+		&& (status.m_attribute & CFile::directory))
+	{
+		LogEvent(LE_INFOLOW, __FUNCTION__ ": Directory %s already exists", DistanceFilesDirectory);
+	} 
+	else if (!CreateDirectory(DistanceFilesDirectory, NULL))
+	{
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to create directory %s", DistanceFilesDirectory);
+	}
+}
+
+void CDistanceMeasurementsDlg::CreateDistanceFile()
+{
+	/* TEMP -> Write to File*/
+	SYSTEMTIME SystemTime;
+	GetLocalTime(&SystemTime);
+
+	CString FileName;
+	FileName.Format("%s\\DISTANCES TABLE a=%.03f,b=%.03f %02d.%02d.%02d %02d-%02d-%02d.csv", 
+		DistanceFilesDirectory, m_SmoothingParamA, m_SmoothingParamB,
+		SystemTime.wDay, SystemTime.wMonth, SystemTime.wYear, 
+		SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
+
+	if (!CreateFile(FileName, &m_DistanceFile))
+		return;
+
+	WriteToFile("SensorID", "BDADDRESS", "TimeStamp", "RSSI", "Distance", 
+		"SmoothDistance", "Velocity", "TS (Time Space)");
+
+	LogEvent(LE_INFO, __FUNCTION__ ": File %s created successfully", FileName);
+	/////////////////////////
+}
+
+
+bool CDistanceMeasurementsDlg::CreateFile(CString FileName, CStdioFile *ScanFile)
+{
+	if (!ScanFile->Open(FileName, CFile::modeCreate | CFile::modeWrite | CFile::typeText /*| CFile::shareDenyWrite*/))
+	{
+		DWORD err = GetLastError();
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to open %s!! ErrorCode = %d", FileName, err);
+		return false;
+	}
+
+	return true;
+}
+
+
+void CDistanceMeasurementsDlg::CloseDistanceFile()
+{
+	m_DistanceFile.Close();
+}
+
+void CDistanceMeasurementsDlg::WriteToFile(
+				 CString strSensorID, CString strBDADDRESS, 
+				 CString strTimeStamp, CString strRSSI, 
+				 CString strDistance, CString strSmoothDistance, 
+				 CString strVelocity, CString strTS)
+{
+	CString DataString;
+	DataString.Format("%s, %s, %s, %s, %s, %s, %s\n",
+		strSensorID, strBDADDRESS, strTimeStamp, strRSSI, strDistance, strSmoothDistance, 
+		strVelocity, strTS);
+
+	m_DistanceFile.WriteString(DataString);
+}
+
+void CDistanceMeasurementsDlg::Close()
+{
+	CloseDistanceFile();
 }

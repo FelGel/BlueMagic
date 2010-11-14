@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "PositioningModule.h"
 #include "PositioningModuleDlg.h"
-
+#include "PositioningAlgorithms/PositioningAlgorithms.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -38,16 +38,23 @@ void CPositioningModuleApp::AddDialogs()
 	CResourcedGuiApplication::AddDialog(m_PositioningModuleAggregatedDlg, CPositioningModuleDlg::IDD, "Scan Log");
 	CResourcedGuiApplication::AddDialog(m_SensorsStatusDlg, CSensorsStatusDlg::IDD, "Sensors Status");
 	CResourcedGuiApplication::AddDialog(m_DistancesMeasurementsDlg, CDistanceMeasurementsDlg::IDD, "Distances Measurements");
-
+	CResourcedGuiApplication::AddDialog(m_PositioningEstimationDlg, CPositioningEstimationDlg::IDD, "Positioning Estimations");
 	return;
 }
 
 bool CPositioningModuleApp::PerformInitalization()
 {
+	// NOTE: ORDER IS IMPORTANT !!
+	CPositioningAlgorithms::SetConfigFileNameDLL(GetConfigFileName().c_str());
+	CPositioningAlgorithms::SetCrashFileNameDLL(GetApplicationName());
+	CPositioningAlgorithms::SetTheLogManagerDLL(GetTheLogManager());
+	CPositioningAlgorithms::SetLogEventOutputDLL(GuiLogOutput, true, GetGuiLogOutputSeverity, GetApplicationName());
+
 	m_PositioningModuleRealTimeDlg.InitScanList();
 	m_PositioningModuleAggregatedDlg.InitScanList();
 	m_SensorsStatusDlg.InitScanList();
 	m_DistancesMeasurementsDlg.InitScanList();
+	m_PositioningEstimationDlg.InitScanList();
 
 	m_PositioningManager.Advise(this);
 	return m_PositioningManager.Init();
@@ -57,6 +64,8 @@ bool CPositioningModuleApp::PerformCleanup()
 {
 	//m_PositioningModuleDlg
 	m_PositioningManager.CloseThread(true);
+	m_DistancesMeasurementsDlg.Close();
+	m_PositioningEstimationDlg.Close();
 	return true;
 }
 
@@ -77,4 +86,24 @@ void CPositioningModuleApp::SendMessageToDialog(SDialogDataMessage *Message)
 void CPositioningModuleApp::SendMessageToDialog(SDialogSensorMessage *Message)
 {
 	m_SensorsStatusDlg.SendMessageToGuiThread((WPARAM)Message);
+}
+
+void CPositioningModuleApp::SendMessageToDialog(SDialogPositioingMessage *Message)
+{
+	m_PositioningEstimationDlg.SendMessageToGuiThread((WPARAM)Message);
+}
+
+void CPositioningModuleApp::SendMessageToDialog(SDialogEstablishmentContourMessage *Message)
+{
+	m_PositioningEstimationDlg.SendMessageToGuiThread((WPARAM)Message);
+}
+
+void CPositioningModuleApp::SendMessageToDialog(SDialogSensorsLocationMessage *Message)
+{
+	m_PositioningEstimationDlg.SendMessageToGuiThread((WPARAM)Message);
+}
+
+void CPositioningModuleApp::OnTimeoutCalledFromPositioningManager()
+{
+	m_PositioningEstimationDlg.OnTimeoutCalledFromPositioningModule();
 }

@@ -39,6 +39,19 @@
 ScanFiles/
 ScanFiles/*
 
+#trying to include installation files!
+!/BlueMagic/
+#!BlueMagic/release/
+#!/BlueMagic/release/*
+#!/BlueMagic/release/
+!BlueMagic/release/BlueMagicLogicSetup
+!BlueMagic/release/BlueMagicLogicSetup/*
+!BlueMagic/release/BlueMagicLogicSetup/
+!/BlueMagic/release/BlueMagicLogicSetup/*
+!/BlueMagic/release/BlueMagicLogicSetup/
+!BlueMagic/release/BlueMagicLogicSetup/setup.exe
+!BlueMagic/release/BlueMagicLogicSetup/BlueMagicLogicSetup.msi
+
 
 # Specific uniteresting file names:
 # -------------------------------------

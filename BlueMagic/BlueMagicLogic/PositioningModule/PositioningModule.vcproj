@@ -101,11 +101,11 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="..\..\$(ConfigurationName)"
+			IntermediateDirectory="..\..\$(ConfigurationName)\$(ProjectName)"
 			ConfigurationType="1"
 			UseOfMFC="2"
-			CharacterSet="1"
+			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -128,12 +128,13 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories=".."
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				WarningLevel="4"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -204,19 +205,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\EstablishmentTopology.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\geometry.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\MeasurementsContainer.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\PositioningAlgorithm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PositioningEstimationDlg.cpp"
 				>
 			</File>
 			<File
@@ -229,6 +226,10 @@
 			</File>
 			<File
 				RelativePath=".\PositioningModuleDlg.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RectReal.cpp"
 				>
 			</File>
 			<File
@@ -287,10 +288,6 @@
 					/>
 				</FileConfiguration>
 			</File>
-			<File
-				RelativePath=".\Utils.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -314,14 +311,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\EstablishmentTopology.h"
-				>
-			</File>
-			<File
-				RelativePath=".\geometry.h"
-				>
-			</File>
-			<File
 				RelativePath=".\IPositioningInterface.h"
 				>
 			</File>
@@ -342,6 +331,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\PositioningEstimationDlg.h"
+				>
+			</File>
+			<File
 				RelativePath=".\PositioningManager.h"
 				>
 			</File>
@@ -351,6 +344,10 @@
 			</File>
 			<File
 				RelativePath=".\PositioningModuleDlg.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RectReal.h"
 				>
 			</File>
 			<File
@@ -395,10 +392,6 @@
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
-				RelativePath=".\utils.h"
 				>
 			</File>
 		</Filter>
