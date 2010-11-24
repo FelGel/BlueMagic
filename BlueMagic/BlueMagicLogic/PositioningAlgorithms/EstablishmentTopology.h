@@ -13,11 +13,14 @@ public:
 	~CEstablishmentTopology(void);
 
 	bool Init();
+	void Close();
 
 	int GetEstablishmentID() {return m_EstablishmentID;}
 	std::vector<SPosition> GetEstablishmentCoordinates();
 
 	bool IsMeasurementInEstablishemnt(SPosition Position);
+
+	std::vector<SDepartmentInfo> GetDepartmentsInfo();
 
 private:
 	//members:

@@ -4,6 +4,12 @@
 #include "PositionStructure.h"
 #include <vector>
 
+struct SDepartmentInfo
+{
+	std::vector<SPosition> DepartmentCoordinates;
+	std::string DepartmentName;
+};
+
 class CDepartmentObject
 {
 public:
@@ -13,8 +19,10 @@ public:
 	bool Init(std::string DepartmentFileName);
 	void Close();
 
-	std::vector<SPosition> GetEstablishmentCoordinates();
-	bool IsMeasurementInEstablishemnt(SPosition Position);
+	SDepartmentInfo GetDepartmentInfo();
+
+	std::vector<SPosition> GetDepartmentCoordinates();
+	bool IsMeasurementInDepartment(SPosition Position);
 
 	std::string GetDepartmentName() {return m_DepartmentName;}
 	std::string GetDepartmentFileName() {return m_DepartmentFileName;}

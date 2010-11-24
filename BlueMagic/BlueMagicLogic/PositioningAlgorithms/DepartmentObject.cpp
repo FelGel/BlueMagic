@@ -48,7 +48,7 @@ void CDepartmentObject::Close()
 	// Do Nothing..
 }
 
-std::vector<SPosition> CDepartmentObject::GetEstablishmentCoordinates()
+std::vector<SPosition> CDepartmentObject::GetDepartmentCoordinates()
 {
 	std::vector<SPosition> DepartmentCoordinates;
 
@@ -58,8 +58,16 @@ std::vector<SPosition> CDepartmentObject::GetEstablishmentCoordinates()
 	return DepartmentCoordinates;
 }
 
-bool CDepartmentObject::IsMeasurementInEstablishemnt(SPosition Position)
+bool CDepartmentObject::IsMeasurementInDepartment(SPosition Position)
 {
 	C3Point Point(Position.x, Position.y, 0);
 	return (m_DepartmentContour.PointIn(Point) == TRUE) ? true : false;
+}
+
+SDepartmentInfo CDepartmentObject::GetDepartmentInfo()
+{
+	SDepartmentInfo DepartmentInfo;
+	DepartmentInfo.DepartmentCoordinates = GetDepartmentCoordinates();
+	DepartmentInfo.DepartmentName = GetDepartmentName();
+	return DepartmentInfo;
 }

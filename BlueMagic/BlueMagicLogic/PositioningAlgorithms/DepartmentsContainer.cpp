@@ -92,9 +92,9 @@ bool CDepartmentsContainer::AreObjectParametersValid(int ObjectIndex, std::strin
 
 bool CDepartmentsContainer::IsDepartmentNameAlreadyExists(std::string DepartmentName, std::string DepartmentTopologyFileName)
 {
-	for (unsigned int i = 0; i < GetNumberOfSensorControllers(); i++)
+	for (unsigned int i = 0; i < GetNumberOfDepartments(); i++)
 	{
-		CDepartmentObject*	DepartmentObject = GetSensorControllerAt(i);
+		CDepartmentObject*	DepartmentObject = GetDepartmentAt(i);
 		if (DepartmentObject->GetDepartmentName() == DepartmentName)
 		{
 			LogEvent(LE_ERROR, __FUNCTION__ ": Department Name %s already exists! Did you accidentally entered same department twice?", 

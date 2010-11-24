@@ -13,8 +13,8 @@ public:
 
 	void RemoveObjects();
 
-	DWORD				GetNumberOfSensorControllers()		{return GetNumberOfObjects();}
-	CDepartmentObject*	GetSensorControllerAt(int index)	{return (CDepartmentObject*)GetObjectAt(index);}
+	DWORD				GetNumberOfDepartments()		{return GetNumberOfObjects();}
+	CDepartmentObject*	GetDepartmentAt(int index)	{return (CDepartmentObject*)GetObjectAt(index);}
 
 private:
 	// Implemented CSensorControllersContainer method

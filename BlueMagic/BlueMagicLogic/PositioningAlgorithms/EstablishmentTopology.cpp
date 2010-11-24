@@ -57,10 +57,28 @@ bool CEstablishmentTopology::Init()
 
 std::vector<SPosition> CEstablishmentTopology::GetEstablishmentCoordinates()
 {
-	return m_EstablishmentContour.GetEstablishmentCoordinates();
+	return m_EstablishmentContour.GetDepartmentCoordinates();
 }
 
 bool CEstablishmentTopology::IsMeasurementInEstablishemnt(SPosition Position)
 {
-	return m_EstablishmentContour.IsMeasurementInEstablishemnt(Position);
+	return m_EstablishmentContour.IsMeasurementInDepartment(Position);
+}
+
+std::vector<SDepartmentInfo> CEstablishmentTopology::GetDepartmentsInfo()
+{
+	std::vector<SDepartmentInfo> DepartmentsInfo;
+
+	for (unsigned int i = 0; i < m_DepartmentsContainer.GetNumberOfDepartments(); i++)
+	{
+		CDepartmentObject* DepartmentObject = m_DepartmentsContainer.GetDepartmentAt(i);
+		DepartmentsInfo.push_back(DepartmentObject->GetDepartmentInfo());
+	}
+
+	return DepartmentsInfo;
+}
+
+void CEstablishmentTopology::Close()
+{
+	m_DepartmentsContainer.RemoveObjects();
 }

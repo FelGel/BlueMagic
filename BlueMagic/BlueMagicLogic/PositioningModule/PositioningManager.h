@@ -53,7 +53,9 @@ private:
 	void CloseAllScanFiles();
 	void UpdateScanFile(const int &SensorId, const SScannedData& ScannedData);
 	void UpdateDialog(const int &SensorId, const SScannedData& ScannedData);
-	void SendEstablishmentContourToDialog(std::vector<SPosition> EstablishmentCoordinates);
+	void SendEstablishmentContourToDialog(
+		std::vector<SPosition> EstablishmentCoordinates,
+		std::vector<SDepartmentInfo> DepartmentsInfo);
 
 	void HandleDataReceived(const int &SensorId, const SScannedData& ScannedData);
 	void HandleNewSensorInSystem(const int &SensorId, const bool &IsController, const std::string &BDADDRESS, const std::vector<int> &ChildrenSensorIDs);

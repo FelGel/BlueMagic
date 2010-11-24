@@ -72,11 +72,15 @@ struct SDialogPositioingMessage : public SDialogMessage
 struct SDialogEstablishmentContourMessage : public SDialogMessage
 {
 	SDialogEstablishmentContourMessage(
-		std::vector<SPosition> EstablishmentCoordinates) : SDialogMessage(DialogEstablishmentContourMessage, 0),
-		m_EstablishmentCoordinates(EstablishmentCoordinates) {}
+		std::vector<SPosition> EstablishmentCoordinates, 
+		std::vector<SDepartmentInfo> DepartmentsInfo) : SDialogMessage(DialogEstablishmentContourMessage, 0),
+		m_EstablishmentCoordinates(EstablishmentCoordinates),
+		m_DepartmentsInfo(DepartmentsInfo) {}
+
 	virtual ~SDialogEstablishmentContourMessage() {}
 
 	std::vector<SPosition> m_EstablishmentCoordinates;
+	std::vector<SDepartmentInfo> m_DepartmentsInfo;
 };
 
 struct SDialogSensorsLocationMessage : public SDialogMessage
