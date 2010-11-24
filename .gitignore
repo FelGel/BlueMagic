@@ -38,6 +38,8 @@
 /ApplicationLogs/
 ScanFiles/
 ScanFiles/*
+ProFind/
+ProFind/*
 
 #trying to include installation files!
 !/BlueMagic/
