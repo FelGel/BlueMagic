@@ -178,6 +178,14 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			>
 			<File
+				RelativePath=".\DepartmentObject.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DepartmentsContainer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\DistanceSmoothingBasicAlgorithm.h"
 				>
 			</File>
@@ -250,6 +258,14 @@
 			Name="Source Files"
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			>
+			<File
+				RelativePath=".\DepartmentObject.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DepartmentsContainer.cpp"
+				>
+			</File>
 			<File
 				RelativePath=".\DistanceSmoothingBasicAlgorithm.cpp"
 				>

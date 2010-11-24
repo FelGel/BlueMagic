@@ -4,6 +4,7 @@
 #include "Common/LogEvent.h"
 
 static const char* CONFIG_SECTION = "EstablishmentTopology";
+static const char* DepartmentsConfigurationSection = "DepartmentsTopology";
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -12,7 +13,7 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 
-CEstablishmentTopology::CEstablishmentTopology(void)
+CEstablishmentTopology::CEstablishmentTopology(void) : m_EstablishmentContour("Establishment")
 {
 }
 
@@ -39,22 +40,16 @@ bool CEstablishmentTopology::Init()
 		return false;
 	}
 
-
-	if (!m_EstablishmentContour.LoadXYZ(EstablishmentContourFileName.c_str()))
+	if (!m_EstablishmentContour.Init(EstablishmentContourFileName.c_str()))
 	{
-		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to read EstablishmentContour File (%s) !", EstablishmentContourFileName.c_str());
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to Init Establishment via EstablishmentContour File (%s) !", EstablishmentContourFileName.c_str());
 		return false;
 	}
 
-	for (int i = 0; i < m_EstablishmentContour.GetSize(); i++)
+	if (!m_DepartmentsContainer.CreateObjects(DepartmentsConfigurationSection))
 	{
-		if (m_EstablishmentContour[i].z != 0)
-		{
-			// because PointIn function checks polygon in 3d,
-			// z must also be accurate, and must always be 0.
-			LogEvent(LE_WARNING, __FUNCTION__ ": Z values other than 0 are not supported! Setting Z=0.");
-			m_EstablishmentContour[i].z = 0;
-		}
+		LogEvent(LE_ERROR, __FUNCTION__ ": Failed to Create & Init Department objects !");
+		return false;
 	}
 
 	return true;
@@ -62,16 +57,10 @@ bool CEstablishmentTopology::Init()
 
 std::vector<SPosition> CEstablishmentTopology::GetEstablishmentCoordinates()
 {
-	std::vector<SPosition> EstablishmentCoordinates;
-
-	for (int i = 0; i < m_EstablishmentContour.GetSize(); i++)
-		EstablishmentCoordinates.push_back(SPosition(m_EstablishmentContour[i].x, m_EstablishmentContour[i].y));
-
-	return EstablishmentCoordinates;
+	return m_EstablishmentContour.GetEstablishmentCoordinates();
 }
 
 bool CEstablishmentTopology::IsMeasurementInEstablishemnt(SPosition Position)
 {
-	C3Point Point(Position.x, Position.y, 0);
-	return (m_EstablishmentContour.PointIn(Point) == TRUE) ? true : false;
+	return m_EstablishmentContour.IsMeasurementInEstablishemnt(Position);
 }

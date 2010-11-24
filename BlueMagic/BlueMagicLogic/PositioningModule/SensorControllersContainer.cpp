@@ -4,7 +4,7 @@
 #include "..\common\Utils.h"
 
 const char* SensorControllerPrefix	= "SensorController";
-const int	MaxReceivers			= 100;
+const int	MaxSensors				= 255;
 
 #define MIN_SENSORID				1
 #define MAX_SENSORID				255
@@ -31,7 +31,7 @@ bool CSensorControllersContainer::CreateObjects(
 		"SensorController", 
 		ConfigSection, 
 		SensorControllerPrefix, 
-		MaxReceivers);
+		MaxSensors);
 }
 
 void CSensorControllersContainer::RemoveObjects()

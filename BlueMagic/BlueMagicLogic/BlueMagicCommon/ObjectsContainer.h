@@ -35,7 +35,7 @@ public:
 
 		if (ObjectSections.size() == 0)
 		{
-			LogEvent(LE_ERROR, "Failed to read objects from Configuration !");
+			LogEvent(LE_ERROR, __FUNCTION__ "Failed to read %s objects from Configuration !", Prefix);
 			return false;
 		}
 
@@ -60,7 +60,7 @@ public:
 			return false;
 		}
 
-		LogEvent(LE_INFOHIGH, "CObjectContainer::CreateObjects: Created %d %ss", m_Objects.size(), Name);
+		LogEvent(LE_NOTICE, "CObjectContainer::CreateObjects: Created %d %ss", m_Objects.size(), Name);
 		return ObjectsCreatedOk; //true;
 	}
 

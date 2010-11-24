@@ -1,8 +1,9 @@
 #pragma once
 
-#include "geometry.h"
 #include "PositioningAlgorithms.h"
 #include "PositionStructure.h"
+#include "DepartmentObject.h"
+#include "DepartmentsContainer.h"
 #include <vector>
 
 class POSITIONINGALGORITHMS_API CEstablishmentTopology
@@ -21,5 +22,6 @@ public:
 private:
 	//members:
 	int m_EstablishmentID;
-	CPolygon m_EstablishmentContour;
+	CDepartmentObject m_EstablishmentContour;
+	CDepartmentsContainer m_DepartmentsContainer;
 };
