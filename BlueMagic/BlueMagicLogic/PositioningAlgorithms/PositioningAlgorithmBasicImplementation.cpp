@@ -125,6 +125,13 @@ CPositioningAlgorithmBasicImplementation::~CPositioningAlgorithmBasicImplementat
 	IsInEstablishment = m_EstablishmentTopology->IsMeasurementInEstablishemnt(EstimatedPosition);
 	DepartmentNamesUserCurrentlyIn = m_EstablishmentTopology->GetDepartmentNamesUserCurrentlyIn(EstimatedPosition);
 
+	if (DepartmentNamesUserCurrentlyIn.size() > 1)
+	{
+		std::string DepartmentNamesString = StringVectorToStr(DepartmentNamesUserCurrentlyIn, true);
+		LogEvent(LE_WARNING, __FUNCTION__ ": User %s is considered to be in more than one Department (%s)",
+			BDADDRESS.c_str(), DepartmentNamesString.c_str());
+	}
+
 	SendDebugReport(BDADDRESS, Measuremnts, DistanceEstimations, EstimatedPosition, Accuracy, NumOfIterations, IsInEstablishment, DepartmentNamesUserCurrentlyIn);
 	return EstimatedPosition;
 }

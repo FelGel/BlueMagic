@@ -298,6 +298,8 @@ ___DEFINE_CPP_OVERLOAD_FUNC_0_2(std::string, FloatArrayToStr, const float, _Dest
 ___DEFINE_CPP_OVERLOAD_FUNC_0_1(std::string, FloatArrayToStr, const float, _Dest, int, _Precision)
 ___DEFINE_CPP_OVERLOAD_FUNC_0_0(std::string, FloatArrayToStr, const float, _Dest)
 
+std::string StringVectorToStr(const std::vector<std::string>& StrVector, bool UseSpaces = false);
+
 int ThreadPriorityStr2Value(const char* Priority);
 int PriorityClassStr2Value(const char* Priority);
 

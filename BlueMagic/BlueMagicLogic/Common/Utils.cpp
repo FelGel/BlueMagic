@@ -1314,6 +1314,25 @@ std::string IntVectorToStr(const std::vector<int>& IntVector, bool UseSpaces /*=
     return Str;
 }
 
+
+std::string StringVectorToStr(const std::vector<std::string>& StrVector, bool UseSpaces /*= false*/)
+{
+	const char* Separator1 = UseSpaces ? ", " : ",";
+
+	int VectorSize = StrVector.size();
+	std::string Str;
+
+	for (int i = 0; i < VectorSize; ++i)
+	{
+		Str += StrVector[i];
+		if (i != VectorSize - 1)
+		{
+			Str += Separator1;
+		}
+	}
+	return Str;
+}
+
 std::string IntArrayToStr(const int Vals[], size_t NumVals)
 {
     std::vector<int> ValVec;

@@ -174,7 +174,7 @@ void CDepartmentEstimationDialog::HandlePositioningMessage(SDialogPositioingMess
 	else
 		UpdateEntry(ListEntryIndex, Message);
 
-	UpdateUserLocation(Message->m_BDADDRESS, Message->m_EstimatedPosition);
+	UpdateUserLocation(Message->m_BDADDRESS, Message->m_EstimatedPosition, Message->m_DepartmentNamesUserCurrentlyIn);
 }
 
 void CDepartmentEstimationDialog::AddNewEntry(SDialogPositioingMessage *Message)
@@ -315,10 +315,10 @@ void CDepartmentEstimationDialog::OnPaint()
 	CPaintDC dc(this);
 
 	DrawBackground(dc);
-	DrawDepartments(dc);
 	DrawEstablishment(dc);
+	DrawDepartmentsUserIsIn(dc);//DrawUserPositions(dc);
+	DrawDepartments(dc);
 	DrawSensors(dc);
-	DrawUserPositions(dc);
 
 	CTabDlg::OnPaint();
 }
@@ -403,22 +403,40 @@ POINT CDepartmentEstimationDialog::ConvertPhysicalCoordinateToCanvas(SPosition C
 	return CanvasPoint;
 }
 
+CRect CDepartmentEstimationDialog::ConvertPhysicalRectToCanvas(CRectReal Coordinate)
+{
+	CRect CanvasRect;
+	
+	SPosition TopLeft(Coordinate.left, Coordinate.top), ButtomRight(Coordinate.right, Coordinate.bottom);
+	POINT TopLeftCanvas, ButtomRightCanvas;
+
+	TopLeftCanvas = ConvertPhysicalCoordinateToCanvas(TopLeft);
+	ButtomRightCanvas = ConvertPhysicalCoordinateToCanvas(ButtomRight);
+
+	CanvasRect.top = TopLeftCanvas.y;
+	CanvasRect.left = TopLeftCanvas.x;
+	CanvasRect.bottom = ButtomRightCanvas.y;
+	CanvasRect.right = ButtomRightCanvas.x;
+
+	return CanvasRect;
+}
+
 void CDepartmentEstimationDialog::DrawUserPositions(CPaintDC &dc)
 {
-	std::map<std::string /*BDADDRESS*/, SUserPosition>::iterator Iter = m_UserPositions.begin();
-	std::map<std::string /*BDADDRESS*/, SUserPosition>::iterator End = m_UserPositions.end();
+	std::map<std::string /*BDADDRESS*/, SUserPositionEx>::iterator Iter = m_UserPositions.begin();
+	std::map<std::string /*BDADDRESS*/, SUserPositionEx>::iterator End = m_UserPositions.end();
 
 	for(;Iter != End; ++Iter)
 	{
 		std::string BDADDRESS = Iter->first;
-		SUserPosition UserPosition = Iter->second;
+		SUserPositionEx UserPosition = Iter->second;
 
 		DrawUserPosition(dc, BDADDRESS, UserPosition);
 	}
 
 }
 
-void CDepartmentEstimationDialog::DrawUserPosition(CPaintDC &dc, std::string BDADDRESS, SUserPosition UserPosition)
+void CDepartmentEstimationDialog::DrawUserPosition(CPaintDC &dc, std::string BDADDRESS, SUserPositionEx UserPosition)
 {
 	POINT UserPositionOnCanvas = ConvertPhysicalCoordinateToCanvas(UserPosition.Position);
 
@@ -460,9 +478,9 @@ void CDepartmentEstimationDialog::DrawText(CPaintDC &dc, CString Text, COLORREF 
 	dc.DrawText(Text, &TextRect, DT_SINGLELINE | DT_CENTER);
 }
 
-void CDepartmentEstimationDialog::UpdateUserLocation(std::string BDADDRESS, SPosition NewPosition)
+void CDepartmentEstimationDialog::UpdateUserLocation(std::string BDADDRESS, SPosition NewPosition, std::vector<std::string> NewDepartmentsUserIn)
 {
-	SUserPosition *UserPosition;
+	SUserPositionEx *UserPosition;
 	if (!GetValueInMap(m_UserPositions, BDADDRESS, UserPosition, true))
 	{
 		LogEvent(LE_ERROR, __FUNCTION__ ": failed to UpdateUserLocation !");
@@ -472,6 +490,7 @@ void CDepartmentEstimationDialog::UpdateUserLocation(std::string BDADDRESS, SPos
 	UserPosition->Position.x = NewPosition.x;
 	UserPosition->Position.y = NewPosition.y;
 	UserPosition->TickCount = GetTickCount();
+	UserPosition->DepartmentsUserIn = NewDepartmentsUserIn;
 
 	SYSTEMTIME SystemTime;
 	GetLocalTime(&SystemTime);
@@ -547,14 +566,14 @@ void CDepartmentEstimationDialog::HandleTimeOut()
 	{
 		m_LastCleanTickCount = Now;
 
-		std::map<std::string /*BDADDRESS*/, SUserPosition>::iterator Iter = m_UserPositions.begin();
-		std::map<std::string /*BDADDRESS*/, SUserPosition>::iterator End = m_UserPositions.end();
+		std::map<std::string /*BDADDRESS*/, SUserPositionEx>::iterator Iter = m_UserPositions.begin();
+		std::map<std::string /*BDADDRESS*/, SUserPositionEx>::iterator End = m_UserPositions.end();
 
 		std::vector<std::string> RemoveList;
 		for(;Iter != End; ++Iter)
 		{
 			std::string BDADDRESS = Iter->first;
-			SUserPosition UserPosition = Iter->second;
+			SUserPositionEx UserPosition = Iter->second;
 
 			if (Now - UserPosition.TickCount > CLEAN_TIMEOUT)
 				RemoveList.push_back(BDADDRESS);
@@ -595,7 +614,7 @@ void CDepartmentEstimationDialog::CreatePositioningFile()
 	GetLocalTime(&SystemTime);
 
 	CString FileName;
-	FileName.Format("%s\\POSITIONING TABLE %02d.%02d.%02d %02d-%02d-%02d.csv", 
+	FileName.Format("%s\\DEPARTMENTS TABLE %02d.%02d.%02d %02d-%02d-%02d.csv", 
 		DepartmentsFilesDirectory,
 		SystemTime.wDay, SystemTime.wMonth, SystemTime.wYear, 
 		SystemTime.wHour, SystemTime.wMinute, SystemTime.wSecond);
@@ -644,4 +663,65 @@ void CDepartmentEstimationDialog::WriteToFile(
 void CDepartmentEstimationDialog::Close()
 {
 	ClosePositioningFile();
+}
+
+void CDepartmentEstimationDialog::DrawDepartmentsUserIsIn(CPaintDC &dc)
+{
+	std::map<std::string /*BDADDRESS*/, SUserPositionEx>::iterator Iter = m_UserPositions.begin();
+	std::map<std::string /*BDADDRESS*/, SUserPositionEx>::iterator End = m_UserPositions.end();
+
+	for(;Iter != End; ++Iter)
+	{
+		std::string BDADDRESS = Iter->first;
+		SUserPositionEx UserPosition = Iter->second;
+
+		if (UserPosition.DepartmentsUserIn.size() == 0)
+		{
+			LogEvent(LE_INFO, ": User %s is not in establishment", BDADDRESS.c_str());
+			continue;
+		}
+
+		if (UserPosition.DepartmentsUserIn.size() > 1)
+		{
+			LogEvent(LE_WARNING, ": User %s is in more than one Departments", 
+				BDADDRESS.c_str(), StringVectorToStr(UserPosition.DepartmentsUserIn).c_str());
+		}
+
+		for (unsigned int i = 0; i < UserPosition.DepartmentsUserIn.size(); i++)
+		{
+			SDepartmentInfo DepartmentInfo = GetDepartmentInfo(UserPosition.DepartmentsUserIn[i]);
+
+			if (DepartmentInfo.DepartmentName == InvalidDepartmentName
+				|| DepartmentInfo.DepartmentCoordinates.size() == 0)
+				continue;
+
+			DrawDepartmentUserIsIn(dc, BDADDRESS, DepartmentInfo);
+		}
+	}
+}
+
+void CDepartmentEstimationDialog::DrawDepartmentUserIsIn(CPaintDC &dc, std::string BDADDRESS, SDepartmentInfo DepartmentUserIsIn)
+{
+	CRectReal DepartmentUserIsInRect = GetEncapsulatingRect(DepartmentUserIsIn.DepartmentCoordinates);
+	CRect DepartmentUserIsInRectOnCanvas = ConvertPhysicalRectToCanvas(DepartmentUserIsInRect);
+
+	DrawSquare(dc, RGB(0,0,255), 
+		DepartmentUserIsInRectOnCanvas.left, 
+		DepartmentUserIsInRectOnCanvas.top, 
+		DepartmentUserIsInRectOnCanvas.right,
+		DepartmentUserIsInRectOnCanvas.bottom);
+}
+
+SDepartmentInfo CDepartmentEstimationDialog::GetDepartmentInfo(std::string DepartmentName)
+{
+	for (unsigned int i = 0; i < m_DepartmentsInfo.size(); i++)
+	{
+		if (m_DepartmentsInfo[i].DepartmentName == DepartmentName)
+			return m_DepartmentsInfo[i];
+	}
+
+	LogEvent(LE_ERROR, __FUNCTION__ ": Failed to extract coordinates for Department %s", 
+		DepartmentName.c_str());
+
+	return SDepartmentInfo();
 }

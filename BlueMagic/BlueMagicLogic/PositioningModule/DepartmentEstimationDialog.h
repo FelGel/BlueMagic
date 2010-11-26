@@ -7,6 +7,12 @@
 #include "afxwin.h"
 #include "RectReal.h"
 
+struct SUserPositionEx : public SUserPosition
+{
+	std::vector<std::string> DepartmentsUserIn;
+};
+
+
 // CDepartmentEstimationDialog dialog
 
 class CDepartmentEstimationDialog : public CTabDlg
@@ -39,7 +45,7 @@ private:
 	void UpdateEntry(int index, SDialogPositioingMessage *Message);
 	int GetListEntryIndex(SDialogPositioingMessage *Message);
 	int GetIndexForNewEntry(SDialogPositioingMessage *Message);
-	void UpdateUserLocation(std::string BDADDRESS, SPosition NewPosition);
+	void UpdateUserLocation(std::string BDADDRESS, SPosition NewPosition, std::vector<std::string> NewDepartmentsUserIn);
 
 	void DrawBackground(CPaintDC &dc);
 	void DrawEstablishment(CPaintDC &dc);
@@ -47,9 +53,12 @@ private:
 	void DrawSensors(CPaintDC &dc);
 	void DrawSensor(CPaintDC &dc, int SensorID, SPosition Position);
 	void DrawUserPositions(CPaintDC &dc);
-	void DrawUserPosition(CPaintDC &dc, std::string BDADDRESS, SUserPosition UserPosition);
+	void DrawUserPosition(CPaintDC &dc, std::string BDADDRESS, SUserPositionEx UserPosition);
+	void DrawDepartmentsUserIsIn(CPaintDC &dc);
+	void DrawDepartmentUserIsIn(CPaintDC &dc, std::string BDADDRESS, SDepartmentInfo DepartmentUserIsIn);
 	
 	POINT ConvertPhysicalCoordinateToCanvas(SPosition Coordinate);
+	CRect ConvertPhysicalRectToCanvas(CRectReal Coordinate);
 	CRectReal GetEncapsulatingRect(std::vector<SPosition> Coordinates);
 
 	void DrawSquare(CPaintDC &dc, COLORREF Color, int l, int t, int r, int b);
@@ -57,6 +66,8 @@ private:
 	void DrawDepartment(CPaintDC &dc, std::vector<SPosition> Coordinates, std::string DerpartmentName = "");
 
 	CString GetLocalTimeForTickCount(DWORD TickCount);
+
+	SDepartmentInfo GetDepartmentInfo(std::string DepartmentName);
 
 	void CreatePositioningFilesDirectory();
 	void CreatePositioningFile();
@@ -80,7 +91,7 @@ public:
 	CRectReal m_PhysicalEstablishmentRect;
 	CRect m_CanvasRect;
 
-	std::map<std::string /*BDADDRESS*/, SUserPosition> m_UserPositions;
+	std::map<std::string /*BDADDRESS*/, SUserPositionEx> m_UserPositions;
 	std::map<int /*SensorID*/, SPosition> m_SensorsLocation;
 
 	DWORD m_LastCleanTickCount;
