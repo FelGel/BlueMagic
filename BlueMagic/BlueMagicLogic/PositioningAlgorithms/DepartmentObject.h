@@ -4,8 +4,12 @@
 #include "PositionStructure.h"
 #include <vector>
 
+const std::string InvalidDepartmentName = "NotInDepartment";
+
 struct SDepartmentInfo
 {
+	SDepartmentInfo() : DepartmentName(InvalidDepartmentName) {}
+
 	std::vector<SPosition> DepartmentCoordinates;
 	std::string DepartmentName;
 };

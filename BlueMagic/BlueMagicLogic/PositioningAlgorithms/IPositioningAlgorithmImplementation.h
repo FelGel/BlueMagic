@@ -16,7 +16,8 @@ public:
 		SPosition EstimatedPosition,
 		SPosition EstimatedPositionError,
 		int NumOfIterations,
-		bool IsInEstablishment) = 0;
+		bool IsInEstablishment,
+		std::vector<std::string> DepartmentNamesUserCurrentlyIn) = 0;
 
 	virtual void OnSensorsLocationReport(
 		std::map<int /*SensorID*/, SPosition> SensorsLocation) = 0;
@@ -26,7 +27,12 @@ public:
 class POSITIONINGALGORITHMS_API IPositioningAlgorithmImplementation
 {
 public:
-	virtual SPosition CalculatePosition(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts, SPosition &Accuracy, bool &IsInEstablishment) = 0;
+	virtual SPosition CalculatePosition(
+		std::string BDADDRESS, 
+		std::map<int /*SensorID*/, SMeasurement> Measuremnts, 
+		SPosition &Accuracy, 
+		bool &IsInEstablishment,
+		std::vector<std::string> DepartmentNamesUserCurrentlyIn) = 0;
 	virtual bool Init() = 0;
 	virtual void AdviseDebugReport(IPositioningDebugReport *DebugReport) = 0;
 	virtual void AdviseEstablishmentTopology(CEstablishmentTopology *EstablishmentTopology) = 0;

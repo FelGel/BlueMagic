@@ -132,14 +132,14 @@ void CPositioningManager::HandleDataReceived(const int &SensorId, const SScanned
 	UpdateDialog(SensorId, ScannedData);
 }
 
-void CPositioningManager::OnPositioning(std::string BDADDRESS, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore)
+void CPositioningManager::OnPositioning(std::string BDADDRESS, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore, std::vector<std::string> DepartmentNamesUserCurrentlyIn)
 {
 	// NOTE: This function is running in local thread! 
 	// No need to add to queue !!
 	if (m_PositioningInterfaceHandler != NULL)
 	{
 		std::string CUID = CCuidGenerator::ConvertToCuid(BDADDRESS);
-		m_PositioningInterfaceHandler->OnPosition(CUID, Position, Accuracy, TimeStamp, StoreID, IsInStore);
+		m_PositioningInterfaceHandler->OnPosition(CUID, Position, Accuracy, TimeStamp, StoreID, IsInStore, DepartmentNamesUserCurrentlyIn);
 	}
 }
 
@@ -316,12 +316,13 @@ void CPositioningManager::CloseAllScanFiles()
 	SPosition EstimatedPosition,
 	SPosition EstimatedPositionError,
 	int NumOfIterations,
-	bool IsInEstablishment)
+	bool IsInEstablishment,
+	std::vector<std::string> DepartmentNamesUserCurrentlyIn)
 {
 	SDialogPositioingMessage *DialogPositioningMessage 
 		= new SDialogPositioingMessage(BDADDRESS, Measurements,
 			DistanceEstimations, EstimatedPosition, EstimatedPositionError,
-			NumOfIterations, IsInEstablishment);
+			NumOfIterations, IsInEstablishment, DepartmentNamesUserCurrentlyIn);
 
 	m_DialogMessagesInterfaceHandler->SendMessageToDialog(DialogPositioningMessage);
 }

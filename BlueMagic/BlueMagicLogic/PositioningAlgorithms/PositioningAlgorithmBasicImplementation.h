@@ -18,7 +18,12 @@ public:
 	~CPositioningAlgorithmBasicImplementation(void);
 
 	virtual bool Init();
-	virtual SPosition CalculatePosition(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts, SPosition &Accuracy, bool &IsInEstablishment);
+	virtual SPosition CalculatePosition(
+		std::string BDADDRESS, 
+		std::map<int /*SensorID*/, SMeasurement> Measuremnts, 
+		SPosition &Accuracy, 
+		bool &IsInEstablishment,
+		std::vector<std::string> DepartmentNamesUserCurrentlyIn);
 	virtual void AdviseDebugReport(IPositioningDebugReport *DebugReportHandler);
 	virtual void AdviseEstablishmentTopology(CEstablishmentTopology *EstablishmentTopology);
 
@@ -41,7 +46,8 @@ private:
 		SPosition EstimatedPosition,
 		SPosition EstimatedPositionError,
 		int NumOfIterations,
-		bool IsInEstablishment);
+		bool IsInEstablishment, 
+		std::vector<std::string> DepartmentNamesUserCurrentlyIn);
 
 	void SendSensorsLocationReport(std::map<int /*SensorID*/, SPosition> SensorsLocation);
 

@@ -97,7 +97,7 @@ void CPositioningModuleApp::SendMessageToDialog(SDialogPositioingMessage *Messag
 		Message->m_BDADDRESS, Message->m_Measurements, 
 		Message->m_DistanceEstimations, Message->m_EstimatedPosition, 
 		Message->m_EstimatedPositionError, Message->m_NumOfIterations, 
-		Message->m_IsInEstablishment);
+		Message->m_IsInEstablishment, Message->m_DepartmentNamesUserCurrentlyIn);
 
 	m_PositioningEstimationDlg.SendMessageToGuiThread((WPARAM)Message);
 	m_DepartmentEstimationDlg.SendMessageToGuiThread((WPARAM)CopyMessage);

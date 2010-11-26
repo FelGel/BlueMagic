@@ -98,7 +98,8 @@ void CPositioningAlgorithm::DoPositioning(std::string BdAddress, DWORD LastDataT
 
 	SPosition Accuracy;
 	bool IsInEstablishment;
-	SPosition EstimatedPosition = m_Impl->CalculatePosition(BdAddress, Measurements, Accuracy, IsInEstablishment);
+	std::vector<std::string> DepartmentNamesUserCurrentlyIn;
+	SPosition EstimatedPosition = m_Impl->CalculatePosition(BdAddress, Measurements, Accuracy, IsInEstablishment, DepartmentNamesUserCurrentlyIn);
 
 		
 	// Calc Geometric Average for Error \ Accuracy:
@@ -112,7 +113,7 @@ void CPositioningAlgorithm::DoPositioning(std::string BdAddress, DWORD LastDataT
 	PositioningTime /= Measurements.size();
 
 	// Send Positioning Event
-	m_PositioningEventsHandler->OnPositioning(BdAddress, EstimatedPosition, AccuracyRadii, PositioningTime, m_EstablishmentTopology->GetEstablishmentID(), IsInEstablishment);
+	m_PositioningEventsHandler->OnPositioning(BdAddress, EstimatedPosition, AccuracyRadii, (DWORD)PositioningTime, m_EstablishmentTopology->GetEstablishmentID(), IsInEstablishment, DepartmentNamesUserCurrentlyIn);
 }
 
 void CPositioningAlgorithm::OnTimeout()

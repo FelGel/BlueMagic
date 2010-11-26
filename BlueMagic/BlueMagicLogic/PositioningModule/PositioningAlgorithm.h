@@ -11,7 +11,7 @@
 class IPositioningEvents
 {
 public:
-	virtual void OnPositioning(std::string BDADDRESS, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore) = 0;
+	virtual void OnPositioning(std::string BDADDRESS, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore, std::vector<std::string> DepartmentNamesUserCurrentlyIn) = 0;
 };
 
 class CPositioningAlgorithm

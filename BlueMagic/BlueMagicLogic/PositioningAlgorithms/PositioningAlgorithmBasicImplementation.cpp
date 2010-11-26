@@ -102,7 +102,12 @@ CPositioningAlgorithmBasicImplementation::~CPositioningAlgorithmBasicImplementat
 	m_EstablishmentTopology = EstablishmentTopology;
 }
 
-/*virtual*/ SPosition CPositioningAlgorithmBasicImplementation::CalculatePosition(std::string BDADDRESS, std::map<int /*SensorID*/, SMeasurement> Measuremnts, SPosition &Accuracy, bool &IsInEstablishment)
+/*virtual*/ SPosition CPositioningAlgorithmBasicImplementation::CalculatePosition(
+	std::string BDADDRESS, 
+	std::map<int /*SensorID*/, SMeasurement> Measuremnts, 
+	SPosition &Accuracy, 
+	bool &IsInEstablishment,
+	std::vector<std::string> DepartmentNamesUserCurrentlyIn)
 {
 	// Rssi Measurements
 	DumpRssiMeasurementsToLog(BDADDRESS, Measuremnts);
@@ -118,8 +123,9 @@ CPositioningAlgorithmBasicImplementation::~CPositioningAlgorithmBasicImplementat
 	DumpEstimatedPositionToLog(BDADDRESS, EstimatedPosition);
 
 	IsInEstablishment = m_EstablishmentTopology->IsMeasurementInEstablishemnt(EstimatedPosition);
+	DepartmentNamesUserCurrentlyIn = m_EstablishmentTopology->GetDepartmentNamesUserCurrentlyIn(EstimatedPosition);
 
-	SendDebugReport(BDADDRESS, Measuremnts, DistanceEstimations, EstimatedPosition, Accuracy, NumOfIterations, IsInEstablishment);
+	SendDebugReport(BDADDRESS, Measuremnts, DistanceEstimations, EstimatedPosition, Accuracy, NumOfIterations, IsInEstablishment, DepartmentNamesUserCurrentlyIn);
 	return EstimatedPosition;
 }
 
@@ -314,7 +320,8 @@ void CPositioningAlgorithmBasicImplementation::SendDebugReport(
 	SPosition EstimatedPosition,
 	SPosition EstimatedPositionError,
 	int NumOfIterations, 
-	bool IsInEstablishment)
+	bool IsInEstablishment,
+	std::vector<std::string> DepartmentNamesUserCurrentlyIn)
 {
 	if (m_DebugReportHandler)
 	{
@@ -325,7 +332,8 @@ void CPositioningAlgorithmBasicImplementation::SendDebugReport(
 			EstimatedPosition, 
 			EstimatedPositionError, 
 			NumOfIterations, 
-			IsInEstablishment);
+			IsInEstablishment,
+			DepartmentNamesUserCurrentlyIn);
 	}
 }
 

@@ -82,3 +82,19 @@ void CEstablishmentTopology::Close()
 {
 	m_DepartmentsContainer.RemoveObjects();
 }
+
+std::vector<std::string> CEstablishmentTopology::GetDepartmentNamesUserCurrentlyIn(SPosition Position)
+{
+	std::vector<std::string> DepartmentsNames;
+
+	for (unsigned int i = 0; i < m_DepartmentsContainer.GetNumberOfDepartments(); i++)
+	{
+		CDepartmentObject* DepartmentObject = m_DepartmentsContainer.GetDepartmentAt(i);
+		if (DepartmentObject->IsMeasurementInDepartment(Position))
+		{
+			DepartmentsNames.push_back(DepartmentObject->GetDepartmentName());
+		}
+	}
+
+	return DepartmentsNames;
+}

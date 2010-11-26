@@ -22,7 +22,7 @@ public:
 	virtual void OnSensorStatusUpdate(int SensorId, bool IsController, ESensorConnectionStatus SensorConnectionStatus, ESensorHandshakeStatus SensorHandshakeStatus, ESensorActivityStatus SensorActivityStatus);
 
 	// Positioning Algorithm Events
-	virtual void OnPositioning(std::string BDADDRESS, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore);
+	virtual void OnPositioning(std::string BDADDRESS, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore, std::vector<std::string> DepartmentNamesUserCurrentlyIn);
 
 	// Positioning Algorithm Debug Events
 	virtual void OnPositioningDebugReport(
@@ -32,7 +32,8 @@ public:
 		SPosition EstimatedPosition,
 		SPosition EstimatedPositionError,
 		int NumOfIterations,
-		bool IsInEstablishment);
+		bool IsInEstablishment,
+		std::vector<std::string> DepartmentNamesUserCurrentlyIn);
 	virtual void OnSensorsLocationReport(
 		std::map<int /*SensorID*/, SPosition> SensorsLocation);
 

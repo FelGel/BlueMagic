@@ -13,5 +13,5 @@
 class IPositioningInterface
 {
 public:
-	virtual void OnPosition(std::string CUID, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore) = 0;
+	virtual void OnPosition(std::string CUID, SPosition Position, double Accuracy, DWORD TimeStamp, int StoreID, bool IsInStore, std::vector<std::string> DepartmentNamesUserCurrentlyIn) = 0;
 };

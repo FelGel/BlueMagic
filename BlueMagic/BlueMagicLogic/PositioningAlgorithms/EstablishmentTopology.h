@@ -19,6 +19,7 @@ public:
 	std::vector<SPosition> GetEstablishmentCoordinates();
 
 	bool IsMeasurementInEstablishemnt(SPosition Position);
+	std::vector<std::string> GetDepartmentNamesUserCurrentlyIn(SPosition Position);
 
 	std::vector<SDepartmentInfo> GetDepartmentsInfo();
 
