@@ -201,6 +201,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\DepartmentEstimationDialog.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\DistanceMeasurementsDlg.cpp"
 				>
 			</File>
@@ -300,6 +304,10 @@
 			</File>
 			<File
 				RelativePath=".\CuidGenerator.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DepartmentEstimationDialog.h"
 				>
 			</File>
 			<File

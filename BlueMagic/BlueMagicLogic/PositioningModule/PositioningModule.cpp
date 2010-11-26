@@ -37,8 +37,9 @@ void CPositioningModuleApp::AddDialogs()
 	CResourcedGuiApplication::AddDialog(m_PositioningModuleRealTimeDlg, CPositioningModuleDlg::IDD, "Scan Status");
 	CResourcedGuiApplication::AddDialog(m_PositioningModuleAggregatedDlg, CPositioningModuleDlg::IDD, "Scan Log");
 	CResourcedGuiApplication::AddDialog(m_SensorsStatusDlg, CSensorsStatusDlg::IDD, "Sensors Status");
-	CResourcedGuiApplication::AddDialog(m_DistancesMeasurementsDlg, CDistanceMeasurementsDlg::IDD, "Distances Measurements");
-	CResourcedGuiApplication::AddDialog(m_PositioningEstimationDlg, CPositioningEstimationDlg::IDD, "Positioning Estimations");
+	CResourcedGuiApplication::AddDialog(m_DistancesMeasurementsDlg, CDistanceMeasurementsDlg::IDD, "Distances");
+	CResourcedGuiApplication::AddDialog(m_PositioningEstimationDlg, CPositioningEstimationDlg::IDD, "Positioning");
+	CResourcedGuiApplication::AddDialog(m_DepartmentEstimationDlg, CDepartmentEstimationDialog::IDD, "Department");
 	return;
 }
 
@@ -55,6 +56,7 @@ bool CPositioningModuleApp::PerformInitalization()
 	m_SensorsStatusDlg.InitScanList();
 	m_DistancesMeasurementsDlg.InitScanList();
 	m_PositioningEstimationDlg.InitScanList();
+	m_DepartmentEstimationDlg.InitScanList();
 
 	m_PositioningManager.Advise(this);
 	return m_PositioningManager.Init();
@@ -66,6 +68,7 @@ bool CPositioningModuleApp::PerformCleanup()
 	m_PositioningManager.CloseThread(true);
 	m_DistancesMeasurementsDlg.Close();
 	m_PositioningEstimationDlg.Close();
+	m_DepartmentEstimationDlg.Close();
 	return true;
 }
 
@@ -90,20 +93,36 @@ void CPositioningModuleApp::SendMessageToDialog(SDialogSensorMessage *Message)
 
 void CPositioningModuleApp::SendMessageToDialog(SDialogPositioingMessage *Message)
 {
+	SDialogPositioingMessage *CopyMessage = new SDialogPositioingMessage(
+		Message->m_BDADDRESS, Message->m_Measurements, 
+		Message->m_DistanceEstimations, Message->m_EstimatedPosition, 
+		Message->m_EstimatedPositionError, Message->m_NumOfIterations, 
+		Message->m_IsInEstablishment);
+
 	m_PositioningEstimationDlg.SendMessageToGuiThread((WPARAM)Message);
+	m_DepartmentEstimationDlg.SendMessageToGuiThread((WPARAM)CopyMessage);
 }
 
 void CPositioningModuleApp::SendMessageToDialog(SDialogEstablishmentContourMessage *Message)
 {
+	SDialogEstablishmentContourMessage *CopyMessage = new SDialogEstablishmentContourMessage(
+		Message->m_EstablishmentCoordinates, Message->m_DepartmentsInfo);
+
 	m_PositioningEstimationDlg.SendMessageToGuiThread((WPARAM)Message);
+	m_DepartmentEstimationDlg.SendMessageToGuiThread((WPARAM)CopyMessage);
 }
 
 void CPositioningModuleApp::SendMessageToDialog(SDialogSensorsLocationMessage *Message)
 {
+	SDialogSensorsLocationMessage *CopyMessage = new SDialogSensorsLocationMessage(
+		Message->m_SensorsLocation);
+
 	m_PositioningEstimationDlg.SendMessageToGuiThread((WPARAM)Message);
+	m_DepartmentEstimationDlg.SendMessageToGuiThread((WPARAM)CopyMessage);
 }
 
 void CPositioningModuleApp::OnTimeoutCalledFromPositioningManager()
 {
 	m_PositioningEstimationDlg.OnTimeoutCalledFromPositioningModule();
+	m_DepartmentEstimationDlg.OnTimeoutCalledFromPositioningModule();
 }
